@@ -22,7 +22,7 @@ public class Food implements CSVSerializable {
     }
 
     public String toCSV() {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         return String.format("%s,%s,%d,%d,%s",
                 consumer.getName(), name, saturation, saturationTime, sdf.format(eatingDate));
     }
@@ -49,7 +49,7 @@ public class Food implements CSVSerializable {
         saturation = objectTransformer.getInt("saturation");
         saturationTime = objectTransformer.getLong("saturationTime");
 
-        eatingDate = objectTransformer.getDate("eatingDate", "dd.MM.yyyy");
+        eatingDate = objectTransformer.getDate("eatingDate", "dd.MM.yyyy HH:mm:ss");
     }
 
     public Human getConsumer() {

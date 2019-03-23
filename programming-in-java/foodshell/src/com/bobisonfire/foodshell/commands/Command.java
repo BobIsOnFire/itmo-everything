@@ -78,7 +78,7 @@ public class Command {
                         "\tfoodName:\tназвание;\n" +
                         "\tsaturation:\tнасыщение в условных единицах (из расчета, что 100 единиц - это тарелка котлеток с пюрешкой);\n" +
                         "\tsaturationTime:\tвремя, в течение которого будет действовать насыщение (в минутах).",
-                tokens -> launcher.eat( tokens[0], Integer.parseInt(tokens[1]), Long.parseLong(tokens[2]) )
+                tokens -> launcher.eat( tokens[0], Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]) )
         );
 
         new Command(

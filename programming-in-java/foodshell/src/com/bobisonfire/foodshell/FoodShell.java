@@ -22,8 +22,8 @@ import java.util.Scanner;
  * FoodShell - основной класс для работы со средой <i>FoodShell</i>.
  */
 public class FoodShell {
-//    private static final String PATH_PREFIX = "";
-    private static final String PATH_PREFIX = "/home/s264443/prog/lab5/";
+    private static final String PATH_PREFIX = "";
+//    private static final String PATH_PREFIX = "/home/s264443/prog/lab5/";
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
     private static String logUser = "God";
     private static final String VERSION = "4.0.1";

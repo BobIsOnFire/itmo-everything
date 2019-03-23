@@ -79,12 +79,12 @@ public class CommandDoc {
      * @param foodName Название еды
      * @param saturation Величина, на которую увеличится насыщение персонажа в условных единицах,
      *                   где 100 единиц - это тарелка котлеток с пюрешкой.
-     * @param saturationTime Время действия насыщения
+     * @param saturationTime Время действия насыщения (в минутах)
      * @throws SaturationException Послано, если персонаж не может съесть такой объем пищи.
      */
-    public boolean eat(String foodName, int saturation, long saturationTime) {
+    public boolean eat(String foodName, int saturation, int saturationTime) {
         Human consumer = Human.getHumanByName( FoodShell.getLogUser() );
-        Food food = new Food(consumer, foodName, saturation, saturationTime);
+        Food food = new Food(consumer, foodName, saturation, saturationTime * 60 * 1000);
 
         if ( consumer.getCurrentSaturation() + food.getSaturation() > consumer.getMaxSaturation() )
             throw new SaturationException(consumer);

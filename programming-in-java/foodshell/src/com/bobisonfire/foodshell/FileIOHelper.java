@@ -28,11 +28,11 @@ public class FileIOHelper {
         File file = new File(instance.getPath());
 
         try {
-            file.createNewFile();
+            boolean existed = !file.createNewFile();
             FileWriter fileWriter = new FileWriter(file, append);
             BufferedWriter writer = new BufferedWriter(fileWriter);
 
-            if (!append)
+            if (!append || !existed)
                 writer.write(instance.getCSVHead() + "\n");
 
             for (Map.Entry<String, T> elem: map.entrySet()) {
