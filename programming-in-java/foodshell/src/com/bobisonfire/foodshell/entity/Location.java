@@ -6,12 +6,25 @@ import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
 import java.util.TreeMap;
 
+/**
+ * Класс, реализующий локации - места расположения персонажей в <i>FoodShell</i>.<br>
+ * Все локации хранятся в CSV-файле (путь к которому указывает сам пользователь), равно как
+ * и в структуре TreeMap внутри локации, доступ к которой осуществляется методами
+ * getLocationByName, getMap, setMap и update.
+ * Локация World - основная локация, в нее помещаются все персонажи при отстутствии других локаций
+ * и ее невозможно удалить.
+ */
 public class Location implements CSVSerializable {
     public static final String CSV_HEAD = "name,x,y,z";
     public static String PATH = "location.csv";
 
     private static TreeMap<String, Location> LocationMap = new TreeMap<>();
 
+    /**
+     * Возвращает локацию по ее уникальному идентификатору (ищет ее в коллекции)
+     * или оповещает, что такой локации не существует.
+     * @param name Название локации (уникальный ключ).
+     */
     public static Location getLocationByName(String name) {
         if (!LocationMap.containsKey(name.intern()) && !name.intern().equals(""))
             throw new LocationNotFoundException(name);
@@ -26,7 +39,12 @@ public class Location implements CSVSerializable {
         return LocationMap;
     }
 
-    // вызывать при любых изменениях локаций
+    /**
+     * Перезаписывает CSV-файл с локациями текущей коллекцией.<br>
+     * Должен вызываться при каждом изменении локаций для синхронизации файла.<br>
+     * При удалении существующей локации также следует вызвать Human.update(),
+     * чтобы персонажи из удаленных локаций переместились в основную локацию.
+     */
     public static void update() {
         mFileIOHelper.writeCSVMapIntoFile(LocationMap, false);
     }

@@ -5,6 +5,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TreeMap;
 
+/**
+ * Класс, реализующий десериализацию объектов.<br>
+ * Поля и значения хранятся в соответствующей структуре values.
+ */
 public abstract class ObjectTransformer {
     protected TreeMap<String, String> values = new TreeMap<>();
     protected String value;

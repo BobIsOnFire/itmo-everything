@@ -2,6 +2,9 @@ package com.bobisonfire.foodshell.entity;
 
 import java.io.Serializable;
 
+/**
+ * Класс, реализующий координаты локации или персонажа.
+ */
 public class Coordinate implements Serializable {
     private double x;
     private double y;
@@ -32,6 +35,9 @@ public class Coordinate implements Serializable {
         return z;
     }
 
+    /**
+     * Изменение координаты на соответствующие величины.
+     */
     public void move(double x, double y, double z) {
         this.x += x;
         this.y += y;

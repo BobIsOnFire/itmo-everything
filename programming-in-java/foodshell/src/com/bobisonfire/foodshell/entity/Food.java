@@ -5,6 +5,10 @@ import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * Класс, реализующий приемы пищи. Пища характеризуется уровнем насыщения и временем действия.<br>
+ * Тут, в принципе, говорить больше нечего.
+ */
 public class Food implements CSVSerializable {
     public static final String CSV_HEAD = "consumer,name,saturation,saturationTime,eatingDate";
     public static String PATH = "meals.csv";

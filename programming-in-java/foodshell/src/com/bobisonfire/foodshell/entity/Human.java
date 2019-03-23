@@ -11,19 +11,34 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TreeMap;
 
+/**
+ * Класс, реализующий персонажей - основных действующих единиц <i>FoodShell</i>.<br>
+ * Также этот класс хранит TreeMap персонажей, доступ к которому осуществляется через
+ * статические методы getHumanByName и update.<br>
+ * Персонаж God - основной персонаж, с ним запускается <i>FoodShell</i> и он создает
+ * других персонажей.
+ */
 public class Human implements CSVSerializable {
     public static final String CSV_HEAD = "name,sadness,birthday,maxSaturation,gender,location";
     public static String PATH = "human.csv";
 
     private static TreeMap<String, Human> HumanMap = new TreeMap<>();
 
+    /**
+     * Возвращает персонажа по его уникальному идентификатору (ищет его в коллекции)
+     * или оповещает, что такого персонажа не существует.
+     * @param name Имя персонажа (уникальный ключ).
+     */
     public static Human getHumanByName(String name) {
         if (!HumanMap.containsKey(name.intern()) && !name.intern().equals(""))
             throw new HumanNotFoundException(name);
         return HumanMap.get(name);
     }
 
-    // Запускать каждый раз, когда изменяется состояние объектов
+    /**
+     * Перезаписывает CSV-файл с персонажами текущей коллекцией.<br>
+     * Должен вызываться при каждом изменении персонажей для синхронизации файла.
+     */
     public static void update() {
         mFileIOHelper.writeCSVMapIntoFile(HumanMap, false);
     }
@@ -154,7 +169,9 @@ public class Human implements CSVSerializable {
     }
 
 
-
+    /**
+     * Считывает список всех приемов пищи текущего персонажа из лога приемов пищи.
+     */
     public ArrayList<Food> readMeals() {
         ArrayList<Food> list = new ArrayList<>();
         ArrayList<CSVObject> map = mFileIOHelper.readCSVListFromFile(Food.PATH);
@@ -167,6 +184,10 @@ public class Human implements CSVSerializable {
         return list;
     }
 
+    /**
+     * Добавляет в консольный вывод реплику персонажа, подписывая автора.
+     * @param phrase Любая фраза.
+     */
     public void sayPhrase(String phrase) {
         System.out.println("\t" + name + ": " + phrase);
     }

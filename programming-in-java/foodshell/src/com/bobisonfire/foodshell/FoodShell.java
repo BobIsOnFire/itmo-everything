@@ -18,8 +18,12 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 
+/**
+ * FoodShell - основной класс для работы со средой <i>FoodShell</i>.
+ */
 public class FoodShell {
-    private static final String PATH_PREFIX = "";
+//    private static final String PATH_PREFIX = "";
+    private static final String PATH_PREFIX = "/home/s264443/prog/lab5/";
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
     private static String logUser = "God";
     private static final String VERSION = "4.0.1";
@@ -33,6 +37,16 @@ public class FoodShell {
         FoodShell.logUser = logUser;
     }
 
+    /**
+     * Метод, запускающий среду <i>FoodShell</i>. Выполняет следующие функции:<br>
+     * 1. Считывает из консоли путь до файла, содержащего локации и останавливает <i>FoodShell</i>,
+     * если путь не введен.<br>
+     * 2. Синхронизирует коллекции локаций и людей, заполняя их из соответствующих файлов или записывая
+     * в файлы коллекции по умолчанию, если файлы пусты.<br>
+     * 3. Организовывает чтение команд, их исполнение и обработку неверно вызванных команд.<br>
+     * 4. Логирует критические ошибки среды <i>FoodShell</i>, останавливая ее выполнение.
+     * @param args Аргументы командной строки (wow)
+     */
     public static void main(String[] args) {
 
         if (args.length == 0) {
@@ -90,6 +104,14 @@ public class FoodShell {
         }
     }
 
+    /**
+     * Метод, организовывающий чтение и токенизацию команд.<br>
+     * Интерпретатор считает токеном структуру, разделенную любым количеством пробелов,
+     * не включенных в кавычки или фигурные скобки.<br>
+     * Пример: структуру "I did not hit her" он воспримет как единый токен, без кавычек -
+     * как 5 отдельных токенов. Аналогично с фигурными скобками.
+     * @return Массив токенов из введенной строки.
+     */
     private static String[] readCommand() {
         printInvitation();
         Scanner standardScanner = new Scanner(System.in);
@@ -135,6 +157,9 @@ public class FoodShell {
         System.out.print(logUser + "@FoodShell> ");
     }
 
+    /**
+     * Сохраняет информацию о возникшей ошибке в лог ошибок (по умолчанию - error.log в корневой папке).
+     */
     private static void logException(Exception exc) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         try {

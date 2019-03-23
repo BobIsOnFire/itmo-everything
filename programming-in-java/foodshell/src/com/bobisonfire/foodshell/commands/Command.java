@@ -9,6 +9,9 @@ import java.text.SimpleDateFormat;
 import java.util.TreeMap;
 import java.util.Date;
 
+/**
+ * Класс, реализующий логику исполняемых команд.<br>
+ */
 public class Command {
     private String name;
     private String description;
@@ -41,16 +44,16 @@ public class Command {
         return CommandMap;
     }
 
-    public static boolean exists(String name) {
-        return CommandMap.containsKey(name.intern());
-    }
-
 
 
     public boolean launch(String[] tokens) {
         return function.start(tokens);
     }
 
+    /**
+     * Метод, запускаемый при инициализации <i>FoodShell</i>, соединяющий логику исполнения команд
+     * (см. CommandDoc) с логикой самой команды.
+     */
     public static void createBasicCommands() {
         final CommandDoc launcher = new CommandDoc();
         new Command(

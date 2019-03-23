@@ -2,6 +2,9 @@ package com.bobisonfire.foodshell.transformer;
 
 import com.bobisonfire.foodshell.exc.TransformerException;
 
+/**
+ * Класс, реализующий десериализацию простых JSON-объектов.
+ */
 public class JSONObject extends ObjectTransformer {
     public JSONObject(String object) {
 
@@ -36,10 +39,19 @@ public class JSONObject extends ObjectTransformer {
         }
     }
 
-    private boolean isJSON(String string) { // after deleting spaces and tabs
+    /**
+     * Проверяет соответствие строки простейшему формату JSON.
+     * @param string Строка на проверку.
+     */
+    private boolean isJSON(String string) {
         return string.matches("^\\{(.*)}$");
     }
 
+    /**
+     * Удаляет не заключенные в кавычки пробелы (в т.ч. табы, переносы строки и т.д.).
+     * @param string Исходная строка
+     * @return Строка без whitespace'ов.
+     */
     private String deleteWhitespacesNotQuoted(String string) {
         StringBuilder sb = new StringBuilder();
         boolean quote = false;
@@ -52,6 +64,12 @@ public class JSONObject extends ObjectTransformer {
         return sb.toString();
     }
 
+    /**
+     * Модификация строкового метода indexOf, выполняющая поиск первого не заключенного в кавычки вхождения символа.
+     * @param search Символ, который нужно найти.
+     * @param string Строка, по которой осуществляется поиск.
+     * @return Индекс первого вхождения.
+     */
     private int indexOfNotQuoted(char search, String string) {
         boolean quote = false;
         for (int i = 0; i < string.length(); i++) {
@@ -60,7 +78,6 @@ public class JSONObject extends ObjectTransformer {
             if (!quote && string.charAt(i) == search)
                 return i;
         }
-
         return -1;
     }
 }

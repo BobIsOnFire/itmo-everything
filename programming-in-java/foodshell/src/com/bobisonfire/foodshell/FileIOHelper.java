@@ -9,7 +9,17 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
 
+/**
+ * Класс, организовывающий чтение и запись коллекций в файлы в CSV-формате.
+ */
 public class FileIOHelper {
+    /**
+     * Записывает коллекцию в виде TreeMap (потому что по заданию в этом формате хранятся коллекции)
+     * в файл формата CSV.
+     * @param map Коллекция с однозначным соответствием строкового ключа и объекта коллекции.
+     * @param append Флаг, соответствующий добавлению информацию в конец файла (true) или его полной перезаписи (false).
+     * @param <T> Тип объектов, содержащихся в коллекции.
+     */
     public <T extends CSVSerializable> void writeCSVMapIntoFile(TreeMap<String, T> map, boolean append) {
         if (map.size() == 0)
             return;
@@ -37,6 +47,11 @@ public class FileIOHelper {
         }
     }
 
+    /**
+     * Читает список CSV-объектов из файла по заданному пути.
+     * @param path Путь до файла формата CSV.
+     * @return Список CSV-объектов, где соответствие полей и значений формируется по шапке файла.
+     */
     public ArrayList<CSVObject> readCSVListFromFile(String path) {
         File file = new File(path);
 
