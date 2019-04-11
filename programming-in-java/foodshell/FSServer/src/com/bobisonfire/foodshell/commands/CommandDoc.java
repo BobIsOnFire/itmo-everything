@@ -1,7 +1,7 @@
 package com.bobisonfire.foodshell.commands;
 
+import com.bobisonfire.foodshell.Connection;
 import com.bobisonfire.foodshell.FileIOHelper;
-import com.bobisonfire.foodshell.FoodShell;
 import com.bobisonfire.foodshell.entity.*;
 import com.bobisonfire.foodshell.exc.*;
 import com.bobisonfire.foodshell.transformer.CSVObject;
@@ -38,8 +38,8 @@ public class CommandDoc {
      * <br>
      * Использование команды: meals
      */
-    public boolean meals() {
-        return this.meals(FoodShell.getLogUser());
+    public boolean meals(Connection con) {
+        return this.meals(con, con.getLogUser());
     }
 
     /**
@@ -50,16 +50,16 @@ public class CommandDoc {
      * @param human Целевой пользователь (в консоли - его имя).
      * @throws HumanNotFoundException Послано, если такого персонажа не существует.
      */
-    public boolean meals(String human) {
+    public boolean meals(Connection con, String human) {
         Human object = Human.getHumanByName(human);
         ArrayList<Food> list = object.readMeals();
 
-        System.out.println("Текущее насыщение " + object.getName() + ": " +
+        con.out.println("Текущее насыщение " + object.getName() + ": " +
                 object.getCurrentSaturation() + "/" + object.getMaxSaturation());
 
         for (Food food: list) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-            System.out.println(
+            con.out.println(
                     food.getName() + ":\tнасыщение - " + food.getSaturation() + ", " +
                             (
                                     (!food.isAffecting()) ? "уже не действует." :
@@ -82,8 +82,8 @@ public class CommandDoc {
      * @param saturationTime Время действия насыщения (в минутах)
      * @throws SaturationException Послано, если персонаж не может съесть такой объем пищи.
      */
-    public boolean eat(String foodName, int saturation, int saturationTime) {
-        Human consumer = Human.getHumanByName( FoodShell.getLogUser() );
+    public boolean eat(Connection con, String foodName, int saturation, int saturationTime) {
+        Human consumer = Human.getHumanByName( con.getLogUser() );
         Food food = new Food(consumer, foodName, saturation, saturationTime * 60 * 1000);
 
         if ( consumer.getCurrentSaturation() + food.getSaturation() > consumer.getMaxSaturation() )
@@ -103,11 +103,11 @@ public class CommandDoc {
      * <br>
      * Использование команды: help
      */
-    public boolean help() {
-        System.out.println("Используйте help [command] для получения описания определенной команды.");
+    public boolean help(Connection con) {
+        con.out.println("Используйте help [command] для получения описания определенной команды.");
         TreeMap<String, Command> map = Command.getMap();
         for (Map.Entry<String, Command> entry: map.entrySet()) {
-            System.out.println(entry.getValue().getName());
+            con.out.println(entry.getValue().getName());
         }
         return true;
     }
@@ -119,8 +119,8 @@ public class CommandDoc {
      * @param command Название команды
      * @throws CommandNotFoundException Послано, если такой команды не существует.
      */
-    public boolean help(String command) {
-        System.out.println( Command.getCommandByName(command).getDescription() );
+    public boolean help(Connection con, String command) {
+        con.out.println( Command.getCommandByName(command).getDescription() );
         return true;
     }
 
@@ -148,16 +148,16 @@ public class CommandDoc {
      * Использование команды: cat file1 file2 ...
      * @param files Путь до файла (относительный или абсолютный)
      */
-    public boolean cat(String... files) {
+    public boolean cat(Connection con, String... files) {
         for (String file: files) {
             try {
                 FileInputStream fis = new FileInputStream(file);
                 Scanner fileInput = new Scanner(fis);
                 while (fileInput.hasNextLine())
-                    System.out.println(fileInput.nextLine());
+                    con.out.println(fileInput.nextLine());
             }
             catch(IOException exc) {
-                System.out.println("Cannot read file " + file);
+                con.out.println("Cannot read file " + file);
             }
         }
         return true;
@@ -168,10 +168,10 @@ public class CommandDoc {
      * <br>
      * Использование команды: gender
      */
-    public boolean gender() {
+    public boolean gender(Connection con) {
         Gender.printPostulate();
         for (Gender gender: Gender.values())
-            System.out.println(gender.getName());
+            con.out.println(gender.getName());
         return true;
     }
 
@@ -198,7 +198,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: show
      */
-    public boolean show() {
+    public boolean show(Connection con) {
         FileIOHelper mFileIOHelper = new FileIOHelper();
         ArrayList<CSVObject> list = mFileIOHelper.readCSVListFromFile( Location.PATH );
 
@@ -209,7 +209,7 @@ public class CommandDoc {
                     csv.getDouble("z")
             );
 
-            System.out.println(csv.getString("name") + ":\t" + coordinate);
+            con.out.println(csv.getString("name") + ":\t" + coordinate);
         }
         return true;
     }
@@ -220,11 +220,11 @@ public class CommandDoc {
      * <br>
      * Использование команды: me
      */
-    public boolean me() {
-        Human me = Human.getHumanByName(FoodShell.getLogUser());
+    public boolean me(Connection con) {
+        Human me = Human.getHumanByName(con.getLogUser());
         Coordinate coordinate = me.getLocation().getCoords();
 
-        System.out.println( String.format( Locale.US,
+        con.out.println( String.format( Locale.US,
 
         "%s %s, %d лет.\n" +
                 "Насыщение - %d/%d.\n" +
@@ -246,8 +246,8 @@ public class CommandDoc {
      * @param name Имя персонажа (уникальный ключ).
      * @throws HumanNotFoundException Послано, если такого персонажа не существует.
      */
-    public boolean login(String name) {
-        FoodShell.setLogUser(name);
+    public boolean login(Connection con, String name) {
+        con.setLogUser(name);
         return true;
     }
 
@@ -258,8 +258,8 @@ public class CommandDoc {
      * @param location Название локации (уникальный ключ).
      * @throws LocationNotFoundException Послано, если целевая локация не существует.
      */
-    public boolean move(String location) {
-        Human me = Human.getHumanByName(FoodShell.getLogUser());
+    public boolean move(Connection con, String location) {
+        Human me = Human.getHumanByName(con.getLogUser());
         Location loc = Location.getLocationByName(location);
         me.setLocation(loc);
         Human.update();
@@ -278,8 +278,8 @@ public class CommandDoc {
      * @param receiver Имя получателя (унивальный ключ).
      * @throws HumanNotFoundException Послано, если такого получателя не существует.
      */
-    public boolean laugh(int power, String receiver) {
-        Human me = Human.getHumanByName(FoodShell.getLogUser());
+    public boolean laugh(Connection con, int power, String receiver) {
+        Human me = Human.getHumanByName(con.getLogUser());
         Human hReceiver = Human.getHumanByName(receiver);
 
         me.setSadness( me.getSadness() - power );
@@ -310,12 +310,12 @@ public class CommandDoc {
      * @param receiver Имя получателя (унивальный ключ).
      * @throws HumanNotFoundException Послано, если такого получателя не существует.
      */
-    public boolean cheer(int level, String receiver) {
-        Human me = Human.getHumanByName(FoodShell.getLogUser());
+    public boolean cheer(Connection con, int level, String receiver) {
+        Human me = Human.getHumanByName(con.getLogUser());
         Human hReceiver = Human.getHumanByName(receiver);
 
         if (me.getSadness() > hReceiver.getSadness()) {
-            System.out.println("Вы слишком грустны, чтобы развеселить " + hReceiver.getName() + " (либо он слишком веселый).");
+            con.out.println("Вы слишком грустны, чтобы развеселить " + hReceiver.getName() + " (либо он слишком веселый).");
             return true;
         }
 
@@ -338,8 +338,8 @@ public class CommandDoc {
      * Использование команды: cry power
      * @param power Сила плача в условных единицах, где 5 единиц - это рандомный видос о бедном песике.
      */
-    public boolean cry(int power) {
-        Human me = Human.getHumanByName(FoodShell.getLogUser());
+    public boolean cry(Connection con, int power) {
+        Human me = Human.getHumanByName(con.getLogUser());
         me.setSadness(me.getSadness() + power);
         Human.update();
 
@@ -365,11 +365,11 @@ public class CommandDoc {
      * @param name Название локации (уникальный ключ).
      * @throws LocationNotFoundException Послано, если такой локации не существует.
      */
-    public boolean remove(String name) {
+    public boolean remove(Connection con, String name) {
         TreeMap<String, Location> map = Location.getMap();
 
         if (name.equals("World")) {
-            System.out.println("World невозможно уничтожить (по крайней мере, тебе)");
+            con.out.println("World невозможно уничтожить (по крайней мере, тебе)");
             return true;
         }
 
@@ -466,22 +466,22 @@ public class CommandDoc {
      * <br>
      * Использование команды: info
      */
-    public boolean info() {
+    public boolean info(Connection con) {
         try {
             File file = new File(Location.PATH);
             BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
             String creationDate = sdf.format(attributes.creationTime().toMillis());
-            System.out.println("Дата создания: " + creationDate);
+            con.out.println("Дата создания: " + creationDate);
         }
         catch (IOException exc) {
-            System.out.println("Невозможно определить дату создания.");
+            con.out.println("Невозможно определить дату создания.");
         }
 
         FileIOHelper mFileIOHelper = new FileIOHelper();
         int mapSize = mFileIOHelper.readCSVListFromFile(Location.PATH).size();
 
-        System.out.println("Тип коллекции: соответствие в виде дерева существующих локаций и их имен.\n" +
+        con.out.println("Тип коллекции: соответствие в виде дерева существующих локаций и их имен.\n" +
                 "Размер коллекции: " + mapSize );
         return true;
     }

@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/FSClient/FSClient.iml" filepath="$PROJECT_DIR$/FSClient/FSClient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/FSServer/FSServer.iml" filepath="$PROJECT_DIR$/FSServer/FSServer.iml" />
       <module fileurl="file://$PROJECT_DIR$/FoodShell.iml" filepath="$PROJECT_DIR$/FoodShell.iml" />
     </modules>
   </component>
