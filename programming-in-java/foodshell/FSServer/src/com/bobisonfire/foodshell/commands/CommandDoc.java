@@ -1,19 +1,16 @@
 package com.bobisonfire.foodshell.commands;
 
-import com.bobisonfire.foodshell.Connection;
 import com.bobisonfire.foodshell.FileIOHelper;
+import com.bobisonfire.foodshell.ServerHelper;
+import com.bobisonfire.foodshell.ServerMain;
 import com.bobisonfire.foodshell.entity.*;
 import com.bobisonfire.foodshell.exc.*;
-import com.bobisonfire.foodshell.transformer.CSVObject;
-import com.bobisonfire.foodshell.transformer.JSONObject;
+import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.text.SimpleDateFormat;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Список команд для <i>FoodShell</i>.
@@ -23,93 +20,31 @@ import java.util.*;
  * Все данные, характеризующие состояние мира, находятся в CSV-таблицах.
  */
 public class CommandDoc {
+    private static ServerHelper s = ServerMain.server;
+    private static FileIOHelper f = new FileIOHelper();
+    private SocketChannel socket;
+    private Map<String, String> map;
+
+    public CommandDoc(SelectionKey key) {
+        socket = (SocketChannel) key.channel();
+        map = (Map<String, String>) key.attachment(); // todo: проверить, что все ок
+    }
+
     /**
      * Завершить работу с <i>FoodShell</i>.<br>
      * <br>
      * Использование команды: exit
      */
-    public boolean exit() {
-        return false;
-    }
-
-    /**
-     * История всех приемов пищи текущего пользователя и
-     * его текущий уровень насыщения.<br>
-     * <br>
-     * Использование команды: meals
-     */
-    public boolean meals(Connection con) {
-        return this.meals(con, con.getLogUser());
-    }
-
-    /**
-     * История всех приемов пищи пользователя human и
-     * его текущий уровень насыщения.<br>
-     * <br>
-     * Использование команды: meals human
-     * @param human Целевой пользователь (в консоли - его имя).
-     * @throws HumanNotFoundException Послано, если такого персонажа не существует.
-     */
-    public boolean meals(Connection con, String human) {
-        Human object = Human.getHumanByName(human);
-        ArrayList<Food> list = object.readMeals();
-
-        con.out.println("Текущее насыщение " + object.getName() + ": " +
-                object.getCurrentSaturation() + "/" + object.getMaxSaturation());
-
-        for (Food food: list) {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-            con.out.println(
-                    food.getName() + ":\tнасыщение - " + food.getSaturation() + ", " +
-                            (
-                                    (!food.isAffecting()) ? "уже не действует." :
-                                            ("действует до " + sdf.format(food.getSaturationExpirationDate()))
-                            )
-            );
-        }
-        return true;
-    }
-
-    /**
-     * Попытка съесть пищу с заданными характеристиками.<br>
-     * Прием пищи сохраняется в таблицу CSV-объектов и дает доступ
-     * к ней через команду meals.<br>
-     * <br>
-     * Использование команды: eat foodName saturation saturationTime
-     * @param foodName Название еды
-     * @param saturation Величина, на которую увеличится насыщение персонажа в условных единицах,
-     *                   где 100 единиц - это тарелка котлеток с пюрешкой.
-     * @param saturationTime Время действия насыщения (в минутах)
-     * @throws SaturationException Послано, если персонаж не может съесть такой объем пищи.
-     */
-    public boolean eat(Connection con, String foodName, int saturation, int saturationTime) {
-        Human consumer = Human.getHumanByName( con.getLogUser() );
-        Food food = new Food(consumer, foodName, saturation, saturationTime * 60 * 1000);
-
-        if ( consumer.getCurrentSaturation() + food.getSaturation() > consumer.getMaxSaturation() )
-            throw new SaturationException(consumer);
-
-        TreeMap<String, Food> map = new TreeMap<>();
-        map.put( food.getConsumer().getName(), food );
-
-        FileIOHelper mFileIOHelper = new FileIOHelper();
-        mFileIOHelper.writeCSVMapIntoFile(map, true);
-
-        return true;
-    }
+    public void exit() {}
 
     /**
      * Просмотр списка всех существующих команд.<br>
      * <br>
      * Использование команды: help
      */
-    public boolean help(Connection con) {
-        con.out.println("Используйте help [command] для получения описания определенной команды.");
-        TreeMap<String, Command> map = Command.getMap();
-        for (Map.Entry<String, Command> entry: map.entrySet()) {
-            con.out.println(entry.getValue().getName());
-        }
-        return true;
+    public void help() {
+        s.writeToChannel(socket, "Используйте help command для получения описания определенной команды.");
+        Command.getMap().forEach( (k, v) -> s.writeToChannel(socket, k));
     }
 
     /**
@@ -119,48 +54,8 @@ public class CommandDoc {
      * @param command Название команды
      * @throws CommandNotFoundException Послано, если такой команды не существует.
      */
-    public boolean help(Connection con, String command) {
-        con.out.println( Command.getCommandByName(command).getDescription() );
-        return true;
-    }
-
-    /**
-     * Создание персонажа с заданными характеристиками или перезаписывает его, если такой персонаж есть.<br>
-     * Грусть персонажа при создании равна 0 (т.е. персонаж создается максимально счастливым).<br>
-     * Все персонажи сохраняются в соответствующую коллекцию в формате CSV.<br>
-     * <br>
-     * Использование команды: human name birthday maxSaturation gender iq
-     * @param name Имя персонажа (уникальный ключ).
-     * @param birthday Дата рождения (при запуске из консоли - в формате ДД.ММ.ГГГГ).
-     * @param maxSaturation Максимальный уровень насыщения в условных единицах,
-     *                      где 100 единиц - это тарелка котлеток с пюрешкой.
-     * @param gender Гендер персонажа (при запуске из консоли - его название в соответствии с командой gender).
-     */
-    public boolean human(String name, Date birthday, int maxSaturation, Gender gender) {
-        Human human = new Human(name, birthday, maxSaturation, gender);
-        return true;
-    }
-
-    /**
-     * Вывести последовательно содержимое файлов.<br>
-     * Используется, в основном, для просмотра логов не выходя из <i>FoodShell</i>.<br>
-     * <br>
-     * Использование команды: cat file1 file2 ...
-     * @param files Путь до файла (относительный или абсолютный)
-     */
-    public boolean cat(Connection con, String... files) {
-        for (String file: files) {
-            try {
-                FileInputStream fis = new FileInputStream(file);
-                Scanner fileInput = new Scanner(fis);
-                while (fileInput.hasNextLine())
-                    con.out.println(fileInput.nextLine());
-            }
-            catch(IOException exc) {
-                con.out.println("Cannot read file " + file);
-            }
-        }
-        return true;
+    public void help(String command) {
+        s.writeToChannel( socket, Command.getCommandByName(command).getDescription() );
     }
 
     /**
@@ -168,11 +63,10 @@ public class CommandDoc {
      * <br>
      * Использование команды: gender
      */
-    public boolean gender(Connection con) {
-        Gender.printPostulate();
+    public void gender() {
+        s.writeToChannel(socket, "\t\t** There are only 15 genders. **");
         for (Gender gender: Gender.values())
-            con.out.println(gender.getName());
-        return true;
+            s.writeToChannel(socket, gender.getName());
     }
 
     /**
@@ -187,10 +81,41 @@ public class CommandDoc {
      *               Остальные поля игнорируются.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public boolean insert(String name, JSONObject object) {
+    public void insert(String name, ObjectTransformer object) {
+        List<ObjectTransformer> list = f.readCSVListFromFile(map.get("path"));
+
         object.put("name", name);
-        new Location(object, true);
-        return true;
+        Human newHuman = new Human(object);
+
+        List<Human> humanList = new ArrayList<>();
+        list.forEach(elem -> humanList.add( new Human(elem) ));
+
+        List<Human> humanListC = humanList
+                .stream()
+                .filter(elem -> !elem.equals(newHuman))
+                .collect(Collectors.toList());
+
+        humanListC.add(newHuman);
+
+        f.writeCSVListIntoFile(humanListC, false);
+    }
+
+    public void location(String name, Coordinate coords) {
+        List<ObjectTransformer> list = f.readCSVListFromFile(Location.PATH);
+
+        Location newLoc = new Location(name, coords);
+
+        List<Location> locationList = new ArrayList<>();
+        list.forEach(elem -> locationList.add( new Location(elem) ));
+
+        List<Location> locationListC = locationList
+                .stream()
+                .filter(elem -> !elem.equals(newLoc))
+                .collect(Collectors.toList());
+
+        locationListC.add(newLoc);
+
+        f.writeCSVListIntoFile(locationListC, false);
     }
 
     /**
@@ -198,20 +123,13 @@ public class CommandDoc {
      * <br>
      * Использование команды: show
      */
-    public boolean show(Connection con) {
-        FileIOHelper mFileIOHelper = new FileIOHelper();
-        ArrayList<CSVObject> list = mFileIOHelper.readCSVListFromFile( Location.PATH );
+    public void show() {
+        List<ObjectTransformer> list = f.readCSVListFromFile( Location.PATH );
 
-        for(CSVObject csv: list) {
-            Coordinate coordinate = new Coordinate(
-                    csv.getDouble("x"),
-                    csv.getDouble("y"),
-                    csv.getDouble("z")
-            );
-
-            con.out.println(csv.getString("name") + ":\t" + coordinate);
+        for(ObjectTransformer obj: list) {
+            Human human = new Human(obj);
+            s.writeToChannel(socket, human.toString());
         }
-        return true;
     }
 
     /**
@@ -220,23 +138,18 @@ public class CommandDoc {
      * <br>
      * Использование команды: me
      */
-    public boolean me(Connection con) {
-        Human me = Human.getHumanByName(con.getLogUser());
+    public void me() {
+        Human me = Human.getHumanByName(map.get("logUser"), map.get("path"));
         Coordinate coordinate = me.getLocation().getCoords();
 
-        con.out.println( String.format( Locale.US,
+        s.writeToChannel(socket, String.format( Locale.US,
 
         "%s %s, %d лет.\n" +
-                "Насыщение - %d/%d.\n" +
-                "Уровень печали - %d.\n" +
                 "Местоположение - %s, точные координаты - %s.",
 
                 me.getGender().getName(), me.getName(), me.getAge(),
-                me.getCurrentSaturation(), me.getMaxSaturation(),
-                me.getSadness(),
                 me.getLocation().getName(), coordinate
         ) );
-        return true;
     }
 
     /**
@@ -244,11 +157,10 @@ public class CommandDoc {
      * <br>
      * Использование команды: login name
      * @param name Имя персонажа (уникальный ключ).
-     * @throws HumanNotFoundException Послано, если такого персонажа не существует.
      */
-    public boolean login(Connection con, String name) {
-        con.setLogUser(name);
-        return true;
+    public void login(String name) {
+        Human.getHumanByName(name, map.get("path"));
+        map.put("logUser", name);
     }
 
     /**
@@ -256,105 +168,19 @@ public class CommandDoc {
      * <br>
      * Использование команды: move location
      * @param location Название локации (уникальный ключ).
-     * @throws LocationNotFoundException Послано, если целевая локация не существует.
      */
-    public boolean move(Connection con, String location) {
-        Human me = Human.getHumanByName(con.getLogUser());
+    public void move(String location) {
         Location loc = Location.getLocationByName(location);
-        me.setLocation(loc);
-        Human.update();
 
-        return true;
-    }
+        List<Human> humanList = new ArrayList<>();
+        f.readCSVListFromFile(map.get("path")).forEach(elem -> {
+            Human human = new Human(elem);
+            if ( human.getName().equals(map.get("name")) )
+                human.setLocation(loc);
+            humanList.add(human);
+        });
 
-    /**
-     * Текущий персонаж смеется над заданным персонажем с заданной силой.
-     * Причина смеха не определена и остается на фантазию пользователя.<br>
-     * В результате грусть текущего пользователя уменьшается на значение силы,
-     * грусть получателя же увеличивается.<br>
-     * <br>
-     * Использование команды: laugh power receiver
-     * @param power Сила смеха в условных единицах, где 5 единиц - это рандомный мемный видос.
-     * @param receiver Имя получателя (унивальный ключ).
-     * @throws HumanNotFoundException Послано, если такого получателя не существует.
-     */
-    public boolean laugh(Connection con, int power, String receiver) {
-        Human me = Human.getHumanByName(con.getLogUser());
-        Human hReceiver = Human.getHumanByName(receiver);
-
-        me.setSadness( me.getSadness() - power );
-        hReceiver.setSadness( hReceiver.getSadness() + power );
-        Human.update();
-
-        if (power <= 5) {
-            me.sayPhrase("Ха-ха-ха...");
-            return true;
-        }
-
-        if (power <= 10) {
-            me.sayPhrase("Ахаха!!");
-            return true;
-        }
-
-        me.sayPhrase("АХАХАХАХАХА");
-        return true;
-    }
-
-    /**
-     * Попытка развеселить заданного персонажа на заданный уровень.<br>
-     * Если грусть персонажа-пользователя больше, чем у заданного, поднять ему настроение он не может.
-     * В другом случае грусть заданного персонажа уменьшается на значение уровня.<br>
-     * <br>
-     * Использование команды: cheer level receiver
-     * @param level Уровень поднятия настроения в условных единицах, где 5 единиц - это рандомный мемный видос.
-     * @param receiver Имя получателя (унивальный ключ).
-     * @throws HumanNotFoundException Послано, если такого получателя не существует.
-     */
-    public boolean cheer(Connection con, int level, String receiver) {
-        Human me = Human.getHumanByName(con.getLogUser());
-        Human hReceiver = Human.getHumanByName(receiver);
-
-        if (me.getSadness() > hReceiver.getSadness()) {
-            con.out.println("Вы слишком грустны, чтобы развеселить " + hReceiver.getName() + " (либо он слишком веселый).");
-            return true;
-        }
-
-        me.sayPhrase(hReceiver.getName() + ", не грусти");
-
-        hReceiver.setSadness( hReceiver.getSadness() - level );
-        me.setSadness( me.getSadness() - level );
-        Human.update();
-
-        hReceiver.sayPhrase("Ох как хорошо стало сразу!! Птички поют, радуга светит, грусть стала равна " + hReceiver.getSadness() + "!!!!");
-
-        return true;
-    }
-
-    /**
-     * Текущий персонаж грустит на заданную величину силы.
-     * Причина плача не определена и остается на фантазию пользователя.<br>
-     * В результате грусть персонажа увеличивается на эту величину.<br>
-     * <br>
-     * Использование команды: cry power
-     * @param power Сила плача в условных единицах, где 5 единиц - это рандомный видос о бедном песике.
-     */
-    public boolean cry(Connection con, int power) {
-        Human me = Human.getHumanByName(con.getLogUser());
-        me.setSadness(me.getSadness() + power);
-        Human.update();
-
-        if (me.getSadness() <= 15) {
-            me.sayPhrase("*вздыхает*");
-            return true;
-        }
-
-        if (me.getSadness() <= 30) {
-            me.sayPhrase("*плачет*");
-            return true;
-        }
-
-        me.sayPhrase("*орет от безысходности*");
-        return true;
+        f.writeCSVListIntoFile(humanList, false);
     }
 
     /**
@@ -363,23 +189,20 @@ public class CommandDoc {
      * <br>
      * Использование команды: remove name
      * @param name Название локации (уникальный ключ).
-     * @throws LocationNotFoundException Послано, если такой локации не существует.
      */
-    public boolean remove(Connection con, String name) {
-        TreeMap<String, Location> map = Location.getMap();
-
+    public void remove(String name) {
         if (name.equals("World")) {
-            con.out.println("World невозможно уничтожить (по крайней мере, тебе)");
-            return true;
+            s.writeToChannel(socket, "World невозможно уничтожить (по крайней мере, тебе)");
+            return;
         }
+        List<Human> humanList = new ArrayList<>();
 
-        map.remove( name );
-        Location.setMap(map);
+        f.readCSVListFromFile(map.get("path"))
+                .stream()
+                .filter(elem -> !elem.getString("name").equals(name))
+                .forEach(elem -> humanList.add( new Human(elem) ));
 
-        Location.update();
-        Human.update();
-
-        return true;
+        f.writeCSVListIntoFile(humanList, false);
     }
 
     /**
@@ -393,24 +216,19 @@ public class CommandDoc {
      *               Остальные поля игнорируются.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public boolean remove_greater(JSONObject object) {
-        double height = object.getDouble("y");
-        TreeMap<String, Location> map = Location.getMap();
+    public void remove_greater(ObjectTransformer object) {
+        List<Human> list = new ArrayList<>();
+        Human compare = new Human(object);
 
-        Iterator< Map.Entry<String, Location> > iterator = map.entrySet().iterator();
-        while ( iterator.hasNext() ) {
-            Map.Entry<String, Location> entry = iterator.next();
-            Location temp = entry.getValue();
-            if (temp.getCoords().getY() > height && !temp.getName().equals("World")) {
-                iterator.remove();
-            }
-        }
-        Location.setMap(map);
+        f.readCSVListFromFile(map.get("path"))
+                .forEach(elem -> list.add( new Human(elem) ));
 
-        Location.update();
-        Human.update();
+        List<Human> humanList = list
+                .stream()
+                .filter(elem -> elem.compareTo(compare) > 0)
+                .collect(Collectors.toList());
 
-        return true;
+        f.writeCSVListIntoFile(humanList, false);
     }
 
     /**
@@ -424,24 +242,19 @@ public class CommandDoc {
      *               Остальные поля игнорируются.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public boolean remove_lower(JSONObject object) {
-        double height = object.getDouble("y");
-        TreeMap<String, Location> map = Location.getMap();
+    public void remove_lower(ObjectTransformer object) {
+        List<Human> list = new ArrayList<>();
+        Human compare = new Human(object);
 
-        Iterator< Map.Entry<String, Location> > iterator = map.entrySet().iterator();
-        while ( iterator.hasNext() ) {
-            Map.Entry<String, Location> entry = iterator.next();
-            Location temp = entry.getValue();
-            if (temp.getCoords().getY() < height && !temp.getName().equals("World")) {
-                iterator.remove();
-            }
-        }
-        Location.setMap(map);
+        f.readCSVListFromFile(map.get("path"))
+                .forEach(elem -> list.add( new Human(elem) ));
 
-        Location.update();
-        Human.update();
+        List<Human> humanList = list
+                .stream()
+                .filter(elem -> elem.compareTo(compare) < 0)
+                .collect(Collectors.toList());
 
-        return true;
+        f.writeCSVListIntoFile(humanList, false);
     }
 
     /**
@@ -450,14 +263,11 @@ public class CommandDoc {
      * <br>
      * Использование команды: clear
      */
-    public boolean clear() {
-        Location.setMap( new TreeMap<>() );
-        new Location();
+    public void clear() {
+        List<Human> humanList = new ArrayList<>();
+        humanList.add(new Human());
 
-        Location.update();
-        Human.update();
-
-        return true;
+        f.writeCSVListIntoFile(humanList, false);
     }
 
     /**
@@ -466,23 +276,23 @@ public class CommandDoc {
      * <br>
      * Использование команды: info
      */
-    public boolean info(Connection con) {
-        try {
-            File file = new File(Location.PATH);
-            BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-            SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-            String creationDate = sdf.format(attributes.creationTime().toMillis());
-            con.out.println("Дата создания: " + creationDate);
-        }
-        catch (IOException exc) {
-            con.out.println("Невозможно определить дату создания.");
-        }
+    public void info() {
+//        todo оформить получше дату создания коллекции
 
-        FileIOHelper mFileIOHelper = new FileIOHelper();
-        int mapSize = mFileIOHelper.readCSVListFromFile(Location.PATH).size();
+//        try {
+//            File file = new File(Location.PATH);
+//            BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+//            SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+//            String creationDate = sdf.format(attributes.creationTime().toMillis());
+//            con.out.println("Дата создания: " + creationDate);
+//        }
+//        catch (IOException exc) {
+//            con.out.println("Невозможно определить дату создания.");
+//        }
 
-        con.out.println("Тип коллекции: соответствие в виде дерева существующих локаций и их имен.\n" +
+        int mapSize = f.readCSVListFromFile(map.get("path")).size();
+
+        s.writeToChannel(socket, "Тип коллекции: соответствие в виде дерева существующих локаций и их имен.\n" +
                 "Размер коллекции: " + mapSize );
-        return true;
     }
 }

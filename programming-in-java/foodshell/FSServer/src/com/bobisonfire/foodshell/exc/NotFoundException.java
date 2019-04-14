@@ -10,4 +10,4 @@ public class NotFoundException extends RuntimeException {
     public String getName() {
         return name;
     }
-}
+} // todo сделать одну NotFoundException; в качестве параметра - выводимое сообщение

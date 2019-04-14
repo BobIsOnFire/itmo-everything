@@ -1,10 +1,9 @@
 package com.bobisonfire.foodshell.entity;
 
 import com.bobisonfire.foodshell.FileIOHelper;
-import com.bobisonfire.foodshell.exc.LocationNotFoundException;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
-import java.util.TreeMap;
+import java.util.Iterator;
 
 /**
  * Класс, реализующий локации - места расположения персонажей в <i>FoodShell</i>.<br>
@@ -14,39 +13,21 @@ import java.util.TreeMap;
  * Локация World - основная локация, в нее помещаются все персонажи при отстутствии других локаций
  * и ее невозможно удалить.
  */
-public class Location implements CSVSerializable {
+public class Location implements Comparable<Location>, CSVSerializable {
     public static final String CSV_HEAD = "name,x,y,z";
     public static String PATH = "location.csv";
 
-    private static TreeMap<String, Location> LocationMap = new TreeMap<>();
-
-    /**
-     * Возвращает локацию по ее уникальному идентификатору (ищет ее в коллекции)
-     * или оповещает, что такой локации не существует.
-     * @param name Название локации (уникальный ключ).
-     */
     public static Location getLocationByName(String name) {
-        if (!LocationMap.containsKey(name.intern()) && !name.intern().equals(""))
-            throw new LocationNotFoundException(name);
-        return LocationMap.get(name);
-    }
+        Iterator<ObjectTransformer> iter = new FileIOHelper()
+                        .readCSVListFromFile(PATH)
+                        .stream()
+                        .filter(e -> e.getString("name").equals(name))
+                        .iterator();
 
-    public static void setMap(TreeMap<String, Location> map) {
-        LocationMap = map;
-    }
+        if (iter.hasNext())
+            return new Location(iter.next());
 
-    public static TreeMap<String, Location> getMap() {
-        return LocationMap;
-    }
-
-    /**
-     * Перезаписывает CSV-файл с локациями текущей коллекцией.<br>
-     * Должен вызываться при каждом изменении локаций для синхронизации файла.<br>
-     * При удалении существующей локации также следует вызвать Human.update(),
-     * чтобы персонажи из удаленных локаций переместились в основную локацию.
-     */
-    public static void update() {
-        mFileIOHelper.writeCSVMapIntoFile(LocationMap, false);
+        return null;
     }
 
     public String toCSV() {
@@ -66,28 +47,24 @@ public class Location implements CSVSerializable {
 
     private String name;
     private Coordinate coords;
-    private static FileIOHelper mFileIOHelper = new FileIOHelper();
 
-    public Location(ObjectTransformer objectTransformer, boolean serialize) {
+    public Location(ObjectTransformer objectTransformer) {
         this.name = objectTransformer.getString("name");
         this.coords = new Coordinate(
                 objectTransformer.getDouble("x"),
                 objectTransformer.getDouble("y"),
                 objectTransformer.getDouble("z")
         );
-
-        LocationMap.put(name, this);
-        if (serialize)
-            update();
-
     }
 
     public Location() {
         name = "World";
         coords = new Coordinate(0, 0, 0);
+    }
 
-        LocationMap.put(name, this);
-        update();
+    public Location(String name, Coordinate coords) {
+        this.name = name;
+        this.coords = coords;
     }
 
 
@@ -100,4 +77,8 @@ public class Location implements CSVSerializable {
         return coords;
     }
 
+    @Override
+    public int compareTo(Location other) {
+        return coords.compareTo(other.coords);
+    }
 }

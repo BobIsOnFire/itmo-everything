@@ -1,8 +1,6 @@
 package com.bobisonfire.foodshell.entity;
 
 import com.bobisonfire.foodshell.FileIOHelper;
-import com.bobisonfire.foodshell.exc.HumanNotFoundException;
-import com.bobisonfire.foodshell.exc.LocationNotFoundException;
 import com.bobisonfire.foodshell.transformer.CSVObject;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
@@ -13,39 +11,27 @@ import java.util.TreeMap;
 
 /**
  * Класс, реализующий персонажей - основных действующих единиц <i>FoodShell</i>.<br>
- * Также этот класс хранит TreeMap персонажей, доступ к которому осуществляется через
- * статические методы getHumanByName и update.<br>
  * Персонаж God - основной персонаж, с ним запускается <i>FoodShell</i> и он создает
  * других персонажей.
  */
-public class Human implements CSVSerializable {
-    public static final String CSV_HEAD = "name,sadness,birthday,maxSaturation,gender,location";
+public class Human implements Comparable<Human>, CSVSerializable {
+    public static final String CSV_HEAD = "name,birthday,gender,location";
     public static String PATH = "human.csv";
 
-    private static TreeMap<String, Human> HumanMap = new TreeMap<>();
-
-    /**
-     * Возвращает персонажа по его уникальному идентификатору (ищет его в коллекции)
-     * или оповещает, что такого персонажа не существует.
-     * @param name Имя персонажа (уникальный ключ).
-     */
-    public static Human getHumanByName(String name) {
-        if (!HumanMap.containsKey(name.intern()) && !name.intern().equals(""))
-            throw new HumanNotFoundException(name);
-        return HumanMap.get(name);
-    }
-
-    /**
-     * Перезаписывает CSV-файл с персонажами текущей коллекцией.<br>
-     * Должен вызываться при каждом изменении персонажей для синхронизации файла.
-     */
-    public static void update() {
-        mFileIOHelper.writeCSVMapIntoFile(HumanMap, false);
+    public static Human getHumanByName(String name, String path) {
+        return new Human(
+                new FileIOHelper()
+                .readCSVListFromFile(path)
+                .stream()
+                .filter(e -> e.getString("name").equals(name))
+                .iterator()
+                .next()
+        );
     }
 
     public String toCSV() {
-        return String.format("%s,%d,%s,%d,%d,%s",
-                name, sadness, getBirthday(), maxSaturation, gender.ordinal(), getLocation().getName());
+        return String.format("%s,%s,%d,%s",
+                name, getBirthday(), gender.ordinal(), getLocation().getName());
     }
 
     public String getPath() {
@@ -58,22 +44,12 @@ public class Human implements CSVSerializable {
 
 
 
-    private int sadness;
     private String name;
     private Date birthday;
-    private int maxSaturation;
     private Gender gender;
     private Location location;
 
     private static FileIOHelper mFileIOHelper = new FileIOHelper();
-
-    public int getSadness() {
-        return sadness;
-    }
-
-    public void setSadness(int sadness) {
-        this.sadness = sadness;
-    }
 
     public String getName() {
         return name;
@@ -94,32 +70,11 @@ public class Human implements CSVSerializable {
         return (int) ( ms / mod );
     }
 
-    public int getMaxSaturation() {
-        return maxSaturation;
-    }
-
-    public int getCurrentSaturation() {
-        ArrayList<Food> list = readMeals();
-
-        int saturation = 0;
-        for (Food food: list) {
-            if (food.isAffecting())
-                saturation += food.getSaturation();
-        }
-        return saturation;
-    }
-
     public Gender getGender() {
         return gender;
     }
 
     public Location getLocation() {
-        try {
-            Location.getLocationByName(location.getName());
-        }
-        catch(LocationNotFoundException exc) {
-            location = Location.getLocationByName("World");
-        }
         return location;
     }
 
@@ -129,59 +84,19 @@ public class Human implements CSVSerializable {
 
 
 
-    public Human(ObjectTransformer objectTransformer, boolean serialize) {
+    public Human(ObjectTransformer objectTransformer) {
         name = objectTransformer.getString("name");
         birthday = objectTransformer.getDate("birthday", "dd.MM.yyyy");
-        maxSaturation = objectTransformer.getInt("maxSaturation");
-        sadness = objectTransformer.getInt("sadness");
-
         gender = Gender.getGenderByNumber( objectTransformer.getInt("gender") );
         location = Location.getLocationByName( objectTransformer.getString("location") );
 
-        HumanMap.put(name, this);
-
-        if (serialize)
-            mFileIOHelper.writeCSVMapIntoFile(HumanMap, true);
     }
 
     public Human() {
         name = "God";
         birthday = new Date(1);
-        maxSaturation = 1000;
-        sadness = 0;
         gender = Gender.getGenderByNumber(2);
         location = Location.getLocationByName("World");
-
-        HumanMap.put(name, this);
-        mFileIOHelper.writeCSVMapIntoFile(HumanMap, false);
-    }
-
-    public Human(String name, Date birthday, int maxSaturation, Gender gender) {
-        this.name = name;
-        this.birthday = birthday;
-        this.maxSaturation = maxSaturation;
-        this.gender = gender;
-        this.location = Location.getLocationByName("World");
-        this.sadness = 0;
-
-        HumanMap.put(name, this);
-        mFileIOHelper.writeCSVMapIntoFile(HumanMap, false);
-    }
-
-
-    /**
-     * Считывает список всех приемов пищи текущего персонажа из лога приемов пищи.
-     */
-    public ArrayList<Food> readMeals() {
-        ArrayList<Food> list = new ArrayList<>();
-        ArrayList<CSVObject> map = mFileIOHelper.readCSVListFromFile(Food.PATH);
-
-        for (CSVObject csv: map) {
-            if (csv.getString("consumer").equals(name))
-                list.add( new Food( csv ) );
-        }
-
-        return list;
     }
 
     /**
@@ -190,5 +105,22 @@ public class Human implements CSVSerializable {
      */
     public void sayPhrase(String phrase) {
         System.out.println("\t" + name + ": " + phrase);
+    }
+
+    public int compareTo(Human other) {
+        return birthday.compareTo(other.birthday);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Human)
+            return name.equals(((Human) obj).name);
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s, %d лет, находится в %s",
+                gender.getName(), name, getAge(), location.getName());
     }
 }

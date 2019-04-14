@@ -2,12 +2,10 @@ package com.bobisonfire.foodshell;
 
 import com.bobisonfire.foodshell.entity.CSVSerializable;
 import com.bobisonfire.foodshell.transformer.CSVObject;
+import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Класс, организовывающий чтение и запись коллекций в файлы в CSV-формате.
@@ -16,30 +14,29 @@ public class FileIOHelper {
     /**
      * Записывает коллекцию в виде TreeMap (потому что по заданию в этом формате хранятся коллекции)
      * в файл формата CSV.
-     * @param map Коллекция с однозначным соответствием строкового ключа и объекта коллекции.
+     * @param list Коллекция с однозначным соответствием строкового ключа и объекта коллекции.
      * @param append Флаг, соответствующий добавлению информацию в конец файла (true) или его полной перезаписи (false).
      * @param <T> Тип объектов, содержащихся в коллекции.
      */
-    public <T extends CSVSerializable> void writeCSVMapIntoFile(TreeMap<String, T> map, boolean append) {
-        if (map.size() == 0)
+    public <T extends CSVSerializable> void writeCSVListIntoFile(List<T> list, boolean append) {
+        if (list.size() == 0)
             return;
 
-        T instance = map.firstEntry().getValue();
+        T instance = list.get(0);
         File file = new File(instance.getPath());
 
         try {
             boolean existed = !file.createNewFile();
             FileWriter fileWriter = new FileWriter(file, append);
-            BufferedWriter writer = new BufferedWriter(fileWriter);
+            PrintWriter writer = new PrintWriter(fileWriter, true);
 
             if (!append || !existed)
                 writer.write(instance.getCSVHead() + "\n");
 
-            for (Map.Entry<String, T> elem: map.entrySet()) {
-                writer.write(elem.getValue().toCSV() + "\n");
+            for (T elem: list) {
+                writer.write(elem.toCSV() + "\n");
             }
 
-            writer.flush();
             writer.close();
         }
         catch (IOException exc) {
@@ -52,7 +49,7 @@ public class FileIOHelper {
      * @param path Путь до файла формата CSV.
      * @return Список CSV-объектов, где соответствие полей и значений формируется по шапке файла.
      */
-    public ArrayList<CSVObject> readCSVListFromFile(String path) {
+    public List<ObjectTransformer> readCSVListFromFile(String path) {
         File file = new File(path);
 
         try {
@@ -62,11 +59,11 @@ public class FileIOHelper {
             if (!scanner.hasNextLine())
                 throw new IOException();
 
-            ArrayList<CSVObject> list = new ArrayList<>();
+            List<ObjectTransformer> list = new ArrayList<>();
             String keys = scanner.nextLine();
 
             while (scanner.hasNextLine()) {
-                CSVObject csv = new CSVObject(keys, scanner.nextLine());
+                ObjectTransformer csv = new CSVObject(keys, scanner.nextLine());
                 list.add( csv );
             }
 

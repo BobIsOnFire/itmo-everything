@@ -2,7 +2,7 @@ package com.bobisnotonfire.foodshell;
 
 import java.util.Scanner;
 
-public class Main {
+public class ClientMain {
 
     public static void main(String[] args) {
         String path = null;
@@ -22,9 +22,9 @@ public class Main {
         System.out.print("Введите ваш логин в сети:\n> ");
         String name = scanner.nextLine();
 
-        ClientHelper client = new ClientHelper(ip, port, name);
+        ClientHelper client = new ClientHelper(ip, port, name, path);
 
-        Thread receiver = client.receiveOutput(path);
+        Thread receiver = client.receiveOutput();
 
         String str = "";
         while (!str.equals("exit") && scanner.hasNextLine()) {

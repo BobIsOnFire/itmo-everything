@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Класс, реализующий координаты локации или персонажа.
  */
-public class Coordinate implements Serializable {
+public class Coordinate implements Comparable<Coordinate>, Serializable {
     private double x;
     private double y;
     private double z;
@@ -47,5 +47,10 @@ public class Coordinate implements Serializable {
     @Override
     public String toString() {
         return String.format("(%.3f, %.3f, %.3f)", x, y, z);
+    }
+
+    @Override
+    public int compareTo(Coordinate other) {
+        return (int) (y - other.y);
     }
 }
