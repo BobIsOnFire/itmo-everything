@@ -12,7 +12,7 @@ import java.util.Date;
 
 public class ServerMain {
     private static final String PATH_PREFIX = "";
-//    private static final String PATH_PREFIX = "/home/s264443/prog/lab5/";
+//    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/";
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
     public static final String VERSION = "5.1.3";
     public static ServerHelper server;
@@ -27,6 +27,7 @@ public class ServerMain {
         Command.createBasicCommands();
 
         server = new ServerHelper();
+        server.runServer();
     }
 
     /**
@@ -52,6 +53,6 @@ public class ServerMain {
     }
 
     private static void initializeMessage() {
-        System.out.println("FoodShellServer v" + VERSION + ". Some rights reserved.\n");
+        System.out.println("FoodShellServer v" + VERSION + ". Some rights reserved.");
     }
 }

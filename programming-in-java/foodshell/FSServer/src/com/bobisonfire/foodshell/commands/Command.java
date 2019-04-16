@@ -85,6 +85,12 @@ public class Command {
         );
 
         new Command(
+                "locations",
+                "locations - просмотр всех существующих локаций.",
+                (launcher, tokens) -> launcher.locations()
+        );
+
+        new Command(
                 "gender",
                 "gender - выводит список всех (нет) существующих гендеров.",
                 (launcher, tokens) -> launcher.gender()

@@ -11,7 +11,6 @@ public class ClientHelper {
     private String path;
     private String name;
 
-    // todo закрыть потоки при ошибках или окончании программы
     public ClientHelper(String ip, int port, String name, String path) {
         try {
             socket = new Socket(ip, port);
@@ -41,6 +40,10 @@ public class ClientHelper {
     public void stopReceiver(Thread receiver) {
         ( (Receiver) receiver ).setStopped();
         close();
+    }
+
+    public boolean receiverStopped(Thread receiver) {
+        return ( (Receiver) receiver ).stopped;
     }
 
     private class Receiver extends Thread {
@@ -75,13 +78,13 @@ public class ClientHelper {
 
                         char[] chars = new char[buffer.limit()];
                         buffer.get(chars);
-                        String str = new String(chars).trim();
-                        System.out.println(str);
+                        String str = new String(chars);
+                        System.out.print(str);
                         buffer.clear();
                     }
                 }
             } catch (IOException e) {
-                System.err.println("Не могу получить сообщение."); // todo логировать ошибочки
+                setStopped();
             }
         }
     }

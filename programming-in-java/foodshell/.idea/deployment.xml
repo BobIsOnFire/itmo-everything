@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="Helios">
+  <component name="PublishConfigData" autoUpload="Always" serverName="Helios">
     <serverData>
       <paths name="Helios">
         <serverdata>
           <mappings>
-            <mapping deploy="/prog/lab5/" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/prog/lab6/" local="$PROJECT_DIR$" web="/" />
             <mapping deploy="/public-html/" local="$PROJECT_DIR$/javadoc" web="/~s264443/javadoc/" />
+            <mapping deploy="/prog/lab6/FSClient" local="$PROJECT_DIR$/FSClient" web="/" />
+            <mapping deploy="/prog/lab6/FSServer" local="$PROJECT_DIR$/FSServer" web="/" />
           </mappings>
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>

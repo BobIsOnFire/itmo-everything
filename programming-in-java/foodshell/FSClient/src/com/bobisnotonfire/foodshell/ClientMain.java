@@ -5,12 +5,16 @@ import java.util.Scanner;
 public class ClientMain {
 
     public static void main(String[] args) {
-        String path = null;
+        String path = "";
 
         if (args.length != 0) {
             path = args[0];
         }
 
+        connect(path);
+    }
+
+    private static void connect(String path) {
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Введите IP и порт в формате XXX.XXX.XXX.XXX:PPPPP\n> ");
@@ -26,12 +30,21 @@ public class ClientMain {
 
         Thread receiver = client.receiveOutput();
 
-        String str = "";
-        while (!str.equals("exit") && scanner.hasNextLine()) {
-            str = scanner.nextLine();
+        String str;
+        while (!client.receiverStopped(receiver)) {
+            if (!scanner.hasNextLine() || ( str = scanner.nextLine() ).trim().equals("exit")) {
+                client.uploadCommand("exit");
+                break;
+            }
             client.uploadCommand(str);
         }
 
-        client.stopReceiver(receiver);
+        if (client.receiverStopped(receiver)) {
+            System.out.println("Reconnecting? y/n");
+            if (scanner.next().equals("y"))
+                connect(path);
+        }
+        else
+            client.stopReceiver(receiver);
     }
 }

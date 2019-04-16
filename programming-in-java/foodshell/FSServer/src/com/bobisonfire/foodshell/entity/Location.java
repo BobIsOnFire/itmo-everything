@@ -4,6 +4,7 @@ import com.bobisonfire.foodshell.FileIOHelper;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
 import java.util.Iterator;
+import java.util.Locale;
 
 /**
  * Класс, реализующий локации - места расположения персонажей в <i>FoodShell</i>.<br>
@@ -27,11 +28,11 @@ public class Location implements Comparable<Location>, CSVSerializable {
         if (iter.hasNext())
             return new Location(iter.next());
 
-        return null;
+        return new Location();
     }
 
     public String toCSV() {
-        return String.format("%s,%.3f,%.3f,%.3f",
+        return String.format(Locale.US, "%s,%.3f,%.3f,%.3f",
                 name, coords.getX(), coords.getY(), coords.getZ());
     }
 
@@ -80,5 +81,10 @@ public class Location implements Comparable<Location>, CSVSerializable {
     @Override
     public int compareTo(Location other) {
         return coords.compareTo(other.coords);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s:\t%s", name, coords.toString());
     }
 }

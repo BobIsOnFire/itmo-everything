@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="FSServer:jar">
-    <output-path>$PROJECT_DIR$/FSServer</output-path>
+    <output-path>$PROJECT_DIR$/</output-path>
     <root id="archive" name="FSServer.jar">
       <element id="module-output" name="FSServer" />
     </root>

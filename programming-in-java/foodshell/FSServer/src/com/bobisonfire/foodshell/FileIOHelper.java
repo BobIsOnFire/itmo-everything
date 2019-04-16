@@ -15,23 +15,21 @@ public class FileIOHelper {
      * Записывает коллекцию в виде TreeMap (потому что по заданию в этом формате хранятся коллекции)
      * в файл формата CSV.
      * @param list Коллекция с однозначным соответствием строкового ключа и объекта коллекции.
-     * @param append Флаг, соответствующий добавлению информацию в конец файла (true) или его полной перезаписи (false).
      * @param <T> Тип объектов, содержащихся в коллекции.
      */
-    public <T extends CSVSerializable> void writeCSVListIntoFile(List<T> list, boolean append) {
+    public <T extends CSVSerializable> void writeCSVListIntoFile(List<T> list, String path) {
         if (list.size() == 0)
             return;
 
         T instance = list.get(0);
-        File file = new File(instance.getPath());
+        File file = new File(path);
 
         try {
-            boolean existed = !file.createNewFile();
-            FileWriter fileWriter = new FileWriter(file, append);
+            file.createNewFile();
+            FileWriter fileWriter = new FileWriter(file, false);
             PrintWriter writer = new PrintWriter(fileWriter, true);
 
-            if (!append || !existed)
-                writer.write(instance.getCSVHead() + "\n");
+            writer.write(instance.getCSVHead() + "\n");
 
             for (T elem: list) {
                 writer.write(elem.toCSV() + "\n");

@@ -3,11 +3,12 @@ package com.bobisonfire.foodshell;
 import com.bobisonfire.foodshell.commands.Command;
 import com.bobisonfire.foodshell.commands.CommandDoc;
 import com.bobisonfire.foodshell.entity.Human;
+import com.bobisonfire.foodshell.entity.Location;
 import com.bobisonfire.foodshell.exc.NotFoundException;
 import com.bobisonfire.foodshell.exc.TransformerException;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -20,18 +21,9 @@ import java.util.*;
 public class ServerHelper {
     private ServerSocketChannel serverChannel;
     private Selector selector;
-    private ByteBuffer buffer = ByteBuffer.allocate(256);
+    private final FileIOHelper f = new FileIOHelper();
 
     public ServerHelper() {
-
-        String ip;
-        try(final DatagramSocket socket = new DatagramSocket()){
-            socket.connect(InetAddress.getByName("8.8.8.8"), 0);
-            ip = socket.getLocalAddress().getHostAddress();
-        } catch (Exception e) {
-            System.out.println("Not opening the server.");
-            return;
-        }
 
         try {
             serverChannel = ServerSocketChannel.open();
@@ -40,9 +32,17 @@ public class ServerHelper {
 
             selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
-            System.out.println("Сервер доступен по адресу " + ip + ":" +
+            System.out.println("Сервер доступен по адресу " + InetAddress.getLocalHost() + ":" +
                     serverChannel.socket().getLocalPort() + "\n");
 
+        } catch(Exception e) {
+            System.err.println("Что-то не так с сервером. Закрываюсь...");
+            e.printStackTrace();
+        }
+    }
+
+    public void runServer() {
+        try {
             Iterator<SelectionKey> iter;
             SelectionKey key;
             while (serverChannel.isOpen()) {
@@ -56,16 +56,15 @@ public class ServerHelper {
                     if (key.isReadable()) handleRead(key);
                 }
             }
-        } catch(Exception e) {
-            System.err.println("Что-то не так с сервером. Закрываюсь...");
+        } catch(IOException e) {
+            e.printStackTrace();
         }
     }
 
     private void handleAccept(SelectionKey key) throws IOException {
         SocketChannel socket = ( (ServerSocketChannel) key.channel() ).accept();
-        socket.configureBlocking(false);
 
-        String[] meta = readFromChannel(socket).split("\\s+");
+        String[] meta = readFromChannel(socket).trim().split("\\s+");
         String path = meta[0];
         String name = meta[1];
         String isPathOnServer = "false";
@@ -75,12 +74,19 @@ public class ServerHelper {
             isPathOnServer = "true";
         }
 
+        if (!new File(path).exists())
+            f.writeCSVListIntoFile(Collections.singletonList(new Human()), path);
+
+        if (!new File(Location.PATH).exists())
+            f.writeCSVListIntoFile(Collections.singletonList(new Location()), Location.PATH);
+
         Map<String, String> map = new HashMap<>();
         map.put("name", name);
         map.put("path", path);
         map.put("isPathOnServer", isPathOnServer);
         map.put("logUser", "God");
 
+        socket.configureBlocking(false);
         socket.register(selector, SelectionKey.OP_READ, map);
 
         System.out.println(name + " вошел. Использует коллекцию по адресу " + path);
@@ -112,6 +118,7 @@ public class ServerHelper {
             writeToChannel(socket, "Неверный формат заданного объекта.");
         } catch (NumberFormatException exc) { // caught if non-numeric words are given as numeric arguments
            writeToChannel(socket, "Часть аргументов не являются числами нужного формата.");
+           exc.printStackTrace();
         } catch (NotFoundException exc) {
             writeToChannel(socket, exc.getMessage());
         } catch (IndexOutOfBoundsException exc) { // caught if number of args in console command is insufficient
@@ -152,22 +159,22 @@ public class ServerHelper {
     }
 
     private String initializeMessageClient() {
-        return "FoodShell v" + ServerMain.VERSION + ". Some rights reserved." +
+        return "FoodShell v" + ServerMain.VERSION + ". Some rights reserved.\n" +
                "Введите help для списка всех команд.\n";
     }
 
     private String readFromChannel(SocketChannel socket) {
         StringBuilder sb = new StringBuilder();
 
-        buffer.clear();
+        ByteBuffer readBuffer = ByteBuffer.allocate(256);
         int read;
         try {
-            read = socket.read(buffer);
-            buffer.flip();
-            byte[] bytes = new byte[buffer.limit()];
-            buffer.get(bytes);
-            sb.append(new String(bytes).trim());
-            buffer.clear();
+            read = socket.read(readBuffer);
+            readBuffer.flip();
+            byte[] bytes = new byte[readBuffer.limit()];
+            readBuffer.get(bytes);
+            sb.append(new String(bytes));
+            readBuffer.clear();
         } catch (IOException exc) {
             read = -1;
         }
@@ -179,16 +186,16 @@ public class ServerHelper {
     }
 
     public void writeToChannel(SocketChannel socket, String message) {
-        buffer.clear();
-        buffer.put(message.getBytes());
+        String msg = message + "\n";
+        ByteBuffer writeBuffer = ByteBuffer.wrap(msg.getBytes());
 
         try {
-            while (buffer.hasRemaining())
-                socket.write(buffer);
+            while (writeBuffer.hasRemaining())
+                socket.write(writeBuffer);
         } catch (IOException e) {
             System.out.println("Не могу отправить по каналу.");
         }
 
-        buffer.clear();
+        writeBuffer.clear();
     }
 }

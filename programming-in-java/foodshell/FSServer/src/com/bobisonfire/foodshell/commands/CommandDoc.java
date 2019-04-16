@@ -27,7 +27,7 @@ public class CommandDoc {
 
     public CommandDoc(SelectionKey key) {
         socket = (SocketChannel) key.channel();
-        map = (Map<String, String>) key.attachment(); // todo: проверить, что все ок
+        map = (Map<String, String>) key.attachment();
     }
 
     /**
@@ -35,7 +35,9 @@ public class CommandDoc {
      * <br>
      * Использование команды: exit
      */
-    public void exit() {}
+    public void exit() {
+        s.writeToChannel(socket, "FoodShell закрывается.");
+    }
 
     /**
      * Просмотр списка всех существующих команд.<br>
@@ -97,7 +99,7 @@ public class CommandDoc {
 
         humanListC.add(newHuman);
 
-        f.writeCSVListIntoFile(humanListC, false);
+        f.writeCSVListIntoFile(humanListC, map.get("path"));
     }
 
     public void location(String name, Coordinate coords) {
@@ -115,7 +117,12 @@ public class CommandDoc {
 
         locationListC.add(newLoc);
 
-        f.writeCSVListIntoFile(locationListC, false);
+        f.writeCSVListIntoFile(locationListC, Location.PATH);
+    }
+
+    public void locations() {
+        f.readCSVListFromFile(Location.PATH)
+                .forEach(elem -> s.writeToChannel( socket, new Location(elem).toString() ));
     }
 
     /**
@@ -124,12 +131,8 @@ public class CommandDoc {
      * Использование команды: show
      */
     public void show() {
-        List<ObjectTransformer> list = f.readCSVListFromFile( Location.PATH );
-
-        for(ObjectTransformer obj: list) {
-            Human human = new Human(obj);
-            s.writeToChannel(socket, human.toString());
-        }
+        f.readCSVListFromFile( map.get("path") )
+                .forEach(elem -> s.writeToChannel( socket, new Human(elem).toString()));
     }
 
     /**
@@ -175,12 +178,12 @@ public class CommandDoc {
         List<Human> humanList = new ArrayList<>();
         f.readCSVListFromFile(map.get("path")).forEach(elem -> {
             Human human = new Human(elem);
-            if ( human.getName().equals(map.get("name")) )
+            if ( human.getName().equals(map.get("logUser")) )
                 human.setLocation(loc);
             humanList.add(human);
         });
 
-        f.writeCSVListIntoFile(humanList, false);
+        f.writeCSVListIntoFile(humanList, map.get("path"));
     }
 
     /**
@@ -191,8 +194,8 @@ public class CommandDoc {
      * @param name Название локации (уникальный ключ).
      */
     public void remove(String name) {
-        if (name.equals("World")) {
-            s.writeToChannel(socket, "World невозможно уничтожить (по крайней мере, тебе)");
+        if (name.equals("God")) {
+            s.writeToChannel(socket, "God невозможно уничтожить (по крайней мере, тебе)");
             return;
         }
         List<Human> humanList = new ArrayList<>();
@@ -202,7 +205,7 @@ public class CommandDoc {
                 .filter(elem -> !elem.getString("name").equals(name))
                 .forEach(elem -> humanList.add( new Human(elem) ));
 
-        f.writeCSVListIntoFile(humanList, false);
+        f.writeCSVListIntoFile(humanList, map.get("path"));
     }
 
     /**
@@ -225,10 +228,10 @@ public class CommandDoc {
 
         List<Human> humanList = list
                 .stream()
-                .filter(elem -> elem.compareTo(compare) > 0)
+                .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) > 0)
                 .collect(Collectors.toList());
 
-        f.writeCSVListIntoFile(humanList, false);
+        f.writeCSVListIntoFile(humanList, map.get("path"));
     }
 
     /**
@@ -251,10 +254,10 @@ public class CommandDoc {
 
         List<Human> humanList = list
                 .stream()
-                .filter(elem -> elem.compareTo(compare) < 0)
+                .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) < 0)
                 .collect(Collectors.toList());
 
-        f.writeCSVListIntoFile(humanList, false);
+        f.writeCSVListIntoFile(humanList, map.get("path"));
     }
 
     /**
@@ -267,7 +270,7 @@ public class CommandDoc {
         List<Human> humanList = new ArrayList<>();
         humanList.add(new Human());
 
-        f.writeCSVListIntoFile(humanList, false);
+        f.writeCSVListIntoFile(humanList, map.get("path"));
     }
 
     /**
