@@ -20,7 +20,7 @@ public class Location implements Comparable<Location>, CSVSerializable {
 
     public static Location getLocationByName(String name) {
         Iterator<ObjectTransformer> iter = new FileIOHelper()
-                        .readCSVListFromFile(PATH)
+                        .readCSVSetFromFile(PATH)
                         .stream()
                         .filter(e -> e.getString("name").equals(name))
                         .iterator();

@@ -13,12 +13,12 @@ import java.util.Iterator;
  * других персонажей.
  */
 public class Human implements Comparable<Human>, CSVSerializable {
-    public static final String CSV_HEAD = "name,birthday,gender,location";
+    public static final String CSV_HEAD = "name,birthday,gender,location,creationDate";
     public static String PATH = "human.csv";
 
     public static Human getHumanByName(String name, String path) {
         Iterator<ObjectTransformer> iter = new FileIOHelper()
-                .readCSVListFromFile(path)
+                .readCSVSetFromFile(path)
                 .stream()
                 .filter(e -> e.getString("name").equals(name))
                 .iterator();
@@ -30,8 +30,8 @@ public class Human implements Comparable<Human>, CSVSerializable {
     }
 
     public String toCSV() {
-        return String.format("%s,%s,%d,%s",
-                name, getBirthday(), gender.ordinal(), getLocation().getName());
+        return String.format("%s,%s,%d,%s,%s",
+                name, getBirthday(), gender.ordinal(), getLocation().getName(), getCreationDate());
     }
 
     public String getPath() {
@@ -48,8 +48,7 @@ public class Human implements Comparable<Human>, CSVSerializable {
     private Date birthday;
     private Gender gender;
     private Location location;
-
-    private static FileIOHelper mFileIOHelper = new FileIOHelper();
+    private Date creationDate;
 
     public String getName() {
         return name;
@@ -62,6 +61,15 @@ public class Human implements Comparable<Human>, CSVSerializable {
 
     public String getBirthday() {
         return this.getBirthday("dd.MM.yyyy");
+    }
+
+    public String getCreationDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+        return sdf.format(creationDate);
+    }
+
+    public void setCreationDate(Date date) {
+        creationDate = date;
     }
 
     public int getAge() {
@@ -89,7 +97,7 @@ public class Human implements Comparable<Human>, CSVSerializable {
         birthday = objectTransformer.getDate("birthday", "dd.MM.yyyy");
         gender = Gender.getGenderByNumber( objectTransformer.getInt("gender") );
         location = Location.getLocationByName( objectTransformer.getString("location") );
-
+        creationDate = objectTransformer.getDate("creationDate", "dd.MM.yyyy HH:mm:ss");
     }
 
     public Human() {
@@ -97,14 +105,7 @@ public class Human implements Comparable<Human>, CSVSerializable {
         birthday = new Date(1);
         gender = Gender.getGenderByNumber(2);
         location = Location.getLocationByName("World");
-    }
-
-    /**
-     * Добавляет в консольный вывод реплику персонажа, подписывая автора.
-     * @param phrase Любая фраза.
-     */
-    public void sayPhrase(String phrase) {
-        System.out.println("\t" + name + ": " + phrase);
+        creationDate = new Date();
     }
 
     public int compareTo(Human other) {
@@ -120,7 +121,7 @@ public class Human implements Comparable<Human>, CSVSerializable {
 
     @Override
     public String toString() {
-        return String.format("%s %s, %d лет, находится в %s",
-                gender.getName(), name, getAge(), location.getName());
+        return String.format("%s %s, %d лет, находится в %s; создан %s",
+                gender.getName(), name, getAge(), location.getName(), getCreationDate());
     }
 }

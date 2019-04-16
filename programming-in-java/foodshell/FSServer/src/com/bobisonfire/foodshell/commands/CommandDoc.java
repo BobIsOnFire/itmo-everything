@@ -9,6 +9,7 @@ import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,44 +85,47 @@ public class CommandDoc {
      * @throws TransformerException Послано, если object не является json-объектом.
      */
     public void insert(String name, ObjectTransformer object) {
-        List<ObjectTransformer> list = f.readCSVListFromFile(map.get("path"));
+        Set<ObjectTransformer> set = f.readCSVSetFromFile(map.get("path"));
 
         object.put("name", name);
         Human newHuman = new Human(object);
+        newHuman.setCreationDate(new Date());
 
-        List<Human> humanList = new ArrayList<>();
-        list.forEach(elem -> humanList.add( new Human(elem) ));
+        Set<Human> humanSet = new TreeSet<>();
+        set.forEach(elem -> humanSet.add( new Human(elem) ));
 
-        List<Human> humanListC = humanList
+        Set<Human> humanSetC = humanSet
                 .stream()
                 .filter(elem -> !elem.equals(newHuman))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
-        humanListC.add(newHuman);
+        humanSetC.add(newHuman);
+        humanSetC = new TreeSet<>(humanSetC);
 
-        f.writeCSVListIntoFile(humanListC, map.get("path"));
+        f.writeCSVSetIntoFile(humanSetC, map.get("path"));
     }
 
     public void location(String name, Coordinate coords) {
-        List<ObjectTransformer> list = f.readCSVListFromFile(Location.PATH);
+        Set<ObjectTransformer> set = f.readCSVSetFromFile(Location.PATH);
 
         Location newLoc = new Location(name, coords);
 
-        List<Location> locationList = new ArrayList<>();
-        list.forEach(elem -> locationList.add( new Location(elem) ));
+        Set<Location> locationSet = new TreeSet<>();
+        set.forEach(elem -> locationSet.add( new Location(elem) ));
 
-        List<Location> locationListC = locationList
+        Set<Location> locationSetC = locationSet
                 .stream()
                 .filter(elem -> !elem.equals(newLoc))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
-        locationListC.add(newLoc);
+        locationSetC.add(newLoc);
+        locationSetC = new TreeSet<>(locationSet);
 
-        f.writeCSVListIntoFile(locationListC, Location.PATH);
+        f.writeCSVSetIntoFile(locationSetC, Location.PATH);
     }
 
     public void locations() {
-        f.readCSVListFromFile(Location.PATH)
+        f.readCSVSetFromFile(Location.PATH)
                 .forEach(elem -> s.writeToChannel( socket, new Location(elem).toString() ));
     }
 
@@ -131,8 +135,12 @@ public class CommandDoc {
      * Использование команды: show
      */
     public void show() {
-        f.readCSVListFromFile( map.get("path") )
-                .forEach(elem -> s.writeToChannel( socket, new Human(elem).toString()));
+        Set<Human> humanSet = new TreeSet<>();
+
+        f.readCSVSetFromFile( map.get("path") )
+                .forEach(elem -> humanSet.add( new Human(elem) ));
+
+        humanSet.forEach(elem -> s.writeToChannel( socket, elem.toString() ));
     }
 
     /**
@@ -148,10 +156,12 @@ public class CommandDoc {
         s.writeToChannel(socket, String.format( Locale.US,
 
         "%s %s, %d лет.\n" +
-                "Местоположение - %s, точные координаты - %s.",
+                "Местоположение - %s, точные координаты - %s.\n" +
+                "Дата создания - %s.",
 
                 me.getGender().getName(), me.getName(), me.getAge(),
-                me.getLocation().getName(), coordinate
+                me.getLocation().getName(), coordinate,
+                me.getCreationDate()
         ) );
     }
 
@@ -175,15 +185,15 @@ public class CommandDoc {
     public void move(String location) {
         Location loc = Location.getLocationByName(location);
 
-        List<Human> humanList = new ArrayList<>();
-        f.readCSVListFromFile(map.get("path")).forEach(elem -> {
+        Set<Human> humanSet = new TreeSet<>();
+        f.readCSVSetFromFile(map.get("path")).forEach(elem -> {
             Human human = new Human(elem);
             if ( human.getName().equals(map.get("logUser")) )
                 human.setLocation(loc);
-            humanList.add(human);
+            humanSet.add(human);
         });
 
-        f.writeCSVListIntoFile(humanList, map.get("path"));
+        f.writeCSVSetIntoFile(humanSet, map.get("path"));
     }
 
     /**
@@ -198,14 +208,14 @@ public class CommandDoc {
             s.writeToChannel(socket, "God невозможно уничтожить (по крайней мере, тебе)");
             return;
         }
-        List<Human> humanList = new ArrayList<>();
+        Set<Human> humanSet = new TreeSet<>();
 
-        f.readCSVListFromFile(map.get("path"))
+        f.readCSVSetFromFile(map.get("path"))
                 .stream()
                 .filter(elem -> !elem.getString("name").equals(name))
-                .forEach(elem -> humanList.add( new Human(elem) ));
+                .forEach(elem -> humanSet.add( new Human(elem) ));
 
-        f.writeCSVListIntoFile(humanList, map.get("path"));
+        f.writeCSVSetIntoFile(humanSet, map.get("path"));
     }
 
     /**
@@ -220,18 +230,20 @@ public class CommandDoc {
      * @throws TransformerException Послано, если object не является json-объектом.
      */
     public void remove_greater(ObjectTransformer object) {
-        List<Human> list = new ArrayList<>();
+        Set<Human> set = new TreeSet<>();
         Human compare = new Human(object);
 
-        f.readCSVListFromFile(map.get("path"))
-                .forEach(elem -> list.add( new Human(elem) ));
+        f.readCSVSetFromFile(map.get("path"))
+                .forEach(elem -> set.add( new Human(elem) ));
 
-        List<Human> humanList = list
+        Set<Human> humanSet = set
                 .stream()
                 .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) > 0)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
-        f.writeCSVListIntoFile(humanList, map.get("path"));
+        humanSet = new TreeSet<>(humanSet);
+
+        f.writeCSVSetIntoFile(humanSet, map.get("path"));
     }
 
     /**
@@ -246,18 +258,20 @@ public class CommandDoc {
      * @throws TransformerException Послано, если object не является json-объектом.
      */
     public void remove_lower(ObjectTransformer object) {
-        List<Human> list = new ArrayList<>();
+        Set<Human> set = new TreeSet<>();
         Human compare = new Human(object);
 
-        f.readCSVListFromFile(map.get("path"))
-                .forEach(elem -> list.add( new Human(elem) ));
+        f.readCSVSetFromFile(map.get("path"))
+                .forEach(elem -> set.add( new Human(elem) ));
 
-        List<Human> humanList = list
+        Set<Human> humanSet = set
                 .stream()
                 .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) < 0)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
-        f.writeCSVListIntoFile(humanList, map.get("path"));
+        humanSet = new TreeSet<>(humanSet);
+
+        f.writeCSVSetIntoFile(humanSet, map.get("path"));
     }
 
     /**
@@ -267,10 +281,10 @@ public class CommandDoc {
      * Использование команды: clear
      */
     public void clear() {
-        List<Human> humanList = new ArrayList<>();
-        humanList.add(new Human());
+        Set<Human> humanSet = new TreeSet<>();
+        humanSet.add(new Human());
 
-        f.writeCSVListIntoFile(humanList, map.get("path"));
+        f.writeCSVSetIntoFile(humanSet, map.get("path"));
     }
 
     /**
@@ -280,22 +294,19 @@ public class CommandDoc {
      * Использование команды: info
      */
     public void info() {
-//        todo оформить получше дату создания коллекции
+        Set<ObjectTransformer> set = f.readCSVSetFromFile(map.get("path"));
+        Optional<ObjectTransformer> opt = set.stream().filter(elem -> elem.getString("name").equals("God")).findFirst();
 
-//        try {
-//            File file = new File(Location.PATH);
-//            BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-//            SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-//            String creationDate = sdf.format(attributes.creationTime().toMillis());
-//            con.out.println("Дата создания: " + creationDate);
-//        }
-//        catch (IOException exc) {
-//            con.out.println("Невозможно определить дату создания.");
-//        }
+        Date creationDate;
+        if (opt.isPresent())
+            creationDate = opt.get().getDate("creationDate", "dd.MM.yyyy HH:mm:ss");
+        else
+            creationDate = new Date();
 
-        int mapSize = f.readCSVListFromFile(map.get("path")).size();
 
+        int mapSize = set.size();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         s.writeToChannel(socket, "Тип коллекции: соответствие в виде дерева существующих локаций и их имен.\n" +
-                "Размер коллекции: " + mapSize );
+                "Размер коллекции: " + mapSize + ", дата создания - " + sdf.format(creationDate) );
     }
 }

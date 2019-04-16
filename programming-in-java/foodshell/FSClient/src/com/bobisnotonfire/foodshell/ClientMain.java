@@ -40,7 +40,7 @@ public class ClientMain {
         }
 
         if (client.receiverStopped(receiver)) {
-            System.out.println("Reconnecting? y/n");
+            System.out.println("Connection lost. Reconnecting? y/n");
             if (scanner.next().equals("y"))
                 connect(path);
         }

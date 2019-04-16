@@ -14,14 +14,15 @@ public class FileIOHelper {
     /**
      * Записывает коллекцию в виде TreeMap (потому что по заданию в этом формате хранятся коллекции)
      * в файл формата CSV.
-     * @param list Коллекция с однозначным соответствием строкового ключа и объекта коллекции.
+     * @param set Коллекция с однозначным соответствием строкового ключа и объекта коллекции.
      * @param <T> Тип объектов, содержащихся в коллекции.
      */
-    public <T extends CSVSerializable> void writeCSVListIntoFile(List<T> list, String path) {
-        if (list.size() == 0)
+    public <T extends CSVSerializable> void writeCSVSetIntoFile(Set<T> set, String path) {
+        Iterator<T> iterator = set.iterator();
+        if (!iterator.hasNext())
             return;
 
-        T instance = list.get(0);
+        T instance = iterator.next();
         File file = new File(path);
 
         try {
@@ -30,11 +31,7 @@ public class FileIOHelper {
             PrintWriter writer = new PrintWriter(fileWriter, true);
 
             writer.write(instance.getCSVHead() + "\n");
-
-            for (T elem: list) {
-                writer.write(elem.toCSV() + "\n");
-            }
-
+            set.forEach(elem -> writer.write(elem.toCSV() + "\n"));
             writer.close();
         }
         catch (IOException exc) {
@@ -47,7 +44,7 @@ public class FileIOHelper {
      * @param path Путь до файла формата CSV.
      * @return Список CSV-объектов, где соответствие полей и значений формируется по шапке файла.
      */
-    public List<ObjectTransformer> readCSVListFromFile(String path) {
+    public Set<ObjectTransformer> readCSVSetFromFile(String path) {
         File file = new File(path);
 
         try {
@@ -57,21 +54,21 @@ public class FileIOHelper {
             if (!scanner.hasNextLine())
                 throw new IOException();
 
-            List<ObjectTransformer> list = new ArrayList<>();
+            Set<ObjectTransformer> set = new HashSet<>();
             String keys = scanner.nextLine();
 
             while (scanner.hasNextLine()) {
                 ObjectTransformer csv = new CSVObject(keys, scanner.nextLine());
-                list.add( csv );
+                set.add( csv );
             }
 
-            return list;
+            return set;
         }
         catch (IOException exc) {
             if (file.exists())
                 System.out.println( "Cannot read file " + file.getAbsolutePath() );
 
-            return new ArrayList<>();
+            return new HashSet<>();
         }
     }
 }

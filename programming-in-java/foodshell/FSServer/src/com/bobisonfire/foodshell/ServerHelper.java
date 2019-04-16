@@ -75,10 +75,10 @@ public class ServerHelper {
         }
 
         if (!new File(path).exists())
-            f.writeCSVListIntoFile(Collections.singletonList(new Human()), path);
+            f.writeCSVSetIntoFile(Collections.singleton(new Human()), path);
 
         if (!new File(Location.PATH).exists())
-            f.writeCSVListIntoFile(Collections.singletonList(new Location()), Location.PATH);
+            f.writeCSVSetIntoFile(Collections.singleton(new Location()), Location.PATH);
 
         Map<String, String> map = new HashMap<>();
         map.put("name", name);
