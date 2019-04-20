@@ -100,7 +100,7 @@ public class ServerHelper {
         Map<String, String> map = (Map<String, String>) key.attachment();
 
         if (message == null) {
-            System.out.println(map.get("name") + " вышел."); // todo: последние проверки?
+            System.out.println(map.get("name") + " вышел.");
             socket.close();
             return;
         }

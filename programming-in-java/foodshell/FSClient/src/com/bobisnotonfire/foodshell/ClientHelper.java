@@ -62,14 +62,7 @@ public class ClientHelper {
 
         public void run() {
             try {
-                // todo написать передачу файлов через канал
-
-//                    File file = new File(path);
-//                    Scanner scanner = new Scanner(new FileInputStream(file));
-//
-//                    while (scanner.hasNextLine()) {
-//                        out.println(scanner.nextLine());
-//                    }
+                // todo IMPORTANT написать передачу файлов через канал
 
                 while (!stopped) {
                     CharBuffer buffer = CharBuffer.allocate(256);
@@ -98,4 +91,6 @@ public class ClientHelper {
             System.err.println("Потоки не закрыты.");
         }
     }
+
+
 }

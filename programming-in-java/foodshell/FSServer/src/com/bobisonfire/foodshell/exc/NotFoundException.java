@@ -1,13 +1,14 @@
 package com.bobisonfire.foodshell.exc;
 
 public class NotFoundException extends RuntimeException {
-    protected String name;
+    private String message;
 
-    NotFoundException(String name) {
-        this.name = name;
+    public NotFoundException(String message) {
+        this.message = message;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public String getMessage() {
+        return message;
     }
-} // todo сделать одну NotFoundException; в качестве параметра - выводимое сообщение
+}

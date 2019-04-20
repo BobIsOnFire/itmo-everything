@@ -14,25 +14,29 @@ public class ServerMain {
     private static final String PATH_PREFIX = "";
 //    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/";
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
-    public static final String VERSION = "5.1.3";
+    public static final String VERSION = "5.2.1";
     public static ServerHelper server;
 
     public static void main(String[] args) {
-        initializeMessage();
+        try {
+            initializeMessage();
 
-        // todo сменить обозначения - пусть персональной будет коллекция человеков
-        Location.PATH = PATH_PREFIX + Location.PATH;
-        Human.PATH = PATH_PREFIX + Human.PATH;
+            Location.PATH = PATH_PREFIX + Location.PATH;
+            Human.PATH = PATH_PREFIX + Human.PATH;
 
-        Command.createBasicCommands();
+            Command.createBasicCommands();
 
-        server = new ServerHelper();
-        server.runServer();
+            server = new ServerHelper();
+            server.runServer();
+        } catch (Exception e) {
+            logException(e);
+        }
     }
 
     /**
      * Сохраняет информацию о возникшей ошибке в лог ошибок (по умолчанию - error.log в корневой папке).
      */
+    // todo логировать критичные ошибки
     static void logException(Exception exc) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         try {

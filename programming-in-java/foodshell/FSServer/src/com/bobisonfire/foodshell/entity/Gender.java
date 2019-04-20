@@ -1,6 +1,6 @@
 package com.bobisonfire.foodshell.entity;
 
-import com.bobisonfire.foodshell.exc.GenderNotFoundException;
+import com.bobisonfire.foodshell.exc.NotFoundException;
 
 /**
  * Enum из всех (нет) гендеров. Организует быстрый доступ к ним через методы получения гендера по
@@ -36,7 +36,7 @@ public enum Gender {
             return Gender.valueOf(name.toUpperCase().replaceAll("\\s", "_"));
         }
         catch(IllegalArgumentException exc) {
-            throw new GenderNotFoundException(name);
+            throw new NotFoundException("Гендер не найден: " + name);
         }
     }
 }

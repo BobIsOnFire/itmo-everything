@@ -1,7 +1,7 @@
 package com.bobisonfire.foodshell.commands;
 
 import com.bobisonfire.foodshell.entity.Coordinate;
-import com.bobisonfire.foodshell.exc.CommandNotFoundException;
+import com.bobisonfire.foodshell.exc.NotFoundException;
 import com.bobisonfire.foodshell.transformer.JSONObject;
 
 import java.util.TreeMap;
@@ -33,7 +33,7 @@ public class Command {
 
     public static Command getCommandByName(String name) {
         if (!CommandMap.containsKey(name))
-            throw new CommandNotFoundException(name);
+            throw new NotFoundException("Команда не найдена: " + name);
         return CommandMap.get(name.intern());
     }
 

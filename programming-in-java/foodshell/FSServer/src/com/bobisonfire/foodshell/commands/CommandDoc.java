@@ -55,7 +55,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: help command
      * @param command Название команды
-     * @throws CommandNotFoundException Послано, если такой команды не существует.
+     * @throws NotFoundException Послано, если такой команды не существует.
      */
     public void help(String command) {
         s.writeToChannel( socket, Command.getCommandByName(command).getDescription() );
