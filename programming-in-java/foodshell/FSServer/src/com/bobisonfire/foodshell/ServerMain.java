@@ -36,7 +36,6 @@ public class ServerMain {
     /**
      * Сохраняет информацию о возникшей ошибке в лог ошибок (по умолчанию - error.log в корневой папке).
      */
-    // todo логировать критичные ошибки
     static void logException(Exception exc) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         try {

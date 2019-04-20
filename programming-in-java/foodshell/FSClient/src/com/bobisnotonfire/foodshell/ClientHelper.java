@@ -62,8 +62,6 @@ public class ClientHelper {
 
         public void run() {
             try {
-                // todo IMPORTANT написать передачу файлов через канал
-
                 while (!stopped) {
                     CharBuffer buffer = CharBuffer.allocate(256);
                     while (in.read(buffer) > 0) {
