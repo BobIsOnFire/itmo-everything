@@ -73,7 +73,7 @@ public class Command {
                 "location",
                 "location name x y z - создать новую локацию со следующими характеристиками:\n" +
                         "\tname:\tназвание локации;\n" +
-                        "\t x y z:\tкоординаты локации.",
+                        "\tx y z:\tкоординаты локации.",
                 (launcher, tokens) -> {
                     double x = Double.parseDouble(tokens[1]);
                     double y = Double.parseDouble(tokens[2]);
@@ -98,15 +98,15 @@ public class Command {
 
         new Command(
                 "insert",
-                "insert name {object} - создание новой локации со следующими характеристиками:\n" +
-                        "\tname:\tназвание локации;\n" +
-                        "\t{object}:\tjson-объект, содержащий поля 'x','y','z' с координатами локации (остальные поля игнорируются).",
+                "insert name {object} - создание нового персонажа со следующими характеристиками:\n" +
+                        "\tname:\tимя персонажа;\n" +
+                        "\t{object}:\tjson-объект, описывающий характеристики персонажа (см. документацию).",
                 (launcher, tokens) -> launcher.insert(tokens[0], new JSONObject(tokens[1]))
         );
 
         new Command(
                 "show",
-                "show - список имен и координат существующих локаций.\n",
+                "show - список имен и характеристик существующих персонажей.\n",
                 (launcher, tokens) -> launcher.show()
         );
 
@@ -130,25 +130,25 @@ public class Command {
 
         new Command(
                 "remove",
-                "remove name - уничтожить локацию name.",
+                "remove name - уничтожить персонажа name.",
                 (launcher, tokens) -> launcher.remove(tokens[0])
         );
 
         new Command(
-                "remove_greater",
-                "remove_greater {object} - уничтожить все локации, находящиеся выше чем json-объект (обязательно наличие поля 'y').",
-                (launcher, tokens) -> launcher.remove_greater(new JSONObject(tokens[0]))
+                "remove_older",
+                "remove_older {object} - уничтожить всех персонажей, которые старше чем object (обяязательно наличие поля 'birthday').",
+                (launcher, tokens) -> launcher.remove_older(new JSONObject(tokens[0]))
         );
 
         new Command(
-                "remove_lower",
-                "remove_lower {object} - уничтожить все локации, находящиеся ниже чем json-объект (обязательно наличие поля 'y').",
-                (launcher, tokens) -> launcher.remove_lower(new JSONObject(tokens[0]))
+                "remove_younger",
+                "remove_younger {object} - уничтожить всех персонажей, которые моложе чем object (обяязательно наличие поля 'birthday').",
+                (launcher, tokens) -> launcher.remove_younger(new JSONObject(tokens[0]))
         );
 
         new Command(
                 "clear",
-                "clear - уничтожить все локации (кроме локации World, разумеется).",
+                "clear - уничтожить всех персонажей (кроме God, разумеется).",
                 (launcher, tokens) -> launcher.clear()
         );
 
@@ -156,6 +156,12 @@ public class Command {
                 "info",
                 "info - получить информацию о текущей коллекции.",
                 (launcher, tokens) -> launcher.info()
+        );
+
+        new Command(
+                "import",
+                "import path - сменить адрес, по которому находится коллекция.",
+                (launcher, tokens) -> launcher._import(tokens[0])
         );
     }
 }

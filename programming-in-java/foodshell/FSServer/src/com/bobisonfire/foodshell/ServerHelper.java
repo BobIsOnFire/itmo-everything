@@ -18,11 +18,18 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 
+/**
+ * Класс, реализующий неблокирующий сервер, принмающий и отдающий информацию, а также
+ * организовывающий передачу работы командному ядру <i>FoodShell</i>.
+ */
 public class ServerHelper {
     private ServerSocketChannel serverChannel;
     private Selector selector;
     private final FileIOHelper f = new FileIOHelper();
 
+    /**
+     * Создание сервера и вывод его адреса, обработка критических ошибок.
+     */
     public ServerHelper() {
 
         try {
@@ -37,10 +44,13 @@ public class ServerHelper {
 
         } catch(Exception e) {
             System.err.println("Что-то не так с сервером. Закрываюсь...");
-            e.printStackTrace();
+            ServerMain.logException(e);
         }
     }
 
+    /**
+     * Организация работы сервера: итерация по селектору в поиске новых каналов и чтении существующих.
+     */
     public void runServer() {
         try {
             Iterator<SelectionKey> iter;
@@ -61,10 +71,15 @@ public class ServerHelper {
         }
     }
 
+    /**
+     * Обработка нового соединения: сохранение имени пользователя и пути к его коллекции с персонажами,
+     * вывод приветственного сообщения и передача в селектор соединения для чтения.
+     * @param key ключ соединения
+     */
     private void handleAccept(SelectionKey key) throws IOException {
         SocketChannel socket = ( (ServerSocketChannel) key.channel() ).accept();
 
-        String[] meta = readFromChannel(socket).trim().split("\\s+");
+        String[] meta = readFromChannel(socket).split("\\s+");
         String path = meta[0];
         String name = meta[1];
         String isPathOnServer = "false";
@@ -93,6 +108,12 @@ public class ServerHelper {
         writeToChannel(socket, initializeMessageClient());
     }
 
+    /**
+     * Обработка получаемого сообщения - команды или сигнала выхода. Если пользователь выходит, закрывает
+     * его соединение. Если пользователь отправил команду, передает соединение обработчику команд <i>FoodShell</i>.
+     * @param key
+     * @throws IOException
+     */
     private void handleRead(SelectionKey key) throws IOException {
         SocketChannel socket = (SocketChannel) key.channel();
         String message = readFromChannel(socket);
@@ -101,7 +122,7 @@ public class ServerHelper {
 
         if (message == null) {
             System.out.println(map.get("name") + " вышел.");
-            socket.close();
+            socket.socket().close();
             return;
         }
 
@@ -126,6 +147,9 @@ public class ServerHelper {
         }
     }
 
+    /**
+     * Обработка и токенизация команд из строки.
+     */
     private String[] readCommand(String command) {
 
         String[] tokens = command.split("\\s+");
@@ -163,6 +187,9 @@ public class ServerHelper {
                "Введите help для списка всех команд.\n";
     }
 
+    /**
+     * Организовывает чтение строки из канала.
+     */
     private String readFromChannel(SocketChannel socket) {
         StringBuilder sb = new StringBuilder();
 
@@ -185,6 +212,9 @@ public class ServerHelper {
         return null;
     }
 
+    /**
+     * Организовывает запись строки в канал.
+     */
     public void writeToChannel(SocketChannel socket, String message) {
         String msg = message + "\n";
         ByteBuffer writeBuffer = ByteBuffer.wrap(msg.getBytes());

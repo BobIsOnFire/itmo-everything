@@ -18,7 +18,12 @@ public class ClientMain {
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Введите IP и порт в формате XXX.XXX.XXX.XXX:PPPPP\n> ");
-        String[] temp = scanner.nextLine().split(":");
+        String[] temp = new String[0];
+        while (temp.length < 2) {
+            temp = scanner.nextLine().split(":");
+            if (temp.length < 2)
+                System.out.println("Адрес некорректен. Введите еще раз.");
+        }
 
         String ip = temp[0];
         int port = Integer.parseInt(temp[1]);
@@ -32,7 +37,7 @@ public class ClientMain {
 
         String str;
         while (!client.receiverStopped(receiver)) {
-            if (!scanner.hasNextLine() || ( str = scanner.nextLine() ).trim().equals("exit")) {
+            if (!scanner.hasNextLine() || (str = scanner.nextLine()).trim().equals("exit")) {
                 client.uploadCommand("exit");
                 break;
             }
@@ -41,8 +46,10 @@ public class ClientMain {
 
         if (client.receiverStopped(receiver)) {
             System.out.println("Connection lost. Reconnecting? y/n");
-            if (scanner.next().equals("y"))
+            if (scanner.next().equals("y")) {
+                client.close();
                 connect(path);
+            }
         }
         else
             client.stopReceiver(receiver);

@@ -7,6 +7,7 @@ import com.bobisonfire.foodshell.entity.*;
 import com.bobisonfire.foodshell.exc.*;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
+import java.io.File;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.SimpleDateFormat;
@@ -69,19 +70,23 @@ public class CommandDoc {
     public void gender() {
         s.writeToChannel(socket, "\t\t** There are only 15 genders. **");
         for (Gender gender: Gender.values())
-            s.writeToChannel(socket, gender.getName());
+            s.writeToChannel(socket, gender.ordinal() + ". " + gender.getName());
     }
 
     /**
-     * Создание новой локации или перезаписывание существующей с заданными характеристиками.<br>
-     * Все локации сохраняются в соответствующую коллекцию в формате CSV (путь к коллекции задается
-     * пользователем), доступ к информации о состоянии локаций осуществляется командой show.<br>
+     * Создание нового персонажа или перезаписывание существующего с заданными характеристиками.<br>
+     * Все персонажи сохраняются в соответствующую коллекцию в формате CSV (путь к коллекции задается
+     * пользователем), доступ к информации о состоянии персонажей осуществляется командой show.<br>
      * <br>
      * Использование команды: insert name object
-     * @param name Название локации (уникальный ключ)
-     * @param object json-объект, содержащий поля "x", "y", "z" с координатами локации - числа с плавающей запятой.
-     *               Если какого-то из полей не будет, оно автоматически заполнится нулем.
-     *               Остальные поля игнорируются.
+     * @param name Имя персонажа (уникальный ключ)
+     * @param object json-объект, содержащий следующие поля:<br>
+     *               <b>birthday</b> - дата рождения в формате ДД.ММ.ГГГГ, по умолчанию - сегодняшняя дата;<br>
+     *               <b>gender</b> - число от 0 до 14, соответствущее номеру гендера (команда gender для
+     *               просмотра соответствия), по умолчанию - 0 (Male);<br>
+     *               <b>location</b> - название локации (уникальный ключ), в которой изначально находится персонаж
+     *               (просмотр существующих локаций - locations), по умолчанию - World.<br>
+     *               Если поле не указано, ставится значение по умолчанию. Остальные поля игнорируются.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
     public void insert(String name, ObjectTransformer object) {
@@ -103,8 +108,19 @@ public class CommandDoc {
         humanSetC = new TreeSet<>(humanSetC);
 
         f.writeCSVSetIntoFile(humanSetC, map.get("path"));
+        System.out.println("Пользователь " + map.get("name") + " добавил персонажа в коллекцию " +
+                map.get("path") + ": " + newHuman.toString() );
     }
 
+    /**
+     * Создание новой локации или перезаписывание текущей с заданными характеристиками.<br>
+     * Все локации сохраняются в соответствующую коллекцию в формате CSV, доступ к ней осуществляется
+     * командой locations.<br>
+     * <br>
+     * Использование команды: location name x y z
+     * @param name - название локации (уникальный ключ)
+     * @param coords - координаты локации (три числа с плавающей точкой)
+     */
     public void location(String name, Coordinate coords) {
         Set<ObjectTransformer> set = f.readCSVSetFromFile(Location.PATH);
 
@@ -122,15 +138,22 @@ public class CommandDoc {
         locationSetC = new TreeSet<>(locationSet);
 
         f.writeCSVSetIntoFile(locationSetC, Location.PATH);
+        System.out.println("Пользователь " + map.get("name") + " добавил локацию в коллекцию " +
+                Location.PATH + ": " + newLoc.toCSV() );
     }
 
+    /**
+     * Просмотр списка имен и координат существующих локаций.<br>
+     * <br>
+     * Использование команды: locations
+     */
     public void locations() {
         f.readCSVSetFromFile(Location.PATH)
                 .forEach(elem -> s.writeToChannel( socket, new Location(elem).toString() ));
     }
 
     /**
-     * Просмотр списка имен и координат существующих локаций.<br>
+     * Просмотр списка имен и характеристик существующих персонажей.<br>
      * <br>
      * Использование команды: show
      */
@@ -144,8 +167,8 @@ public class CommandDoc {
     }
 
     /**
-     * Просмотр данных о текущем пользователе, а именно гендер, имя персонажа, его возраст (в годах),
-     * уровень текущего насыщения, настроения, его местоположение и точные координаты.<br>
+     * Просмотр данных о текущем пользователе, а именно: гендер, имя персонажа, его возраст (в годах),
+     * его местоположение, точные координаты и дата создания объекта, описывающего персонажа.<br>
      * <br>
      * Использование команды: me
      */
@@ -173,7 +196,8 @@ public class CommandDoc {
      */
     public void login(String name) {
         Human.getHumanByName(name, map.get("path"));
-        map.put("logUser", name);
+        String previous = map.put("logUser", name);
+        System.out.println("Пользователь " + map.get("name") + " сменил персонажа: " + previous + " -> " + name);
     }
 
     /**
@@ -194,14 +218,15 @@ public class CommandDoc {
         });
 
         f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        System.out.println("Пользователь " + map.get("name") + " переместил персонажа " + map.get("logUser") + " в " + location);
     }
 
     /**
-     * Уничтожение локации по ее ключу. Все персонажи, которые были в этой локации, перемещаются в локацию World.<br>
-     * Локацию World уничтожить нельзя (появляется соответствующее сообщение).<br>
+     * Уничтожение персонажа по его ключу.<br>
+     * Персонажа God уничтожить нельзя (появляется соответствующее сообщение).<br>
      * <br>
      * Использование команды: remove name
-     * @param name Название локации (уникальный ключ).
+     * @param name Имя персонажа (уникальный ключ).
      */
     public void remove(String name) {
         if (name.equals("God")) {
@@ -209,27 +234,29 @@ public class CommandDoc {
             return;
         }
         Set<Human> humanSet = new TreeSet<>();
+        Set<ObjectTransformer> set = f.readCSVSetFromFile(map.get("path"));
 
-        f.readCSVSetFromFile(map.get("path"))
-                .stream()
+        set.stream()
                 .filter(elem -> !elem.getString("name").equals(name))
                 .forEach(elem -> humanSet.add( new Human(elem) ));
 
-        f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        if (set.size() == humanSet.size()) {
+            s.writeToChannel(socket, "Персонаж не уничтожен: его не существует!");
+        } else {
+            f.writeCSVSetIntoFile(humanSet, map.get("path"));
+            System.out.println("Пользователь " + map.get("name") + " уничтожил персонажа " + name);
+        }
     }
 
     /**
-     * Уничтожение всех локаций (кроме World), находящихся выше чем заданная метка в мире.<br>
-     * Все персонажи из уничтоженных локаций перемещаются в локацию World.<br>
+     * Уничтожение всех персонажей (кроме God), которые старше данного персонажа.<br>
      * <br>
-     * Использование команды: remove_greater object
-     * @param object Метка в пространстве в формате json-объекта, содержащего поля "x", "y", "z"
-     *               со значениями чисел с плавающей запятой.<br>
-     *               Если какого-то из полей не будет, оно автоматически заполнится нулем.
-     *               Остальные поля игнорируются.
+     * Использование команды: remove_older object
+     * @param object json-объект, описывающий персонажа (см. insert), относительно которого
+     *               производится уничтожение персонажей.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public void remove_greater(ObjectTransformer object) {
+    public void remove_older(ObjectTransformer object) {
         Set<Human> set = new TreeSet<>();
         Human compare = new Human(object);
 
@@ -244,20 +271,20 @@ public class CommandDoc {
         humanSet = new TreeSet<>(humanSet);
 
         f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        System.out.println("Пользователь " + map.get("name") + " уничтожил персонажей, родившихся раньше чем " +
+                compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
+                ". Размер коллекции: " + humanSet.size() );
     }
 
     /**
-     * Уничтожение всех локаций (кроме World), находящихся ниже чем заданная метка в мире.<br>
-     * Все персонажи из уничтоженных локаций перемещаются в локацию World.<br>
+     * Уничтожение всех персонажей (кроме God), которые младше данного персонажа.<br>
      * <br>
-     * Использование команды: remove_lower object
-     * @param object Метка в пространстве в формате json-объекта, содержащего поля "x", "y", "z"
-     *               со значениями чисел с плавающей запятой.<br>
-     *               Если какого-то из полей не будет, оно автоматически заполнится нулем.
-     *               Остальные поля игнорируются.
+     * Использование команды: remove_younger object
+     * @param object json-объект, описывающий персонажа (см. insert), относительно которого
+     *               производится уничтожение персонажей.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public void remove_lower(ObjectTransformer object) {
+    public void remove_younger(ObjectTransformer object) {
         Set<Human> set = new TreeSet<>();
         Human compare = new Human(object);
 
@@ -272,11 +299,14 @@ public class CommandDoc {
         humanSet = new TreeSet<>(humanSet);
 
         f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        System.out.println("Пользователь " + map.get("name") + " уничтожил персонажей, родившихся позже чем " +
+                compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
+                ". Размер коллекции: " + humanSet.size() );
     }
 
     /**
-     * Очистка коллекции с локациями a.k.a. уничтожение всех локаций, кроме World.<br>
-     * При этом время создания локации не перезаписывается.<br>
+     * Очистка коллекции с персонажами a.k.a. уничтожение всех персонажей, кроме God.<br>
+     * При этом время создания коллекции перезаписывается.<br>
      * <br>
      * Использование команды: clear
      */
@@ -285,11 +315,12 @@ public class CommandDoc {
         humanSet.add(new Human());
 
         f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        System.out.println("Пользователь " + map.get("name") + " очистил коллекцию персонажей по адресу " + map.get("path"));
     }
 
     /**
      * Получение информации о состоянии текущей коллекции a.k.a. состоянии текущего мира.<br>
-     * Информация: дата создания мира, тип коллекции, количество локаций.<br>
+     * Информация: дата создания мира, тип коллекции, количество персонажей.<br>
      * <br>
      * Использование команды: info
      */
@@ -306,7 +337,20 @@ public class CommandDoc {
 
         int mapSize = set.size();
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-        s.writeToChannel(socket, "Тип коллекции: соответствие в виде дерева существующих локаций и их имен.\n" +
+        s.writeToChannel(socket, "Тип коллекции: " + new TreeSet<Human>().getClass().getCanonicalName() + ".\n" +
                 "Размер коллекции: " + mapSize + ", дата создания - " + sdf.format(creationDate) );
+    }
+
+    /**
+     * Сменить адрес нахождения коллекции персонажей.<br>
+     * <br>
+     * Использование команды: import path
+     * @param path новый адрес
+     */
+    public void _import(String path) {
+        String previous = map.put("path", path);
+        System.out.println("Пользователь " + map.get("name") + " сменил адрес коллекции: " + previous + " -> " + path);
+        if (!new File(path).exists())
+            f.writeCSVSetIntoFile(Collections.singleton(new Human()), path);
     }
 }

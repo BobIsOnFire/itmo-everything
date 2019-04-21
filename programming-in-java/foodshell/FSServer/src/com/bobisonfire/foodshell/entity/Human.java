@@ -9,8 +9,9 @@ import java.util.Iterator;
 
 /**
  * Класс, реализующий персонажей - основных действующих единиц <i>FoodShell</i>.<br>
- * Персонаж God - основной персонаж, с ним запускается <i>FoodShell</i> и он создает
- * других персонажей.
+ * Все персонажи хранятся в CSV-файле (путь к которому указывает сам пользователь).<br>
+ * Персонаж God - основной персонаж, с ним запускается <i>FoodShell</i> и он "создает"
+ * других персонажей. Его невозможно удалить.
  */
 public class Human implements Comparable<Human>, CSVSerializable {
     public static final String CSV_HEAD = "name,birthday,gender,location,creationDate";

@@ -10,11 +10,14 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * Класс, отвецающий за запуск серверной части приложения.
+ */
 public class ServerMain {
-    private static final String PATH_PREFIX = "";
-//    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/";
+//    private static final String PATH_PREFIX = "";
+    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/";
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
-    public static final String VERSION = "5.2.1";
+    public static final String VERSION = "5.2.3";
     public static ServerHelper server;
 
     public static void main(String[] args) {

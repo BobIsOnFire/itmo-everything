@@ -12,9 +12,8 @@ import java.util.*;
  */
 public class FileIOHelper {
     /**
-     * Записывает коллекцию в виде TreeMap (потому что по заданию в этом формате хранятся коллекции)
-     * в файл формата CSV.
-     * @param set Коллекция с однозначным соответствием строкового ключа и объекта коллекции.
+     * Записывает коллекцию-множество в файл формата CSV.
+     * @param set Коллекция-множество.
      * @param <T> Тип объектов, содержащихся в коллекции.
      */
     public <T extends CSVSerializable> void writeCSVSetIntoFile(Set<T> set, String path) {
@@ -40,9 +39,9 @@ public class FileIOHelper {
     }
 
     /**
-     * Читает список CSV-объектов из файла по заданному пути.
+     * Читает множество CSV-объектов из файла по заданному пути.
      * @param path Путь до файла формата CSV.
-     * @return Список CSV-объектов, где соответствие полей и значений формируется по шапке файла.
+     * @return Множество CSV-объектов, где соответствие полей и значений формируется по шапке файла.
      */
     public Set<ObjectTransformer> readCSVSetFromFile(String path) {
         File file = new File(path);
