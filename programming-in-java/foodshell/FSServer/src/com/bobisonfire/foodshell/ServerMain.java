@@ -5,29 +5,44 @@ import com.bobisonfire.foodshell.entity.Human;
 import com.bobisonfire.foodshell.entity.Location;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 
 /**
  * Класс, отвецающий за запуск серверной части приложения.
  */
 public class ServerMain {
-//    private static final String PATH_PREFIX = "";
-    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/";
+    private static final String PATH_PREFIX = "";
+//    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/";
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
+    private static final FileIOHelper f = new FileIOHelper();
+
     public static final String VERSION = "5.2.3";
     public static ServerHelper server;
 
     public static void main(String[] args) {
+
+        if (args.length > 0)
+            Human.PATH = args[0];
+        else
+            Human.PATH = PATH_PREFIX + Human.PATH;
+
         try {
             initializeMessage();
 
             Location.PATH = PATH_PREFIX + Location.PATH;
-            Human.PATH = PATH_PREFIX + Human.PATH;
-
             Command.createBasicCommands();
+
+            if (!new File(Human.PATH).exists())
+                f.writeCSVSetIntoFile(Collections.singleton(new Human()), Human.PATH);
+
+            if (!new File(Location.PATH).exists())
+                f.writeCSVSetIntoFile(Collections.singleton(new Location()), Location.PATH);
+
 
             server = new ServerHelper();
             server.runServer();

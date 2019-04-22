@@ -40,7 +40,8 @@ public class ServerHelper {
             selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
             System.out.println("Сервер доступен по адресу " + InetAddress.getLocalHost() + ":" +
-                    serverChannel.socket().getLocalPort() + "\n");
+                    serverChannel.socket().getLocalPort() + ".\nИспользует коллекцию персонажей по умолчанию: " +
+                    Human.PATH + "\n");
 
         } catch(Exception e) {
             System.err.println("Что-то не так с сервером. Закрываюсь...");
@@ -79,32 +80,16 @@ public class ServerHelper {
     private void handleAccept(SelectionKey key) throws IOException {
         SocketChannel socket = ( (ServerSocketChannel) key.channel() ).accept();
 
-        String[] meta = readFromChannel(socket).split("\\s+");
-        String path = meta[0];
-        String name = meta[1];
-        String isPathOnServer = "false";
-
-        if (path == null || path.equals("")) {
-            path = Human.PATH;
-            isPathOnServer = "true";
-        }
-
-        if (!new File(path).exists())
-            f.writeCSVSetIntoFile(Collections.singleton(new Human()), path);
-
-        if (!new File(Location.PATH).exists())
-            f.writeCSVSetIntoFile(Collections.singleton(new Location()), Location.PATH);
+        String name = readFromChannel(socket).trim();
 
         Map<String, String> map = new HashMap<>();
         map.put("name", name);
-        map.put("path", path);
-        map.put("isPathOnServer", isPathOnServer);
         map.put("logUser", "God");
 
         socket.configureBlocking(false);
         socket.register(selector, SelectionKey.OP_READ, map);
 
-        System.out.println(name + " вошел. Использует коллекцию по адресу " + path);
+        System.out.println(name + " вошел.");
         writeToChannel(socket, initializeMessageClient());
     }
 
@@ -190,7 +175,7 @@ public class ServerHelper {
     /**
      * Организовывает чтение строки из канала.
      */
-    private String readFromChannel(SocketChannel socket) {
+    public String readFromChannel(SocketChannel socket) {
         StringBuilder sb = new StringBuilder();
 
         ByteBuffer readBuffer = ByteBuffer.allocate(256);

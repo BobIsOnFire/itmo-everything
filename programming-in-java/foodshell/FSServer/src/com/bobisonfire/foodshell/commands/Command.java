@@ -159,8 +159,14 @@ public class Command {
         );
 
         new Command(
+                "export",
+                "export path - загрузить коллекцию из файла path на сервер.",
+                (launcher, tokens) -> launcher.export()
+        );
+
+        new Command(
                 "import",
-                "import path - сменить адрес, по которому находится коллекция.",
+                "import path - загрузить коллекцию с сервера в файл path.",
                 (launcher, tokens) -> launcher._import(tokens[0])
         );
     }

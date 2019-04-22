@@ -7,7 +7,8 @@ import com.bobisonfire.foodshell.entity.*;
 import com.bobisonfire.foodshell.exc.*;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
-import java.io.File;
+import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.SimpleDateFormat;
@@ -90,7 +91,7 @@ public class CommandDoc {
      * @throws TransformerException Послано, если object не является json-объектом.
      */
     public void insert(String name, ObjectTransformer object) {
-        Set<ObjectTransformer> set = f.readCSVSetFromFile(map.get("path"));
+        Set<ObjectTransformer> set = f.readCSVSetFromFile(Human.PATH);
 
         object.put("name", name);
         Human newHuman = new Human(object);
@@ -107,9 +108,9 @@ public class CommandDoc {
         humanSetC.add(newHuman);
         humanSetC = new TreeSet<>(humanSetC);
 
-        f.writeCSVSetIntoFile(humanSetC, map.get("path"));
-        System.out.println("Пользователь " + map.get("name") + " добавил персонажа в коллекцию " +
-                map.get("path") + ": " + newHuman.toString() );
+        f.writeCSVSetIntoFile(humanSetC, Human.PATH);
+        System.out.println("Пользователь " + map.get("name") + " добавил персонажа в коллекцию: " +
+                newHuman.toString() );
     }
 
     /**
@@ -160,7 +161,7 @@ public class CommandDoc {
     public void show() {
         Set<Human> humanSet = new TreeSet<>();
 
-        f.readCSVSetFromFile( map.get("path") )
+        f.readCSVSetFromFile( Human.PATH )
                 .forEach(elem -> humanSet.add( new Human(elem) ));
 
         humanSet.forEach(elem -> s.writeToChannel( socket, elem.toString() ));
@@ -173,7 +174,7 @@ public class CommandDoc {
      * Использование команды: me
      */
     public void me() {
-        Human me = Human.getHumanByName(map.get("logUser"), map.get("path"));
+        Human me = Human.getHumanByName(map.get("logUser"), Human.PATH);
         Coordinate coordinate = me.getLocation().getCoords();
 
         s.writeToChannel(socket, String.format( Locale.US,
@@ -195,7 +196,7 @@ public class CommandDoc {
      * @param name Имя персонажа (уникальный ключ).
      */
     public void login(String name) {
-        Human.getHumanByName(name, map.get("path"));
+        Human.getHumanByName(name, Human.PATH);
         String previous = map.put("logUser", name);
         System.out.println("Пользователь " + map.get("name") + " сменил персонажа: " + previous + " -> " + name);
     }
@@ -210,14 +211,14 @@ public class CommandDoc {
         Location loc = Location.getLocationByName(location);
 
         Set<Human> humanSet = new TreeSet<>();
-        f.readCSVSetFromFile(map.get("path")).forEach(elem -> {
+        f.readCSVSetFromFile(Human.PATH).forEach(elem -> {
             Human human = new Human(elem);
             if ( human.getName().equals(map.get("logUser")) )
                 human.setLocation(loc);
             humanSet.add(human);
         });
 
-        f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        f.writeCSVSetIntoFile(humanSet, Human.PATH);
         System.out.println("Пользователь " + map.get("name") + " переместил персонажа " + map.get("logUser") + " в " + location);
     }
 
@@ -234,7 +235,7 @@ public class CommandDoc {
             return;
         }
         Set<Human> humanSet = new TreeSet<>();
-        Set<ObjectTransformer> set = f.readCSVSetFromFile(map.get("path"));
+        Set<ObjectTransformer> set = f.readCSVSetFromFile(Human.PATH);
 
         set.stream()
                 .filter(elem -> !elem.getString("name").equals(name))
@@ -243,7 +244,7 @@ public class CommandDoc {
         if (set.size() == humanSet.size()) {
             s.writeToChannel(socket, "Персонаж не уничтожен: его не существует!");
         } else {
-            f.writeCSVSetIntoFile(humanSet, map.get("path"));
+            f.writeCSVSetIntoFile(humanSet, Human.PATH);
             System.out.println("Пользователь " + map.get("name") + " уничтожил персонажа " + name);
         }
     }
@@ -260,7 +261,7 @@ public class CommandDoc {
         Set<Human> set = new TreeSet<>();
         Human compare = new Human(object);
 
-        f.readCSVSetFromFile(map.get("path"))
+        f.readCSVSetFromFile(Human.PATH)
                 .forEach(elem -> set.add( new Human(elem) ));
 
         Set<Human> humanSet = set
@@ -270,7 +271,7 @@ public class CommandDoc {
 
         humanSet = new TreeSet<>(humanSet);
 
-        f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        f.writeCSVSetIntoFile(humanSet, Human.PATH);
         System.out.println("Пользователь " + map.get("name") + " уничтожил персонажей, родившихся раньше чем " +
                 compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
                 ". Размер коллекции: " + humanSet.size() );
@@ -288,7 +289,7 @@ public class CommandDoc {
         Set<Human> set = new TreeSet<>();
         Human compare = new Human(object);
 
-        f.readCSVSetFromFile(map.get("path"))
+        f.readCSVSetFromFile(Human.PATH)
                 .forEach(elem -> set.add( new Human(elem) ));
 
         Set<Human> humanSet = set
@@ -298,7 +299,7 @@ public class CommandDoc {
 
         humanSet = new TreeSet<>(humanSet);
 
-        f.writeCSVSetIntoFile(humanSet, map.get("path"));
+        f.writeCSVSetIntoFile(humanSet, Human.PATH);
         System.out.println("Пользователь " + map.get("name") + " уничтожил персонажей, родившихся позже чем " +
                 compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
                 ". Размер коллекции: " + humanSet.size() );
@@ -314,8 +315,8 @@ public class CommandDoc {
         Set<Human> humanSet = new TreeSet<>();
         humanSet.add(new Human());
 
-        f.writeCSVSetIntoFile(humanSet, map.get("path"));
-        System.out.println("Пользователь " + map.get("name") + " очистил коллекцию персонажей по адресу " + map.get("path"));
+        f.writeCSVSetIntoFile(humanSet, Human.PATH);
+        System.out.println("Пользователь " + map.get("name") + " очистил коллекцию персонажей.");
     }
 
     /**
@@ -325,7 +326,7 @@ public class CommandDoc {
      * Использование команды: info
      */
     public void info() {
-        Set<ObjectTransformer> set = f.readCSVSetFromFile(map.get("path"));
+        Set<ObjectTransformer> set = f.readCSVSetFromFile(Human.PATH);
         Optional<ObjectTransformer> opt = set.stream().filter(elem -> elem.getString("name").equals("God")).findFirst();
 
         Date creationDate;
@@ -342,15 +343,46 @@ public class CommandDoc {
     }
 
     /**
-     * Сменить адрес нахождения коллекции персонажей.<br>
+     * Загрузить коллекцию на сервер. Данные из коллекции сохраняются в путь по умолчанию или в путь,
+     * указанный при создании сервера.<br>
+     * <br>
+     * Использование команды: export path
+     */
+    public void export() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(Human.PATH, false))) {
+            while ( true ) {
+                String str = s.readFromChannel(socket);
+                if (str.contains("!endexport")) {
+                    str = str.substring(0, str.indexOf("!endexport"));
+                    writer.write(str);
+                    break;
+                }
+
+                writer.write(str);
+            }
+
+            System.out.println("Пользователь " + map.get("name") + " загрузил свою коллекцию на сервер.");
+        } catch (IOException e) {
+            System.out.println("Невозможно записать в файл " + Human.PATH);
+        }
+    }
+
+    /**
+     * Сохранить коллекцию с сервера в файл. Данные для сохранения берутся из файла по умолчанию или файла,
+     * указанного при создании сервера.<br>
      * <br>
      * Использование команды: import path
-     * @param path новый адрес
      */
     public void _import(String path) {
-        String previous = map.put("path", path);
-        System.out.println("Пользователь " + map.get("name") + " сменил адрес коллекции: " + previous + " -> " + path);
-        if (!new File(path).exists())
-            f.writeCSVSetIntoFile(Collections.singleton(new Human()), path);
+        try (Scanner scanner = new Scanner(new FileReader(Human.PATH))) {
+            s.writeToChannel(socket, "!import " + path);
+            while (scanner.hasNextLine())
+                s.writeToChannel(socket, scanner.nextLine() );
+            s.writeToChannel(socket, "!endimport");
+
+            System.out.println("Пользователь " + map.get("name") + " импортировал свою коллекцию с сервера.");
+        } catch (IOException e) {
+            System.out.println("Невозможно прочитать файл " + Human.PATH);
+        }
     }
 }
