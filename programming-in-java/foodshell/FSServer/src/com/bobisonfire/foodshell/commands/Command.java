@@ -160,14 +160,32 @@ public class Command {
 
         new Command(
                 "export",
-                "export path - загрузить коллекцию из файла path на сервер.",
+                "export path - загрузить коллекцию из файла path, находящегося на клиенте, на сервер.",
                 (launcher, tokens) -> launcher.export()
         );
 
         new Command(
                 "import",
-                "import path - загрузить коллекцию с сервера в файл path.",
+                "import path - загрузить коллекцию с сервера в файл path, находящийся на клиенте.",
                 (launcher, tokens) -> launcher._import(tokens[0])
+        );
+
+        new Command(
+                "load",
+                "load path - загрузить коллекцию из файла path, находящегося на сервере, на сервер.",
+                (launcher, tokens) -> launcher.load(tokens[0])
+        );
+
+        new Command(
+                "save",
+                "save path - загрузить коллекцию с сервера в файл path, находящийся на сервере.",
+                (launcher, tokens) -> launcher.save(tokens[0])
+        );
+
+        new Command(
+                "cat",
+                "cat file1 [file2 ...] - последовательно вывести содержимое файлов.",
+                CommandDoc::cat
         );
     }
 }

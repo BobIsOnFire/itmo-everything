@@ -109,7 +109,7 @@ public class CommandDoc {
         humanSetC = new TreeSet<>(humanSetC);
 
         f.writeCSVSetIntoFile(humanSetC, Human.PATH);
-        System.out.println("Пользователь " + map.get("name") + " добавил персонажа в коллекцию: " +
+        System.out.println(map.get("name") + " добавил персонажа в коллекцию: " +
                 newHuman.toString() );
     }
 
@@ -139,7 +139,7 @@ public class CommandDoc {
         locationSetC = new TreeSet<>(locationSet);
 
         f.writeCSVSetIntoFile(locationSetC, Location.PATH);
-        System.out.println("Пользователь " + map.get("name") + " добавил локацию в коллекцию " +
+        System.out.println(map.get("name") + " добавил локацию в коллекцию " +
                 Location.PATH + ": " + newLoc.toCSV() );
     }
 
@@ -198,7 +198,7 @@ public class CommandDoc {
     public void login(String name) {
         Human.getHumanByName(name, Human.PATH);
         String previous = map.put("logUser", name);
-        System.out.println("Пользователь " + map.get("name") + " сменил персонажа: " + previous + " -> " + name);
+        System.out.println(map.get("name") + " сменил персонажа: " + previous + " -> " + name);
     }
 
     /**
@@ -219,7 +219,7 @@ public class CommandDoc {
         });
 
         f.writeCSVSetIntoFile(humanSet, Human.PATH);
-        System.out.println("Пользователь " + map.get("name") + " переместил персонажа " + map.get("logUser") + " в " + location);
+        System.out.println(map.get("name") + " переместил персонажа " + map.get("logUser") + " в " + location);
     }
 
     /**
@@ -245,7 +245,7 @@ public class CommandDoc {
             s.writeToChannel(socket, "Персонаж не уничтожен: его не существует!");
         } else {
             f.writeCSVSetIntoFile(humanSet, Human.PATH);
-            System.out.println("Пользователь " + map.get("name") + " уничтожил персонажа " + name);
+            System.out.println(map.get("name") + " уничтожил персонажа " + name);
         }
     }
 
@@ -272,7 +272,7 @@ public class CommandDoc {
         humanSet = new TreeSet<>(humanSet);
 
         f.writeCSVSetIntoFile(humanSet, Human.PATH);
-        System.out.println("Пользователь " + map.get("name") + " уничтожил персонажей, родившихся раньше чем " +
+        System.out.println(map.get("name") + " уничтожил персонажей, родившихся раньше чем " +
                 compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
                 ". Размер коллекции: " + humanSet.size() );
     }
@@ -300,7 +300,7 @@ public class CommandDoc {
         humanSet = new TreeSet<>(humanSet);
 
         f.writeCSVSetIntoFile(humanSet, Human.PATH);
-        System.out.println("Пользователь " + map.get("name") + " уничтожил персонажей, родившихся позже чем " +
+        System.out.println(map.get("name") + " уничтожил персонажей, родившихся позже чем " +
                 compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
                 ". Размер коллекции: " + humanSet.size() );
     }
@@ -316,7 +316,7 @@ public class CommandDoc {
         humanSet.add(new Human());
 
         f.writeCSVSetIntoFile(humanSet, Human.PATH);
-        System.out.println("Пользователь " + map.get("name") + " очистил коллекцию персонажей.");
+        System.out.println(map.get("name") + " очистил коллекцию персонажей.");
     }
 
     /**
@@ -361,14 +361,14 @@ public class CommandDoc {
                 writer.write(str);
             }
 
-            System.out.println("Пользователь " + map.get("name") + " загрузил свою коллекцию на сервер.");
+            System.out.println(map.get("name") + " загрузил свою коллекцию на сервер.");
         } catch (IOException e) {
-            System.out.println("Невозможно записать в файл " + Human.PATH);
+            s.writeToChannel(socket, "Невозможно записать в файл " + Human.PATH);
         }
     }
 
     /**
-     * Сохранить коллекцию с сервера в файл. Данные для сохранения берутся из файла по умолчанию или файла,
+     * Сохранить коллекцию в файл на клиенте. Данные для сохранения берутся из файла по умолчанию или файла,
      * указанного при создании сервера.<br>
      * <br>
      * Использование команды: import path
@@ -380,9 +380,72 @@ public class CommandDoc {
                 s.writeToChannel(socket, scanner.nextLine() );
             s.writeToChannel(socket, "!endimport");
 
-            System.out.println("Пользователь " + map.get("name") + " импортировал свою коллекцию с сервера.");
+            System.out.println(map.get("name") + " импортировал свою коллекцию с сервера.");
         } catch (IOException e) {
-            System.out.println("Невозможно прочитать файл " + Human.PATH);
+            s.writeToChannel(socket,"Невозможно прочитать файл " + Human.PATH);
+        }
+    }
+
+    /**
+     * Сохранить коллекцию в файл на сервере. Данные для сохранения берутся из файла по умолчанию или файла,
+     * указанного при создании сервера.<br>
+     * <br>
+     * Использование команды: save path
+     */
+    public void save(String path) {
+        try {
+            Scanner scanner = new Scanner(new FileReader(Human.PATH));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(path, false));
+
+            while (scanner.hasNextLine())
+                writer.write(scanner.nextLine() + "\n");
+
+            scanner.close();
+            writer.close();
+            System.out.println(map.get("name") + " сохранил коллекцию в " + path + ".");
+        } catch (IOException exc) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении или записи файла.");
+        }
+    }
+
+    /**
+     * Загрузить коллекцию из файла на сервере. Данные из коллекции сохраняются в путь по умолчанию или в путь,
+     * указанный при создании сервера.<br>
+     * <br>
+     * Использование команды: load path
+     */
+    public void load(String path) {
+        try {
+            Scanner scanner = new Scanner(new FileReader(path));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(Human.PATH, false));
+
+            while (scanner.hasNextLine())
+                writer.write(scanner.nextLine() + "\n");
+
+            scanner.close();
+            writer.close();
+            System.out.println(map.get("name") + " загрузил коллекцию из " + path + ".");
+        } catch (IOException exc) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении или записи файла.");
+        }
+    }
+
+    /**
+     * Последовательно выводит содержимое файлов. Существует для отладки или чтения файлов коллекций.<br>
+     * <br>
+     * Использование команды: cat file1 [file2 ...]
+     * @param files файлы, которые необходимо прочитать.
+     */
+    public void cat(String... files) {
+        try {
+            for (String file: files) {
+                Scanner scanner = new Scanner(new FileReader(file));
+                while (scanner.hasNextLine())
+                    s.writeToChannel(socket, scanner.nextLine());
+                scanner.close();
+            }
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении файла.");
         }
     }
 }
