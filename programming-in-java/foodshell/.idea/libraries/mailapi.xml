@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="mailapi">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../Универ/2 сем/Программирование/Лаб7/mailapi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Универ/2 сем/Программирование/Лаб7/postgresql.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

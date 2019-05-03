@@ -10,18 +10,13 @@ public class ClientHelper {
     private BufferedReader in;
     private PrintWriter out;
     private Socket socket;
-    private String name;
 
-    public ClientHelper(String ip, int port, String name) {
+    public ClientHelper(String ip, int port) {
         try {
             socket = new Socket();
             socket.connect(new InetSocketAddress(ip, port), 1000);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
-
-            this.name = name;
-
-            out.println(name);
         } catch (IOException exc) {
             System.err.println("Не могу установить соединение. Перезапустите программу.");
             System.exit(0);
@@ -29,7 +24,7 @@ public class ClientHelper {
     }
 
     public Thread receiveOutput() {
-        Receiver thread = new Receiver(name);
+        Receiver thread = new Receiver();
         thread.start();
         return thread;
     }
@@ -60,16 +55,10 @@ public class ClientHelper {
 
     private class Receiver extends Thread {
         private boolean stopped;
-        private String name;
 
         public void setStopped() {
             stopped = true;
         }
-
-        public Receiver(String name) {
-            this.name = name;
-        }
-
         public void run() {
             try {
                 CharBuffer buffer = CharBuffer.allocate(256);

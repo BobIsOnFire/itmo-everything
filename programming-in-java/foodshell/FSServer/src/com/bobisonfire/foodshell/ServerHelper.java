@@ -77,17 +77,32 @@ public class ServerHelper {
     private void handleAccept(SelectionKey key) throws IOException {
         SocketChannel socket = ( (ServerSocketChannel) key.channel() ).accept();
 
-        String name = readFromChannel(socket).trim();
-
-        Map<String, String> map = new HashMap<>();
-        map.put("name", name);
-        map.put("logUser", "God");
-
-        socket.configureBlocking(false);
-        socket.register(selector, SelectionKey.OP_READ, map);
-
-        System.out.println(name + " вошел.");
         writeToChannel(socket, initializeMessageClient());
+        String response;
+        try {
+            response = readFromChannel(socket).trim();
+        } catch (NullPointerException exc) {
+            writeToChannel(socket, "\0"); // todo check if it is necessary
+            socket.close();
+            return;
+        }
+
+        Integer id;
+        if (response.equals("y")) {
+            id = AuthorizeBuilder.authorizeInstance().apply(socket);
+        } else {
+            id = AuthorizeBuilder.registerInstance().apply(socket);
+        } // todo добавить еще одно приветствие после завершения авторизации
+
+        if (id == null) {
+            writeToChannel(socket, "\0"); // todo check if it is necessary
+            socket.close();
+            return;
+        }
+        socket.configureBlocking(false);
+        socket.register(selector, SelectionKey.OP_READ, id);
+
+        System.out.println("User#" + id + " вошел.");
     }
 
     /**
@@ -97,12 +112,13 @@ public class ServerHelper {
      */
     private void handleRead(SelectionKey key) throws IOException {
         SocketChannel socket = (SocketChannel) key.channel();
-        String message = readFromChannel(socket);
+        Integer id = (Integer) key.attachment();
 
-        Map<String, String> map = (Map<String, String>) key.attachment();
-
-        if (message == null) {
-            System.out.println(map.get("name") + " вышел.");
+        String message;
+        try {
+            message = readFromChannel(socket);
+        } catch (NullPointerException exc) {
+            System.out.println("User#" + id + " вышел.");
             socket.socket().close();
             return;
         }
@@ -165,38 +181,27 @@ public class ServerHelper {
 
     private String initializeMessageClient() {
         return "FoodShell v" + ServerMain.VERSION + ". Some rights reserved.\n" +
-               "Введите help для списка всех команд.\n";
+               "Введите help для списка всех команд.\n\nЕсть аккаунт? y/n";
     }
 
     /**
      * Организовывает чтение строки из канала.
      */
-    public String readFromChannel(SocketChannel socket) {
-        StringBuilder sb = new StringBuilder();
+    public static String readFromChannel(SocketChannel socket) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(256);
+        if (socket.read(buffer) < 0)
+            throw new NullPointerException();
 
-        ByteBuffer readBuffer = ByteBuffer.allocate(256);
-        int read;
-        try {
-            read = socket.read(readBuffer);
-            readBuffer.flip();
-            byte[] bytes = new byte[readBuffer.limit()];
-            readBuffer.get(bytes);
-            sb.append(new String(bytes));
-            readBuffer.clear();
-        } catch (IOException exc) {
-            read = -1;
-        }
-
-        if (read >= 0)
-            return sb.toString();
-
-        return null;
+        buffer.flip();
+        byte[] bytes = new byte[buffer.limit()];
+        buffer.get(bytes);
+        return new String(bytes).trim();
     }
 
     /**
      * Организовывает запись строки в канал.
      */
-    public void writeToChannel(SocketChannel socket, String message) {
+    public static void writeToChannel(SocketChannel socket, String message) {
         String msg = message + "\n";
         ByteBuffer writeBuffer = ByteBuffer.wrap(msg.getBytes());
 

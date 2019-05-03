@@ -31,16 +31,7 @@ public class ClientMain {
         String ip = temp[0];
         int port = Integer.parseInt(temp[1]);
 
-        System.out.print("Введите ваш логин в сети:\n> ");
-        String name = "";
-        while ( name.equals("") ) {
-            name = scanner.nextLine();
-
-            if (name.equals(""))
-                System.out.println("Введите непустое имя.");
-        }
-
-        ClientHelper client = new ClientHelper(ip, port, name);
+        ClientHelper client = new ClientHelper(ip, port);
 
         Thread receiver = client.receiveOutput();
 

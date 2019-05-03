@@ -1,11 +1,14 @@
 package com.bobisonfire.foodshell.entity;
 
+import com.bobisonfire.foodshell.DBExchanger;
 import com.bobisonfire.foodshell.transformer.CSVObject;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Locale;
 
 /**
@@ -17,16 +20,17 @@ public class Location implements Comparable<Location>, CSVSerializable {
     public static final String CSV_HEAD = "name,x,y,z";
     public static String PATH = "location.csv";
 
-    public static Location getLocationByName(String name) {
-        try {
-            return Files.lines(Paths.get(PATH))
-                    .skip(1)
-                    .map(elem -> new Location(new CSVObject(CSV_HEAD, elem)))
-                    .filter(e -> e.getName().equals(name))
-                    .findAny()
-                    .orElse(new Location());
-        } catch (IOException exc) {
-            return new Location();
+    public static String getLocationByName(String name) {
+        try (DBExchanger exchanger = new DBExchanger()) {
+            ResultSet set = exchanger.getQuery("SELECT name FROM locations WHERE name LIKE '" + name + "';");
+            if (set.next())
+                return set.getString("name");
+            else
+                return "World";
+        } catch (SQLException exc) {
+            System.out.println("Произошла ошибка при чтении базы.");
+            exc.printStackTrace();
+            return "World";
         }
     }
 
@@ -65,6 +69,15 @@ public class Location implements Comparable<Location>, CSVSerializable {
     public Location(String name, Coordinate coords) {
         this.name = name;
         this.coords = coords;
+    }
+
+    public Location(ResultSet set) throws SQLException {
+        this.name = set.getString("name");
+        this.coords = new Coordinate(
+                set.getDouble("x"),
+                set.getDouble("y"),
+                set.getDouble("z")
+        );
     }
 
 

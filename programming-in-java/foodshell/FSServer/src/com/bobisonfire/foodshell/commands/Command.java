@@ -111,15 +111,9 @@ public class Command {
         );
 
         new Command(
-                "login",
-                "login name - войти как другой пользователь name.",
-                (launcher, tokens) -> launcher.login(tokens[0])
-        );
-
-        new Command(
                 "move",
-                "move location - переместиться в локацию location.",
-                (launcher, tokens) -> launcher.move(tokens[0])
+                "move human location - переместить персонажа human в локацию location.",
+                (launcher, tokens) -> launcher.move(tokens[0], tokens[1])
         );
 
         new Command(
@@ -150,30 +144,6 @@ public class Command {
                 "info",
                 "info - получить информацию о текущей коллекции.",
                 (launcher, tokens) -> launcher.info()
-        );
-
-        new Command(
-                "export",
-                "export path - загрузить коллекцию из файла path, находящегося на клиенте, на сервер.",
-                (launcher, tokens) -> launcher.export()
-        );
-
-        new Command(
-                "import",
-                "import path - загрузить коллекцию с сервера в файл path, находящийся на клиенте.",
-                (launcher, tokens) -> launcher._import(tokens[0])
-        );
-
-        new Command(
-                "load",
-                "load path - загрузить коллекцию из файла path, находящегося на сервере, на сервер.",
-                (launcher, tokens) -> launcher.load(tokens[0])
-        );
-
-        new Command(
-                "save",
-                "save path - загрузить коллекцию с сервера в файл path, находящийся на сервере.",
-                (launcher, tokens) -> launcher.save(tokens[0])
         );
 
         new Command(

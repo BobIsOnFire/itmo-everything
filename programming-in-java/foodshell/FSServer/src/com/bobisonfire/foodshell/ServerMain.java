@@ -38,7 +38,6 @@ public class ServerMain {
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
 
     public static final String VERSION = "5.2.5";
-    public static ServerHelper server;
 
     public static void main(String[] args) {
         if (debug)
@@ -62,7 +61,7 @@ public class ServerMain {
                 Files.write(Paths.get(Location.PATH), Collections.singleton( new Location().toCSV() ));
 
 
-            server = new ServerHelper();
+            ServerHelper server = new ServerHelper();
             server.runServer();
         } catch (Exception e) {
             logException(e);

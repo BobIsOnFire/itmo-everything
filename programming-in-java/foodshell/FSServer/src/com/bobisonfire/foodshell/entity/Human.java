@@ -6,6 +6,8 @@ import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -19,22 +21,9 @@ public class Human implements Comparable<Human>, CSVSerializable {
     public static final String CSV_HEAD = "name,birthday,gender,location,creationDate";
     public static String PATH = "human.csv";
 
-    public static Human getHumanByName(String name, String path) {
-        try {
-            return Files.lines(Paths.get(path))
-                    .skip(1)
-                    .map(elem -> new Human(new CSVObject(CSV_HEAD, elem)))
-                    .filter(e -> e.getName().equals(name))
-                    .findAny()
-                    .orElse(new Human());
-        } catch (IOException exc) {
-            return new Human();
-        }
-    }
-
     public String toCSV() {
         return String.format("%s,%s,%d,%s,%s",
-                name, getBirthday(), gender.ordinal(), getLocation().getName(), getCreationDate());
+                name, getBirthday(), gender.ordinal(), location, getCreationDate());
     }
 
     public String getPath() {
@@ -50,7 +39,7 @@ public class Human implements Comparable<Human>, CSVSerializable {
     private String name;
     private Date birthday;
     private Gender gender;
-    private Location location;
+    private String location;
     private Date creationDate;
 
     public String getName() {
@@ -85,12 +74,12 @@ public class Human implements Comparable<Human>, CSVSerializable {
         return gender;
     }
 
-    public Location getLocation() {
+    public String getLocation() {
         return location;
     }
 
     public void setLocation(Location location) {
-        this.location = location;
+        this.location = location.getName();
     }
 
 
@@ -107,8 +96,16 @@ public class Human implements Comparable<Human>, CSVSerializable {
         name = "God";
         birthday = new Date(1);
         gender = Gender.getGenderByNumber(2);
-        location = Location.getLocationByName("World");
+        location = "World";
         creationDate = new Date();
+    }
+
+    public Human(ResultSet set) throws SQLException {
+        name = set.getString("name");
+        birthday = set.getDate("birthday");
+        gender = Gender.getGenderByNumber( set.getInt("gender") );
+        location = Location.getLocationByName( set.getString("location") );
+        creationDate = set.getTimestamp("creation_date"); // todo по заданию хранится в другом формате
     }
 
     public int compareTo(Human other) {
@@ -125,6 +122,6 @@ public class Human implements Comparable<Human>, CSVSerializable {
     @Override
     public String toString() {
         return String.format("%s %s, %d лет, находится в %s; создан %s",
-                gender.getName(), name, getAge(), location.getName(), getCreationDate());
+                gender.getName(), name, getAge(), location, getCreationDate());
     }
 }
