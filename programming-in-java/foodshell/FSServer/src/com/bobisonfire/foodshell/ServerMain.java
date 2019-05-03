@@ -8,6 +8,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -31,10 +33,9 @@ import java.util.Date;
  * @version 5.2.5
  */
 public class ServerMain {
-//    private static final String PATH_PREFIX = ""; private static final boolean debug = true;
-    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/"; private static final boolean debug = false;
+    private static final String PATH_PREFIX = ""; private static final boolean debug = true;
+//    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/"; private static final boolean debug = false;
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
-    private static final FileIOHelper f = new FileIOHelper();
 
     public static final String VERSION = "5.2.5";
     public static ServerHelper server;
@@ -55,10 +56,10 @@ public class ServerMain {
             Command.createBasicCommands();
 
             if (!new File(Human.PATH).exists())
-                f.writeCSVSetIntoFile(Collections.singleton(new Human()), Human.PATH);
+                Files.write(Paths.get(Human.PATH), Collections.singleton( new Human().toCSV() ));
 
             if (!new File(Location.PATH).exists())
-                f.writeCSVSetIntoFile(Collections.singleton(new Location()), Location.PATH);
+                Files.write(Paths.get(Location.PATH), Collections.singleton( new Location().toCSV() ));
 
 
             server = new ServerHelper();

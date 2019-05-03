@@ -6,7 +6,7 @@
         <serverdata>
           <mappings>
             <mapping deploy="/prog/lab6/" local="$PROJECT_DIR$" web="/" />
-            <mapping deploy="/public_html/" local="$PROJECT_DIR$/javadoc" web="/~s264443/javadoc/" />
+            <mapping deploy="/public_html/javadoc/" local="$PROJECT_DIR$/javadoc" web="/~s264443/javadoc/" />
             <mapping deploy="/prog/lab6/FSClient" local="$PROJECT_DIR$/FSClient" web="/" />
             <mapping deploy="/prog/lab6/FSServer" local="$PROJECT_DIR$/FSServer" web="/" />
           </mappings>

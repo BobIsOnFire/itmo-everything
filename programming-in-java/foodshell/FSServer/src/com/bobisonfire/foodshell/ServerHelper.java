@@ -3,11 +3,9 @@ package com.bobisonfire.foodshell;
 import com.bobisonfire.foodshell.commands.Command;
 import com.bobisonfire.foodshell.commands.CommandDoc;
 import com.bobisonfire.foodshell.entity.Human;
-import com.bobisonfire.foodshell.entity.Location;
 import com.bobisonfire.foodshell.exc.NotFoundException;
 import com.bobisonfire.foodshell.exc.TransformerException;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,7 +23,6 @@ import java.util.*;
 public class ServerHelper {
     private ServerSocketChannel serverChannel;
     private Selector selector;
-    private final FileIOHelper f = new FileIOHelper();
 
     /**
      * Создание сервера и вывод его адреса, обработка критических ошибок.
@@ -75,7 +72,7 @@ public class ServerHelper {
     /**
      * Обработка нового соединения: сохранение имени пользователя и пути к его коллекции с персонажами,
      * вывод приветственного сообщения и передача в селектор соединения для чтения.
-     * @param key ключ соединения
+     * @param key ключ соединения в селекторе
      */
     private void handleAccept(SelectionKey key) throws IOException {
         SocketChannel socket = ( (ServerSocketChannel) key.channel() ).accept();
@@ -96,8 +93,7 @@ public class ServerHelper {
     /**
      * Обработка получаемого сообщения - команды или сигнала выхода. Если пользователь выходит, закрывает
      * его соединение. Если пользователь отправил команду, передает соединение обработчику команд <i>FoodShell</i>.
-     * @param key
-     * @throws IOException
+     * @param key ключ соединения в селекторе
      */
     private void handleRead(SelectionKey key) throws IOException {
         SocketChannel socket = (SocketChannel) key.channel();

@@ -1,11 +1,13 @@
 package com.bobisonfire.foodshell.entity;
 
-import com.bobisonfire.foodshell.FileIOHelper;
+import com.bobisonfire.foodshell.transformer.CSVObject;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 
 /**
  * Класс, реализующий персонажей - основных действующих единиц <i>FoodShell</i>.<br>
@@ -18,16 +20,16 @@ public class Human implements Comparable<Human>, CSVSerializable {
     public static String PATH = "human.csv";
 
     public static Human getHumanByName(String name, String path) {
-        Iterator<ObjectTransformer> iter = new FileIOHelper()
-                .readCSVSetFromFile(path)
-                .stream()
-                .filter(e -> e.getString("name").equals(name))
-                .iterator();
-
-        if (iter.hasNext())
-            return new Human(iter.next());
-
-        return new Human();
+        try {
+            return Files.lines(Paths.get(path))
+                    .skip(1)
+                    .map(elem -> new Human(new CSVObject(CSV_HEAD, elem)))
+                    .filter(e -> e.getName().equals(name))
+                    .findAny()
+                    .orElse(new Human());
+        } catch (IOException exc) {
+            return new Human();
+        }
     }
 
     public String toCSV() {

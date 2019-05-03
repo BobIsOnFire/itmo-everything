@@ -1,16 +1,17 @@
 package com.bobisonfire.foodshell.commands;
 
-import com.bobisonfire.foodshell.FileIOHelper;
 import com.bobisonfire.foodshell.ServerHelper;
 import com.bobisonfire.foodshell.ServerMain;
 import com.bobisonfire.foodshell.entity.*;
 import com.bobisonfire.foodshell.exc.*;
+import com.bobisonfire.foodshell.transformer.CSVObject;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,7 +25,6 @@ import java.util.stream.Collectors;
  */
 public class CommandDoc {
     private static ServerHelper s = ServerMain.server;
-    private static FileIOHelper f = new FileIOHelper();
     private SocketChannel socket;
     private Map<String, String> map;
 
@@ -38,7 +38,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: exit
      */
-    public void exit() {
+    void exit() {
         s.writeToChannel(socket, "FoodShell закрывается.");
     }
 
@@ -47,7 +47,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: help
      */
-    public void help() {
+    void help() {
         s.writeToChannel(socket, "Используйте help command для получения описания определенной команды.");
         Command.getMap().forEach( (k, v) -> s.writeToChannel(socket, k));
     }
@@ -59,7 +59,7 @@ public class CommandDoc {
      * @param command Название команды
      * @throws NotFoundException Послано, если такой команды не существует.
      */
-    public void help(String command) {
+    void help(String command) {
         s.writeToChannel( socket, Command.getCommandByName(command).getDescription() );
     }
 
@@ -68,7 +68,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: gender
      */
-    public void gender() {
+    void gender() {
         s.writeToChannel(socket, "\t\t** There are only 15 genders. **");
         for (Gender gender: Gender.values())
             s.writeToChannel(socket, gender.ordinal() + ". " + gender.getName());
@@ -90,25 +90,34 @@ public class CommandDoc {
      *               Если поле не указано, ставится значение по умолчанию. Остальные поля игнорируются.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public void insert(String name, ObjectTransformer object) {
-        Set<ObjectTransformer> set = f.readCSVSetFromFile(Human.PATH);
-
+    void insert(String name, ObjectTransformer object) {
         object.put("name", name);
         Human newHuman = new Human(object);
-        newHuman.setCreationDate(new Date());
 
-        Set<Human> humanSet = new TreeSet<>();
-        set.forEach(elem -> humanSet.add( new Human(elem) ));
+        Set<Human> humanSet;
+        try {
+            humanSet = Files.lines(Paths.get(Human.PATH))
+                    .skip(1)
+                    .map(x -> new Human( new CSVObject(Human.CSV_HEAD, x) ))
+                    .filter(x -> !x.equals(newHuman) )
+                    .collect(Collectors.toCollection(TreeSet::new));
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+            humanSet = new TreeSet<>();
+        }
 
-        Set<Human> humanSetC = humanSet
-                .stream()
-                .filter(elem -> !elem.equals(newHuman))
-                .collect(Collectors.toSet());
+        humanSet.add(newHuman);
+        List<String> list = humanSet.stream()
+                .map(Human::toCSV)
+                .collect(Collectors.toList());
 
-        humanSetC.add(newHuman);
-        humanSetC = new TreeSet<>(humanSetC);
+        list.add(0, Human.CSV_HEAD);
+        try {
+            Files.write(Paths.get(Human.PATH), list);
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при записи.");
+        }
 
-        f.writeCSVSetIntoFile(humanSetC, Human.PATH);
         System.out.println(map.get("name") + " добавил персонажа в коллекцию: " +
                 newHuman.toString() );
     }
@@ -122,25 +131,35 @@ public class CommandDoc {
      * @param name - название локации (уникальный ключ)
      * @param coords - координаты локации (три числа с плавающей точкой)
      */
-    public void location(String name, Coordinate coords) {
-        Set<ObjectTransformer> set = f.readCSVSetFromFile(Location.PATH);
-
+    void location(String name, Coordinate coords) {
         Location newLoc = new Location(name, coords);
 
-        Set<Location> locationSet = new TreeSet<>();
-        set.forEach(elem -> locationSet.add( new Location(elem) ));
+        Set<Location> locationSet;
+        try {
+            locationSet = Files.lines(Paths.get(Location.PATH))
+                    .skip(1)
+                    .map(x -> new Location( new CSVObject(Location.CSV_HEAD, x) ))
+                    .filter(x -> !x.equals(newLoc) )
+                    .collect(Collectors.toCollection(TreeSet::new));
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+            locationSet = new TreeSet<>();
+        }
 
-        Set<Location> locationSetC = locationSet
-                .stream()
-                .filter(elem -> !elem.equals(newLoc))
-                .collect(Collectors.toSet());
+        locationSet.add(newLoc);
+        List<String> list = locationSet.stream()
+                .map(Location::toCSV)
+                .collect(Collectors.toList());
 
-        locationSetC.add(newLoc);
-        locationSetC = new TreeSet<>(locationSet);
+        list.add(0, Location.CSV_HEAD);
+        try {
+            Files.write(Paths.get(Location.PATH), list);
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при записи.");
+        }
 
-        f.writeCSVSetIntoFile(locationSetC, Location.PATH);
-        System.out.println(map.get("name") + " добавил локацию в коллекцию " +
-                Location.PATH + ": " + newLoc.toCSV() );
+        System.out.println(map.get("name") + " добавил локацию в коллекцию: " +
+                newLoc.toString() );
     }
 
     /**
@@ -148,9 +167,15 @@ public class CommandDoc {
      * <br>
      * Использование команды: locations
      */
-    public void locations() {
-        f.readCSVSetFromFile(Location.PATH)
-                .forEach(elem -> s.writeToChannel( socket, new Location(elem).toString() ));
+    void locations() {
+        try {
+            Files.lines(Paths.get(Location.PATH))
+                    .skip(1)
+                    .map(elem -> new Location( new CSVObject(Location.CSV_HEAD, elem) ))
+                    .forEach(elem -> s.writeToChannel( socket, elem.toString() ));
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+        }
     }
 
     /**
@@ -158,13 +183,16 @@ public class CommandDoc {
      * <br>
      * Использование команды: show
      */
-    public void show() {
-        Set<Human> humanSet = new TreeSet<>();
-
-        f.readCSVSetFromFile( Human.PATH )
-                .forEach(elem -> humanSet.add( new Human(elem) ));
-
-        humanSet.forEach(elem -> s.writeToChannel( socket, elem.toString() ));
+    void show() {
+        try {
+            Files.lines(Paths.get(Human.PATH))
+                    .skip(1)
+                    .map(x -> new Human( new CSVObject(Human.CSV_HEAD, x) ))
+                    .sorted()
+                    .forEach(elem -> s.writeToChannel( socket, elem.toString() ));
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+        }
     }
 
     /**
@@ -173,7 +201,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: me
      */
-    public void me() {
+    void me() {
         Human me = Human.getHumanByName(map.get("logUser"), Human.PATH);
         Coordinate coordinate = me.getLocation().getCoords();
 
@@ -195,7 +223,7 @@ public class CommandDoc {
      * Использование команды: login name
      * @param name Имя персонажа (уникальный ключ).
      */
-    public void login(String name) {
+    void login(String name) {
         Human.getHumanByName(name, Human.PATH);
         String previous = map.put("logUser", name);
         System.out.println(map.get("name") + " сменил персонажа: " + previous + " -> " + name);
@@ -207,18 +235,31 @@ public class CommandDoc {
      * Использование команды: move location
      * @param location Название локации (уникальный ключ).
      */
-    public void move(String location) {
+    void move(String location) {
         Location loc = Location.getLocationByName(location);
 
-        Set<Human> humanSet = new TreeSet<>();
-        f.readCSVSetFromFile(Human.PATH).forEach(elem -> {
-            Human human = new Human(elem);
-            if ( human.getName().equals(map.get("logUser")) )
-                human.setLocation(loc);
-            humanSet.add(human);
-        });
+        List<String> list;
+        try {
+            list = Files.lines(Paths.get(Human.PATH))
+                    .skip(1)
+                    .map(x -> new Human( new CSVObject(Human.CSV_HEAD, x) ))
+                    .sorted()
+                    .peek(elem -> {
+                        if (elem.getName().equals(map.get("logUser"))) elem.setLocation(loc);
+                    })
+                    .map(Human::toCSV)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+            list = new ArrayList<>();
+        }
 
-        f.writeCSVSetIntoFile(humanSet, Human.PATH);
+        list.add(0, Human.CSV_HEAD);
+        try {
+            Files.write(Paths.get(Human.PATH), list);
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при записи.");
+        }
         System.out.println(map.get("name") + " переместил персонажа " + map.get("logUser") + " в " + location);
     }
 
@@ -229,24 +270,34 @@ public class CommandDoc {
      * Использование команды: remove name
      * @param name Имя персонажа (уникальный ключ).
      */
-    public void remove(String name) {
+    void remove(String name) {
         if (name.equals("God")) {
             s.writeToChannel(socket, "God невозможно уничтожить (по крайней мере, тебе)");
             return;
         }
-        Set<Human> humanSet = new TreeSet<>();
-        Set<ObjectTransformer> set = f.readCSVSetFromFile(Human.PATH);
 
-        set.stream()
-                .filter(elem -> !elem.getString("name").equals(name))
-                .forEach(elem -> humanSet.add( new Human(elem) ));
-
-        if (set.size() == humanSet.size()) {
-            s.writeToChannel(socket, "Персонаж не уничтожен: его не существует!");
-        } else {
-            f.writeCSVSetIntoFile(humanSet, Human.PATH);
-            System.out.println(map.get("name") + " уничтожил персонажа " + name);
+        List<String> list;
+        try {
+            list = Files.lines(Paths.get(Human.PATH))
+                    .skip(1)
+                    .map(elem -> new Human( new CSVObject(Human.CSV_HEAD, elem)))
+                    .sorted()
+                    .filter(elem -> !elem.getName().equals(name))
+                    .map(Human::toCSV)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+            list = new ArrayList<>();
         }
+
+        list.add(0, Human.CSV_HEAD);
+        try {
+            Files.write(Paths.get(Human.PATH), list);
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при записи.");
+        }
+        System.out.println(map.get("name") + " уничтожил персонажа " + name);
+
     }
 
     /**
@@ -257,24 +308,31 @@ public class CommandDoc {
      *               производится уничтожение персонажей.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public void remove_older(ObjectTransformer object) {
-        Set<Human> set = new TreeSet<>();
+    void remove_older(ObjectTransformer object) {
         Human compare = new Human(object);
 
-        f.readCSVSetFromFile(Human.PATH)
-                .forEach(elem -> set.add( new Human(elem) ));
+        List<String> list;
+        try {
+            list = Files.lines(Paths.get(Human.PATH))
+                    .skip(1)
+                    .map(elem -> new Human( new CSVObject(Human.CSV_HEAD, elem)))
+                    .sorted()
+                    .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) > 0)
+                    .map(Human::toCSV)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+            list = new ArrayList<>();
+        }
 
-        Set<Human> humanSet = set
-                .stream()
-                .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) > 0)
-                .collect(Collectors.toSet());
-
-        humanSet = new TreeSet<>(humanSet);
-
-        f.writeCSVSetIntoFile(humanSet, Human.PATH);
+        list.add(0, Human.CSV_HEAD);
+        try {
+            Files.write(Paths.get(Human.PATH), list);
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при записи.");
+        }
         System.out.println(map.get("name") + " уничтожил персонажей, родившихся раньше чем " +
-                compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
-                ". Размер коллекции: " + humanSet.size() );
+                compare.getBirthday() + ". Текущий размер коллекции: " + list.size() );
     }
 
     /**
@@ -285,24 +343,31 @@ public class CommandDoc {
      *               производится уничтожение персонажей.
      * @throws TransformerException Послано, если object не является json-объектом.
      */
-    public void remove_younger(ObjectTransformer object) {
-        Set<Human> set = new TreeSet<>();
+    void remove_younger(ObjectTransformer object) {
         Human compare = new Human(object);
 
-        f.readCSVSetFromFile(Human.PATH)
-                .forEach(elem -> set.add( new Human(elem) ));
+        List<String> list;
+        try {
+            list = Files.lines(Paths.get(Human.PATH))
+                    .skip(1)
+                    .map(elem -> new Human( new CSVObject(Human.CSV_HEAD, elem)))
+                    .sorted()
+                    .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) < 0)
+                    .map(Human::toCSV)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+            list = new ArrayList<>();
+        }
 
-        Set<Human> humanSet = set
-                .stream()
-                .filter(elem -> elem.equals( new Human() ) || elem.compareTo(compare) < 0)
-                .collect(Collectors.toSet());
-
-        humanSet = new TreeSet<>(humanSet);
-
-        f.writeCSVSetIntoFile(humanSet, Human.PATH);
+        list.add(0, Human.CSV_HEAD);
+        try {
+            Files.write(Paths.get(Human.PATH), list);
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при записи.");
+        }
         System.out.println(map.get("name") + " уничтожил персонажей, родившихся позже чем " +
-                compare.getBirthday() + ". Уничтожено персонажей: " + ( set.size() - humanSet.size() ) +
-                ". Размер коллекции: " + humanSet.size() );
+                compare.getBirthday() + ". Размер коллекции: " + list.size() );
     }
 
     /**
@@ -311,11 +376,12 @@ public class CommandDoc {
      * <br>
      * Использование команды: clear
      */
-    public void clear() {
-        Set<Human> humanSet = new TreeSet<>();
-        humanSet.add(new Human());
-
-        f.writeCSVSetIntoFile(humanSet, Human.PATH);
+    void clear() {
+        try {
+            Files.write(Paths.get(Human.PATH), Arrays.asList( Human.CSV_HEAD, new Human().toCSV() ));
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при записи.");
+        }
         System.out.println(map.get("name") + " очистил коллекцию персонажей.");
     }
 
@@ -325,21 +391,26 @@ public class CommandDoc {
      * <br>
      * Использование команды: info
      */
-    public void info() {
-        Set<ObjectTransformer> set = f.readCSVSetFromFile(Human.PATH);
-        Optional<ObjectTransformer> opt = set.stream().filter(elem -> elem.getString("name").equals("God")).findFirst();
+    void info() {
+        Set<Human> set;
+        try {
+            set = Files.lines(Paths.get(Human.PATH))
+                    .skip(1)
+                    .map(elem -> new Human( new CSVObject(Human.CSV_HEAD, elem) ))
+                    .collect(Collectors.toSet());
+        } catch (IOException e) {
+            s.writeToChannel(socket, "Произошла ошибка при чтении.");
+            set = new TreeSet<>();
+        }
 
-        Date creationDate;
-        if (opt.isPresent())
-            creationDate = opt.get().getDate("creationDate", "dd.MM.yyyy HH:mm:ss");
-        else
-            creationDate = new Date();
-
+        Human first = set.stream()
+                .filter(elem -> elem.getName().equals("God"))
+                .findFirst()
+                .orElse(new Human());
 
         int mapSize = set.size();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-        s.writeToChannel(socket, "Тип коллекции: " + new TreeSet<Human>().getClass().getCanonicalName() + ".\n" +
-                "Размер коллекции: " + mapSize + ", дата создания - " + sdf.format(creationDate) );
+        s.writeToChannel(socket, "Тип коллекции: " + TreeSet.class.getCanonicalName() + ".\n" +
+                "Размер коллекции: " + mapSize + ", дата создания - " + first.getCreationDate() );
     }
 
     /**
@@ -348,7 +419,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: export path
      */
-    public void export() {
+    void export() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(Human.PATH, false))) {
             while ( true ) {
                 String str = s.readFromChannel(socket);
@@ -373,7 +444,7 @@ public class CommandDoc {
      * <br>
      * Использование команды: import path
      */
-    public void _import(String path) {
+    void _import(String path) {
         try (Scanner scanner = new Scanner(new FileReader(Human.PATH))) {
             s.writeToChannel(socket, "!import " + path);
             while (scanner.hasNextLine())
@@ -392,16 +463,9 @@ public class CommandDoc {
      * <br>
      * Использование команды: save path
      */
-    public void save(String path) {
+    void save(String path) {
         try {
-            Scanner scanner = new Scanner(new FileReader(Human.PATH));
-            BufferedWriter writer = new BufferedWriter(new FileWriter(path, false));
-
-            while (scanner.hasNextLine())
-                writer.write(scanner.nextLine() + "\n");
-
-            scanner.close();
-            writer.close();
+            Files.write(Paths.get(path), Files.readAllLines(Paths.get(Human.PATH)));
             System.out.println(map.get("name") + " сохранил коллекцию в " + path + ".");
         } catch (IOException exc) {
             s.writeToChannel(socket, "Произошла ошибка при чтении или записи файла.");
@@ -414,16 +478,9 @@ public class CommandDoc {
      * <br>
      * Использование команды: load path
      */
-    public void load(String path) {
+    void load(String path) {
         try {
-            Scanner scanner = new Scanner(new FileReader(path));
-            BufferedWriter writer = new BufferedWriter(new FileWriter(Human.PATH, false));
-
-            while (scanner.hasNextLine())
-                writer.write(scanner.nextLine() + "\n");
-
-            scanner.close();
-            writer.close();
+            Files.write(Paths.get(Human.PATH), Files.readAllLines(Paths.get(path)));
             System.out.println(map.get("name") + " загрузил коллекцию из " + path + ".");
         } catch (IOException exc) {
             s.writeToChannel(socket, "Произошла ошибка при чтении или записи файла.");
@@ -436,7 +493,7 @@ public class CommandDoc {
      * Использование команды: cat file1 [file2 ...]
      * @param files файлы, которые необходимо прочитать.
      */
-    public void cat(String... files) {
+    void cat(String... files) {
         try {
             for (String file: files) {
                 Scanner scanner = new Scanner(new FileReader(file));

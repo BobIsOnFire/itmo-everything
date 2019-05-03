@@ -10,21 +10,15 @@ import java.util.TreeMap;
  * Класс, реализующий логику исполняемых команд.<br>
  */
 public class Command {
-    private String name;
     private String description;
     private Launchable function;
     private static TreeMap<String, Command> CommandMap = new TreeMap<>();
 
     public Command(String name, String description, Launchable function) {
-        this.name = name;
         this.description = description;
         this.function = function;
 
         CommandMap.put(name, this);
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String getDescription() {

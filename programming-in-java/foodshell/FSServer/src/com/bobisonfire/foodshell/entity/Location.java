@@ -1,9 +1,11 @@
 package com.bobisonfire.foodshell.entity;
 
-import com.bobisonfire.foodshell.FileIOHelper;
+import com.bobisonfire.foodshell.transformer.CSVObject;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
-import java.util.Iterator;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Locale;
 
 /**
@@ -16,16 +18,16 @@ public class Location implements Comparable<Location>, CSVSerializable {
     public static String PATH = "location.csv";
 
     public static Location getLocationByName(String name) {
-        Iterator<ObjectTransformer> iter = new FileIOHelper()
-                        .readCSVSetFromFile(PATH)
-                        .stream()
-                        .filter(e -> e.getString("name").equals(name))
-                        .iterator();
-
-        if (iter.hasNext())
-            return new Location(iter.next());
-
-        return new Location();
+        try {
+            return Files.lines(Paths.get(PATH))
+                    .skip(1)
+                    .map(elem -> new Location(new CSVObject(CSV_HEAD, elem)))
+                    .filter(e -> e.getName().equals(name))
+                    .findAny()
+                    .orElse(new Location());
+        } catch (IOException exc) {
+            return new Location();
+        }
     }
 
     public String toCSV() {
@@ -77,7 +79,7 @@ public class Location implements Comparable<Location>, CSVSerializable {
 
     @Override
     public int compareTo(Location other) {
-        return coords.compareTo(other.coords);
+        return name.compareTo(other.name);
     }
 
     @Override
