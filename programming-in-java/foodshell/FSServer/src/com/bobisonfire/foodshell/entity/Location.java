@@ -1,28 +1,20 @@
 package com.bobisonfire.foodshell.entity;
 
 import com.bobisonfire.foodshell.DBExchanger;
-import com.bobisonfire.foodshell.transformer.CSVObject;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Locale;
 
 /**
  * Класс, реализующий локации - места расположения персонажей в <i>FoodShell</i>.<br>
  * Локация World - основная локация, в нее помещаются все персонажи при отстутствии других локаций
  * и ее невозможно удалить.
  */
-public class Location implements Comparable<Location>, CSVSerializable {
-    public static final String CSV_HEAD = "name,x,y,z";
-    public static String PATH = "location.csv";
-
+public class Location implements Comparable<Location> {
     public static String getLocationByName(String name) {
         try (DBExchanger exchanger = new DBExchanger()) {
-            ResultSet set = exchanger.getQuery("SELECT name FROM locations WHERE name LIKE '" + name + "';");
+            ResultSet set = exchanger.getQuery("SELECT name FROM locations WHERE name LIKE ?;", name);
             if (set.next())
                 return set.getString("name");
             else
@@ -33,21 +25,6 @@ public class Location implements Comparable<Location>, CSVSerializable {
             return "World";
         }
     }
-
-    public String toCSV() {
-        return String.format(Locale.US, "%s,%.3f,%.3f,%.3f",
-                name, coords.getX(), coords.getY(), coords.getZ());
-    }
-
-    public String getPath() {
-        return PATH;
-    }
-
-    public String getCSVHead() {
-        return CSV_HEAD;
-    }
-
-
 
     private String name;
     private Coordinate coords;

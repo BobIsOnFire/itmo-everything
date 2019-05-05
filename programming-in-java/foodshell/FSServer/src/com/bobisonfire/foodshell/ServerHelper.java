@@ -2,7 +2,6 @@ package com.bobisonfire.foodshell;
 
 import com.bobisonfire.foodshell.commands.Command;
 import com.bobisonfire.foodshell.commands.CommandDoc;
-import com.bobisonfire.foodshell.entity.Human;
 import com.bobisonfire.foodshell.exc.NotFoundException;
 import com.bobisonfire.foodshell.exc.TransformerException;
 
@@ -27,7 +26,7 @@ public class ServerHelper {
     /**
      * Создание сервера и вывод его адреса, обработка критических ошибок.
      */
-    public ServerHelper() {
+    ServerHelper() {
 
         try {
             serverChannel = ServerSocketChannel.open();
@@ -37,8 +36,7 @@ public class ServerHelper {
             selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
             System.out.println("Сервер доступен по адресу " + InetAddress.getLocalHost() + ":" +
-                    serverChannel.socket().getLocalPort() + ".\nИспользует коллекцию персонажей по умолчанию: " +
-                    Human.PATH + "\n");
+                    serverChannel.socket().getLocalPort() + ".\n");
 
         } catch(Exception e) {
             System.err.println("Что-то не так с сервером. Закрываюсь...");
@@ -49,7 +47,7 @@ public class ServerHelper {
     /**
      * Организация работы сервера: итерация по селектору в поиске новых каналов и чтении существующих.
      */
-    public void runServer() {
+    void runServer() {
         try {
             Iterator<SelectionKey> iter;
             SelectionKey key;
@@ -92,10 +90,10 @@ public class ServerHelper {
             id = AuthorizeBuilder.authorizeInstance().apply(socket);
         } else {
             id = AuthorizeBuilder.registerInstance().apply(socket);
-        } // todo добавить еще одно приветствие после завершения авторизации
+        }
 
         if (id == null) {
-            writeToChannel(socket, "\0"); // todo check if it is necessary
+            writeToChannel(socket, "\0");
             socket.close();
             return;
         }
@@ -103,6 +101,7 @@ public class ServerHelper {
         socket.register(selector, SelectionKey.OP_READ, id);
 
         System.out.println("User#" + id + " вошел.");
+        writeToChannel(socket, "Введите help для списка всех команд.");
     }
 
     /**
@@ -180,14 +179,13 @@ public class ServerHelper {
     }
 
     private String initializeMessageClient() {
-        return "FoodShell v" + ServerMain.VERSION + ". Some rights reserved.\n" +
-               "Введите help для списка всех команд.\n\nЕсть аккаунт? y/n";
+        return "FoodShell v" + ServerMain.VERSION + ". Some rights reserved.\n\nЕсть аккаунт? y/n";
     }
 
     /**
      * Организовывает чтение строки из канала.
      */
-    public static String readFromChannel(SocketChannel socket) throws IOException {
+    static String readFromChannel(SocketChannel socket) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(256);
         if (socket.read(buffer) < 0)
             throw new NullPointerException();

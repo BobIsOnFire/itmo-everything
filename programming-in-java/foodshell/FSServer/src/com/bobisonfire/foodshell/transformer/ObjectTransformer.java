@@ -1,8 +1,10 @@
 package com.bobisonfire.foodshell.transformer;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.TreeMap;
 
 /**
@@ -10,8 +12,8 @@ import java.util.TreeMap;
  * Поля и значения хранятся в соответствующей структуре values.
  */
 public abstract class ObjectTransformer {
-    protected TreeMap<String, String> values = new TreeMap<>();
-    protected String value;
+    TreeMap<String, String> values = new TreeMap<>();
+    String value;
 
     public String getString(String key) {
         if (!values.containsKey(key))
@@ -37,17 +39,19 @@ public abstract class ObjectTransformer {
         return Long.parseLong(values.get(key));
     }
 
-    public Date getDate(String key, String pattern) {
+    public OffsetDateTime getDate(String key, String pattern) {
         if (!values.containsKey(key))
-            return new Date();
-
-        SimpleDateFormat sdf = new SimpleDateFormat(pattern);
-        Date date = new Date();
+            return OffsetDateTime.now();
+        OffsetDateTime date = OffsetDateTime.now();
 
         try {
-            date = sdf.parse(values.get(key));
+            date = OffsetDateTime.of(
+                    LocalDate.parse(values.get(key), DateTimeFormatter.ofPattern(pattern)).atTime(0, 0),
+                    ZoneOffset.UTC
+            );
+            //date = OffsetDateTime.parse(values.get(key), DateTimeFormatter.ofPattern(pattern));
         }
-        catch(ParseException exc) {
+        catch(DateTimeParseException exc) {
             System.out.println("Wrong pattern! Setting today's date..");
         }
         return date;

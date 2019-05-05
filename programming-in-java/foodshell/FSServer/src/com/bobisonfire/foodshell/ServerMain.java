@@ -1,17 +1,11 @@
 package com.bobisonfire.foodshell;
 
 import com.bobisonfire.foodshell.commands.Command;
-import com.bobisonfire.foodshell.entity.Human;
-import com.bobisonfire.foodshell.entity.Location;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -33,34 +27,19 @@ import java.util.Date;
  * @version 5.2.5
  */
 public class ServerMain {
-    private static final String PATH_PREFIX = ""; private static final boolean debug = true;
-//    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/"; private static final boolean debug = false;
+//    private static final String PATH_PREFIX = ""; static final boolean debug = true;
+    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/"; static final boolean debug = false;
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
 
-    public static final String VERSION = "5.2.5";
+    static final String VERSION = "6.1.3";
+    static final boolean mailWorking = false;
 
     public static void main(String[] args) {
         if (debug)
             System.out.println("Running debug version..");
-
-        if (args.length > 0)
-            Human.PATH = args[0];
-        else
-            Human.PATH = PATH_PREFIX + Human.PATH;
-
         try {
             initializeMessage();
-
-            Location.PATH = PATH_PREFIX + Location.PATH;
             Command.createBasicCommands();
-
-            if (!new File(Human.PATH).exists())
-                Files.write(Paths.get(Human.PATH), Collections.singleton( new Human().toCSV() ));
-
-            if (!new File(Location.PATH).exists())
-                Files.write(Paths.get(Location.PATH), Collections.singleton( new Location().toCSV() ));
-
-
             ServerHelper server = new ServerHelper();
             server.runServer();
         } catch (Exception e) {
@@ -71,7 +50,7 @@ public class ServerMain {
     /**
      * Сохраняет информацию о возникшей ошибке в лог ошибок (по умолчанию - error.log в папке с лабой).
      */
-    static void logException(Exception exc) {
+    public static void logException(Exception exc) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         try {
             FileWriter fw = new FileWriter(ERROR_PATH, true);

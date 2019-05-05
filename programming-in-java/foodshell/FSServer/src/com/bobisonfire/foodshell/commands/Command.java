@@ -14,14 +14,14 @@ public class Command {
     private Launchable function;
     private static TreeMap<String, Command> CommandMap = new TreeMap<>();
 
-    public Command(String name, String description, Launchable function) {
+    private Command(String name, String description, Launchable function) {
         this.description = description;
         this.function = function;
 
         CommandMap.put(name, this);
     }
 
-    public String getDescription() {
+    String getDescription() {
         return description;
     }
 
@@ -31,7 +31,7 @@ public class Command {
         return CommandMap.get(name.intern());
     }
 
-    public static TreeMap<String, Command> getMap() {
+    static TreeMap<String, Command> getMap() {
         return CommandMap;
     }
 
@@ -100,8 +100,12 @@ public class Command {
 
         new Command(
                 "show",
-                "show - список имен и характеристик существующих персонажей.\n",
-                (launcher, tokens) -> launcher.show()
+                "show [user_id] - список имен и характеристик всех персонажей или персонажей, созданных пользователем с user_id.\n",
+                (launcher, tokens) -> {
+                    if (tokens.length == 0)
+                        launcher.show();
+                    else launcher.show( Integer.parseInt(tokens[0]) );
+                }
         );
 
         new Command(

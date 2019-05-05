@@ -28,29 +28,31 @@ public class DBExchanger implements AutoCloseable {
             );
         } catch (SQLException exc) {
             System.out.println("Cannot connect to database.");
-            exc.printStackTrace();
+            ServerMain.logException(exc);
         }
     }
 
-    public ResultSet getQuery(String sql) {
+    public ResultSet getQuery(String sql, Object... preps) {
         try {
-            Statement statement = connection.createStatement();
-            return statement.executeQuery(sql);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            fillStatement(statement, preps);
+            return statement.executeQuery();
         } catch (SQLException exc) {
             System.out.println("Cannot query from database.");
-            exc.printStackTrace();
+            ServerMain.logException(exc);
             return null;
         }
     }
 
-    public void update(String sql) {
-
+    public int update(String sql, Object... preps) {
         try {
-            Statement statement = connection.createStatement();
-            statement.executeUpdate(sql);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            fillStatement(statement, preps);
+            return statement.executeUpdate();
         } catch (SQLException exc) {
             System.out.println("Cannot insert into database.");
-            exc.printStackTrace();
+            ServerMain.logException(exc);
+            return 0;
         }
     }
 
@@ -59,7 +61,21 @@ public class DBExchanger implements AutoCloseable {
             connection.close();
         } catch (SQLException exc) {
             System.out.println("Caught exception during work with database.");
-            exc.printStackTrace();
+            ServerMain.logException(exc);
+        }
+    }
+
+    private void fillStatement(PreparedStatement statement, Object[] preps) throws SQLException {
+        for (int i = 0; i < preps.length; i++) {
+            if (preps[i] instanceof Integer) {
+                statement.setInt(i + 1, (Integer) preps[i]);
+                continue;
+            }
+            if (preps[i] instanceof Double) {
+                statement.setDouble(i + 1, (Double) preps[i]);
+                continue;
+            }
+            statement.setString(i + 1, preps[i].toString());
         }
     }
 }

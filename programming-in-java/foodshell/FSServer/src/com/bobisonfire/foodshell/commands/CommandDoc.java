@@ -2,15 +2,18 @@ package com.bobisonfire.foodshell.commands;
 
 import com.bobisonfire.foodshell.DBExchanger;
 import com.bobisonfire.foodshell.ServerHelper;
+import com.bobisonfire.foodshell.ServerMain;
 import com.bobisonfire.foodshell.entity.*;
 import com.bobisonfire.foodshell.exc.*;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
+import com.bobisonfire.foodshell.transformer.SQLObject;
 
 import java.io.*;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -88,7 +91,7 @@ public class CommandDoc {
      */
     void insert(String name, ObjectTransformer object) {
         object.put("name", name);
-        Human human = new Human(object); // todo конструктор должен искать локацию в базе и выставлять дефолт, если еее не существует
+        Human human = new Human(object);
 
         try (DBExchanger exchanger = new DBExchanger()) {
             exchanger.update(
@@ -139,14 +142,14 @@ public class CommandDoc {
      */
     void locations() {
         try (DBExchanger exchanger = new DBExchanger()) {
-            ResultSet locationSet = exchanger.getQuery("SELECT * FROM locations;");
+            ResultSet locationSet = exchanger.getQuery("SELECT * FROM locations ORDER BY name;");
             while (locationSet.next()) {
                 Location location = new Location(locationSet);
                 ServerHelper.writeToChannel(socket, location.toString());
             }
         } catch (SQLException exc) {
             System.out.println("Произошла ошибка доступа к базе данных.");
-            exc.printStackTrace();
+            ServerMain.logException(exc);
         }
     }
 
@@ -155,16 +158,29 @@ public class CommandDoc {
      * <br>
      * Использование команды: show
      */
-    void show() { // todo добавить просмотр всех персонажей и только своих (обернуть в less?)
+    void show() {
         try (DBExchanger exchanger = new DBExchanger()) {
-            ResultSet humanSet = exchanger.getQuery("SELECT * FROM humans;");
+            ResultSet humanSet = exchanger.getQuery("SELECT * FROM humans ORDER BY birthday;");
             while (humanSet.next()) {
-                Human human = new Human(humanSet);
+                Human human = new Human(new SQLObject( humanSet ));
                 ServerHelper.writeToChannel(socket, human.toString());
             }
         } catch (SQLException exc) {
             System.out.println("Произошла ошибка доступа к базе данных.");
-            exc.printStackTrace(); // todo логировать
+            ServerMain.logException(exc);
+        }
+    }
+
+    void show(int creatorId) {
+        try (DBExchanger exchanger = new DBExchanger()) {
+            ResultSet humanSet = exchanger.getQuery("SELECT * FROM humans WHERE creator_id=? ORDER BY birthday;", creatorId);
+            while (humanSet.next()) {
+                Human human = new Human(new SQLObject( humanSet ));
+                ServerHelper.writeToChannel(socket, human.toString());
+            }
+        } catch (SQLException exc) {
+            System.out.println("Произошла ошибка доступа к базе данных.");
+            ServerMain.logException(exc);
         }
     }
 
@@ -174,17 +190,18 @@ public class CommandDoc {
      * <br>
      * Использование команды: me
      */
-    void me() { // todo добавить в users время последней авторизации
+    void me() {
         try (DBExchanger exchanger = new DBExchanger()) {
-            ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE id=" + id + ";");
+            ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE id=?;", id);
             set.next();
             ServerHelper.writeToChannel(socket,
                     "User#" + id + ": имя - " + set.getString("name") + "\n" +
-                    "Email: " + set.getString("email"));
-            // todo me->profile, добавить возможность изменения профиля
+                    "Email: " + set.getString("email") + "\n" +
+                    "Время последней авторизации: " + set.getTimestamp("last_authorize")
+            );
         } catch (SQLException exc) {
             System.out.println("Произошла ошибка доступа к базе данных.");
-            exc.printStackTrace();
+            ServerMain.logException(exc);
         }
     }
 
@@ -197,13 +214,17 @@ public class CommandDoc {
     void move(String human, String location) {
         String destination = Location.getLocationByName(location);
 
+        int rowsChanged;
         try (DBExchanger exchanger = new DBExchanger()) {
-            exchanger.update(
-                    "UPDATE humans SET location='" + destination + "' WHERE " +
-                    "creator_id=" + id + " AND name LIKE '" + human + "';");
+            rowsChanged = exchanger.update(
+                    "UPDATE humans SET location=? WHERE creator_id=? AND name LIKE ?;",
+                    destination, id, human
+            );
         }
-        System.out.println("User#" + id + " переместил персонажа " + human + " в " + location);
-        // todo проверить, если вообще произошло перемещение (возвращаемое значение у update)
+        if (rowsChanged > 0)
+            System.out.println("User#" + id + " переместил персонажа " + human + " в " + location);
+        else
+            ServerHelper.writeToChannel(socket, "Перемещения не произошло: либо персонажа, либо локации не существует");
     }
 
     /**
@@ -219,14 +240,18 @@ public class CommandDoc {
             return;
         }
 
+        int rowsChanged;
         try (DBExchanger exchanger = new DBExchanger()) {
-            exchanger.update(
-                    "DELETE FROM humans WHERE creator_id="+ id + " AND name='" + name + "';"
+            rowsChanged = exchanger.update(
+                    "DELETE FROM humans WHERE creator_id=? AND name=?;",
+                    id, name
             );
         }
 
-        System.out.println("User#" + id + " уничтожил персонажа " + name);
-        // todo проверить, если произошло удаление
+        if (rowsChanged > 0)
+            System.out.println("User#" + id + " уничтожил персонажа " + name);
+        else
+            ServerHelper.writeToChannel(socket, "Удаления не произошло: персонажа не существует.");
     }
 
     /**
@@ -240,16 +265,16 @@ public class CommandDoc {
     void remove_older(ObjectTransformer object) {
         Human compare = new Human(object);
 
+        int rowsChanged;
         try (DBExchanger exchanger = new DBExchanger()) {
-            exchanger.update(
-                    "DELETE FROM humans WHERE creator_id=" + id + " AND " +
-                    "date '" + compare.getBirthday("yyyy-MM-dd") + "' - birthday > 0;"
+            rowsChanged = exchanger.update(
+                    "DELETE FROM humans WHERE creator_id=? AND date ? - birthday > 0;",
+                    id, compare.getBirthday("yyyy-MM-dd")
             );
         }
 
         System.out.println("User#" + id + " уничтожил персонажей, родившихся раньше чем " +
-                compare.getBirthday() );
-        // todo добавить количество уничтоженных элементов
+                compare.getBirthday() + "\nУничтожено персонажей: " + rowsChanged);
     }
 
     /**
@@ -263,15 +288,16 @@ public class CommandDoc {
     void remove_younger(ObjectTransformer object) {
         Human compare = new Human(object);
 
+        int rowsChanged;
         try (DBExchanger exchanger = new DBExchanger()) {
-            exchanger.update(
-                    "DELETE FROM humans WHERE creator_id=" + id + " AND " +
-                            "date '" + compare.getBirthday("yyyy-MM-dd") + "' - birthday < 0;"
+            rowsChanged = exchanger.update(
+                    "DELETE FROM humans WHERE creator_id=? AND date ? - birthday < 0;",
+                    id, compare.getBirthday("yyyy-MM-dd")
             );
         }
 
         System.out.println("User#" + id + " уничтожил персонажей, родившихся позже чем " +
-                compare.getBirthday() );
+                compare.getBirthday() + "\nУничтожено персонажей: " + rowsChanged);
     }
 
     /**
@@ -282,9 +308,7 @@ public class CommandDoc {
      */
     void clear() {
         try (DBExchanger exchanger = new DBExchanger()) {
-            exchanger.update(
-                    "DELETE FROM humans WHERE creator_id=" + id + ";"
-            );
+            exchanger.update("DELETE FROM humans WHERE creator_id=?;", id);
         }
         System.out.println("User#" + id + " очистил свою коллекцию персонажей.");
     }
@@ -296,7 +320,30 @@ public class CommandDoc {
      * Использование команды: info
      */
     void info() {
-        // todo написать логику: брать информацию о создании коллекции из даты создания персонажей
+        try (DBExchanger exchanger = new DBExchanger()) {
+            ResultSet set = exchanger.getQuery("SELECT COUNT(*) FROM humans;");
+            set.next();
+            int totalElements = set.getInt(1);
+            set.close();
+
+            set = exchanger.getQuery("SELECT COUNT(*) FROM humans WHERE creator_id=?;", id);
+            set.next();
+            int currentUserElements = set.getInt(1);
+            set.close();
+
+            set = exchanger.getQuery("SELECT MIN(creation_date) FROM humans WHERE creator_id=?;", id);
+            set.next();
+            Instant creationTime = set.getTimestamp(1).toInstant();
+            set.close();
+
+            ServerHelper.writeToChannel(socket,
+                    "Коллекция персонажей, хранится в базе PostgreSQL.\n" +
+                    "Всего элементов - " + totalElements + ", для текущего пользователя - " + currentUserElements + ".\n" +
+                    "Дата создания коллекции данным пользователем: " + creationTime.toString()
+            );
+        } catch (SQLException exc) {
+            ServerMain.logException(exc);
+        }
     }
 
     /**

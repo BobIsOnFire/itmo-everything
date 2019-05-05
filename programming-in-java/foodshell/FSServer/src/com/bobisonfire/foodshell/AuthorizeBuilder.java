@@ -5,14 +5,14 @@ import java.nio.channels.SocketChannel;
 import java.sql.ResultSet;
 import java.util.function.Function;
 
-public class AuthorizeBuilder {
-    public static Function<SocketChannel, Integer> registerInstance() {
+class AuthorizeBuilder {
+    static Function<SocketChannel, Integer> registerInstance() {
         return socket -> {
             try (DBExchanger exchanger = new DBExchanger()) {
                 ServerHelper.writeToChannel(socket, "**Registration**\nEmail:");
                 String email = readEmail(socket);
 
-                ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE email LIKE '" + email + "';");
+                ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE email LIKE ?;", email);
                 if (set.next()) {
                     ServerHelper.writeToChannel(socket, "This user already exists. Forgot password? y/n");
                     if (ServerHelper.readFromChannel(socket).equals("y")) {
@@ -24,16 +24,15 @@ public class AuthorizeBuilder {
                 } else {
                     Password password = new Password();
 
-                    // commented because something is not working on helios
-                     MailSender sender = new MailSender();
-                     sender.sendMessage(email, "Your password to Chat", "Hello, here is your password:\n" + password.get());
+                    MailSender sender = new MailSender();
+                    sender.sendMessage(email, "Your password to Chat", "Hello, here is your password:\n" + password.get());
 
                     ServerHelper.writeToChannel(socket, "Enter your username:");
                     String name = ServerHelper.readFromChannel(socket);
 
                     System.out.println(password.getHashCode());
-                    exchanger.update("INSERT INTO users(email,password,name) VALUES ('" +
-                            email + "','" + password.getHashCode() + "','" + name + "');");
+                    exchanger.update("INSERT INTO users(email,password,name) VALUES (?,?,?);",
+                            email, password.getHashCode(), name);
                     ServerHelper.writeToChannel(socket, "Registration complete, password has been sent to your email.");
                     return authorizeInstance().apply(socket);
                 }
@@ -47,13 +46,13 @@ public class AuthorizeBuilder {
         };
     }
 
-    public static Function<SocketChannel, Integer> authorizeInstance() {
+    static Function<SocketChannel, Integer> authorizeInstance() {
         return socket -> {
             try (DBExchanger exchanger = new DBExchanger()) {
                 ServerHelper.writeToChannel(socket, "**Authorization**\nEmail:");
                 String email = readEmail(socket);
 
-                ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE email LIKE '" + email + "';");
+                ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE email LIKE ?;", email);
                 if (set.next()) {
                     ServerHelper.writeToChannel(socket, "Password:");
                     Password password = new Password(ServerHelper.readFromChannel(socket));
@@ -72,6 +71,7 @@ public class AuthorizeBuilder {
                     }
 
                     ServerHelper.writeToChannel(socket, "Authorization complete.");
+                    exchanger.update("UPDATE users SET last_authorize=current_timestamp WHERE id=?;", set.getInt("id"));
                     return set.getInt("id");
                 } else {
                     ServerHelper.writeToChannel(socket, "This user does not exist.");
@@ -95,14 +95,14 @@ public class AuthorizeBuilder {
                 String email = readEmail(socket);
 
                 Password password = new Password();
-                ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE email LIKE '" + email + "';");
-                set.next();
-                String name = set.getString("name");
+                ResultSet set = exchanger.getQuery("SELECT * FROM users WHERE email LIKE ?;", email);
+                if (!set.next()) {
+                    ServerHelper.writeToChannel(socket, "No such user.");
+                    return null;
+                }
 
                 System.out.println(set.getString("password") + "\n" + password.getHashCode());
-
-                exchanger.update("UPDATE users SET password='" + password.getHashCode() +
-                        "' WHERE email LIKE '" + email + "';");
+                exchanger.update("UPDATE users SET password=? WHERE email LIKE ?;", password.getHashCode(), email);
 
                 MailSender sender = new MailSender();
                 sender.sendMessage(email, "Restoring password to Chat",
