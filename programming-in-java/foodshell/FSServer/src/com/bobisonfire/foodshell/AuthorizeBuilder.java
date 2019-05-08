@@ -5,7 +5,16 @@ import java.nio.channels.SocketChannel;
 import java.sql.ResultSet;
 import java.util.function.Function;
 
+/**
+ * Класс-строитель, создающий и обрабатывающий процессы регистрации, авторизации и восстановления пароля
+ * для интерактивного клиент-серверного консольного приложения.
+ */
 class AuthorizeBuilder {
+    /**
+     * Метод, создающий instance регистрации: получение почтового адреса, генерация пароля, отсылка на почту
+     * пароля и сохранение пользователя в БД. В случае, если такой адрес уже зарегистрирован, пользователь
+     * переносится на восстановление пароля. После успешной регистрации пользователь переносится на авторизацию.
+     */
     static Function<SocketChannel, Integer> registerInstance() {
         return socket -> {
             try (DBExchanger exchanger = new DBExchanger()) {
@@ -30,7 +39,6 @@ class AuthorizeBuilder {
                     ServerHelper.writeToChannel(socket, "Enter your username:");
                     String name = ServerHelper.readFromChannel(socket);
 
-                    System.out.println(password.getHashCode());
                     exchanger.update("INSERT INTO users(email,password,name) VALUES (?,?,?);",
                             email, password.getHashCode(), name);
                     ServerHelper.writeToChannel(socket, "Registration complete, password has been sent to your email.");
@@ -46,6 +54,11 @@ class AuthorizeBuilder {
         };
     }
 
+    /**
+     * Метод, создающий instance авторизации: получение логина и пароля, сопоставление с существующими и
+     * возвращение id данного пользователя. Если логина не существует, соединение с пользователем завершается.
+     * Если пароль неверный, пользователь перенаправляется на восстановление пароля.
+     */
     static Function<SocketChannel, Integer> authorizeInstance() {
         return socket -> {
             try (DBExchanger exchanger = new DBExchanger()) {
@@ -58,16 +71,13 @@ class AuthorizeBuilder {
                     Password password = new Password(ServerHelper.readFromChannel(socket));
 
                     String correctHash = set.getString("password");
-                    System.out.println(correctHash + "\n" + password.getHashCode());
-                    System.out.println(password.getHashCode().equals( correctHash ));
                     while ( !password.getHashCode().equals( correctHash ) ) {
                         ServerHelper.writeToChannel(socket, "Password is incorrect. Forgot password? y/n");
-                        if (ServerHelper.readFromChannel(socket).equals("y")) {
+                        if (ServerHelper.readFromChannel(socket).equals("y"))
                             correctHash = forgotPasswordInstance().apply(socket);
-                        } else {
-                            ServerHelper.writeToChannel(socket, "Password:");
-                            password = new Password(ServerHelper.readFromChannel(socket));
-                        }
+
+                        ServerHelper.writeToChannel(socket, "Password:");
+                        password = new Password(ServerHelper.readFromChannel(socket));
                     }
 
                     ServerHelper.writeToChannel(socket, "Authorization complete.");
@@ -88,6 +98,10 @@ class AuthorizeBuilder {
         };
     }
 
+    /**
+     * Метод, создающий instance восстановления пароля: получение адреса, генерация нового пароля и отправка
+     * пароля по данному почтовому адресу. Если адреса не существует, соединение с пользователем завершается.
+     */
     private static Function<SocketChannel, String> forgotPasswordInstance() {
         return socket -> {
             try (DBExchanger exchanger = new DBExchanger()) {
@@ -121,6 +135,11 @@ class AuthorizeBuilder {
         };
     }
 
+    /**
+     * Метод, читающий email из данного канала до тех пор, пока он не станет валидным.
+     * @param socket текущий канал
+     * @return прочитанный email
+     */
     private static String readEmail(SocketChannel socket) throws IOException {
         String email = ServerHelper.readFromChannel(socket);
         while (!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)$")) {

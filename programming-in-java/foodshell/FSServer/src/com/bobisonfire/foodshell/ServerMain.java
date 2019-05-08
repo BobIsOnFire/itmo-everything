@@ -15,20 +15,17 @@ import java.util.Date;
  * удалять и перемещать в пространстве. Перемещение осуществляется закреплением
  * персонажа к определенной локации. Изначально существуют персонаж God и локация World.<br>
  * Структура <i>FoodShell</i>:<br>
- * 1. com.bobisonfire.foodshell - организовывает работу приложения с внешними ресурсами:
- * файлами с CSV-таблицами и клиентской частью приложения;<br>
- * 2. com.bobisonfire.foodshell.entity - хранит классы, необходимые для создания сериализуемых
- * объектов: интерфейс и классы самих объектов и классы, являющиеся полями этих объектов;<br>
- * 3. com.bobisonfire.foodshell.transformer - хранит классы, использующиеся для десериализации;<br>
+ * 1. com.bobisonfire.foodshell - организовывает работу приложения и взаимодействие с внешними ресурсами;<br>
+ * 2. com.bobisonfire.foodshell.entity - классы локаций и персонажей, а также вспомогательные для них;<br>
+ * 3. com.bobisonfire.foodshell.transformer - классы, использующиеся для десериализации;<br>
  * 4. com.bobisonfire.foodshell.commands - организовывает логику исполнения консольных команд;<br>
- * 5. com.bobisonfire.foodshell.exc - хранит пользовательские исключения, использующиеся в
- * <i>FoodShell</i>.
+ * 5. com.bobisonfire.foodshell.exc - хранит пользовательские исключения, использующиеся в <i>FoodShell</i>.
  * @author BobIsOnFire - Nikita Akatyev: Programming Lab6 2019
- * @version 5.2.5
+ * @version 6.1.3
  */
 public class ServerMain {
 //    private static final String PATH_PREFIX = ""; static final boolean debug = true;
-    private static final String PATH_PREFIX = "/home/s264443/prog/lab6/"; static final boolean debug = false;
+    private static final String PATH_PREFIX = "/home/s264443/prog/lab7/"; static final boolean debug = false;
     private static final String ERROR_PATH = PATH_PREFIX + "error.log";
 
     static final String VERSION = "6.1.3";

@@ -5,6 +5,11 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
+/**
+ * Класс-оболочка для java.sql.ResultSet, позволяющий использовать его содержимое как ObjectTransformer.<br>
+ * Гарантируется, что методы этого класса не изменяют положение указателя в ResultSet и только считывают данные
+ * по столбцам текущей строки в БД.
+ */
 public class SQLObject extends ObjectTransformer {
     private ResultSet set;
     public SQLObject(ResultSet set) {
