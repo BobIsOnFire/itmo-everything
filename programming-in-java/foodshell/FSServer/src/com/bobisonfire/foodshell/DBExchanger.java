@@ -39,8 +39,8 @@ public class DBExchanger implements AutoCloseable {
         try {
             connection = DriverManager.getConnection(
                     props.getProperty("jdbc.url"),
-                    props.getProperty("jdbc.username"),
-                    props.getProperty("jdbc.password")
+                    ServerMain.dbLogin,
+                    ServerMain.dbPassword
             );
         } catch (SQLException exc) {
             System.out.println("Cannot connect to database.");

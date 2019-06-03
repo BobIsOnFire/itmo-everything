@@ -2,8 +2,8 @@ package com.bobisonfire.foodshell.transformer;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 /**
  * Класс-оболочка для java.sql.ResultSet, позволяющий использовать его содержимое как ObjectTransformer.<br>
@@ -44,12 +44,12 @@ public class SQLObject extends ObjectTransformer {
     }
 
     @Override
-    public OffsetDateTime getDate(String key, String pattern) {
+    public ZonedDateTime getDate(String key, String pattern) {
         try {
-            return set.getTimestamp(key).toInstant().atOffset(ZoneOffset.UTC);
+            return set.getTimestamp(key).toInstant().atZone(ZoneId.systemDefault());
         } catch (SQLException e) {
             e.printStackTrace();
-            return OffsetDateTime.now();
+            return ZonedDateTime.now();
         }
     }
 }

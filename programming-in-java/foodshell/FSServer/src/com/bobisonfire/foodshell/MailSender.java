@@ -23,9 +23,6 @@ import java.util.Properties;
  * - mail.smtp.socketFactory.port<br>
  * - mail.smtp.socketFactory.fallback<br>
  * 5. mail.smtp.auth - true, если почтовый сервер запрашивает авторизацию пользователей.<br>
- * В таком случае необходимы еще два свойства:<br>
- * - mail.smtp.username - почтовый адрес<br>
- * - mail.smtp.password - пароль<br>
  * 6. mail.debug - true, если MailAPI должен быть запущен в режиме отладки.
  */
 class MailSender {
@@ -43,14 +40,14 @@ class MailSender {
         } catch (IOException exc) {
             System.out.println("Cannot read mail properties.");
         }
-        this.sender = props.getProperty("mail.smtp.username");
+        this.sender = ServerMain.mailLogin;
 
         if (!ServerMain.debug && !ServerMain.mailWorking)
             return;
         mailSession = Session.getDefaultInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(sender, props.getProperty("mail.smtp.password"));
+                return new PasswordAuthentication(sender, ServerMain.mailPassword);
             }
         });
 
@@ -63,13 +60,6 @@ class MailSender {
      * @param text Текст сообщения
      */
     void sendMessage(String to, String subject, String text) {
-        if (!ServerMain.debug && !ServerMain.mailWorking) {
-            System.out.println("Похоже, что вы попросили не отправлять ничего с помощью MailAPI.\n" +
-                    "Вот сообщение, которое должно было быть отправлено:\n" +
-                    "Отправитель: "+ sender + "\nПолучатель: " + to + "\nТема: " + subject + "\n" + text);
-            return;
-        }
-
         try {
             MimeMessage message = new MimeMessage(mailSession);
             message.setFrom(new InternetAddress(sender));
@@ -79,7 +69,9 @@ class MailSender {
 
             Transport.send(message);
         } catch (MessagingException exc) {
-            System.out.println("Cannot send message.");
+            System.out.println("Невозможно отправить сообщение.\n" +
+                    "Вот сообщение, которое должно было быть отправлено:" +
+                    "Отправитель: "+ sender + "\nПолучатель: " + to + "\nТема: " + subject + "\n" + text);
             ServerMain.logException(exc);
         }
     }

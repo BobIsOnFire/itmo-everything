@@ -3,6 +3,7 @@ package com.bobisonfire.foodshell.entity;
 import com.bobisonfire.foodshell.transformer.ObjectTransformer;
 
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static java.time.temporal.ChronoUnit.YEARS;
@@ -14,10 +15,10 @@ import static java.time.temporal.ChronoUnit.YEARS;
  */
 public class Human implements Comparable<Human> {
     private String name;
-    private OffsetDateTime birthday;
+    private ZonedDateTime birthday;
     private Gender gender;
     private String location;
-    private OffsetDateTime creationDate;
+    private ZonedDateTime creationDate;
 
     public String getName() {
         return name;
@@ -59,10 +60,10 @@ public class Human implements Comparable<Human> {
 
     public Human() {
         name = "God";
-        birthday = OffsetDateTime.parse("1970-01-01T00:00:00+00:00");
+        birthday = ZonedDateTime.parse("1970-01-01T00:00:00+00:00");
         gender = Gender.getGenderByNumber(2);
         location = "World";
-        creationDate = OffsetDateTime.now();
+        creationDate = ZonedDateTime.now();
     }
 
     public int compareTo(Human other) {

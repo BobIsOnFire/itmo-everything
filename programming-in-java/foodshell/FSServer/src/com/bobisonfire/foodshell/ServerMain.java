@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Scanner;
 
 /**
  * Класс, отвецающий за запуск серверной части <i>FoodShell</i>.<br>
@@ -31,9 +32,29 @@ public class ServerMain {
     static final String VERSION = "6.1.3";
     static final boolean mailWorking = false;
 
+    static String dbLogin = "";
+    static String dbPassword = "";
+    static String mailLogin = "";
+    static String mailPassword = "";
+
     public static void main(String[] args) {
         if (debug)
             System.out.println("Running debug version..");
+
+        try {
+            Scanner sc = new Scanner(System.in);
+            System.out.print("Введите данные для входа во внешние системы:\nПочта\n\tЛогин: ");
+            mailLogin = sc.nextLine();
+            System.out.print("\tПароль: ");
+            mailPassword = new String(System.console().readPassword());
+            System.out.print("База данных\n\tЛогин: ");
+            dbLogin = sc.nextLine();
+            System.out.print("\tПароль: ");
+            dbPassword = new String(System.console().readPassword());
+        } catch (Exception exc) {
+            System.exit(0);
+        }
+
         try {
             initializeMessage();
             Command.createBasicCommands();

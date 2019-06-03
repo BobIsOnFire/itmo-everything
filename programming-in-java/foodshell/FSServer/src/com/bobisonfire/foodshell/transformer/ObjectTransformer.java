@@ -1,8 +1,8 @@
 package com.bobisonfire.foodshell.transformer;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.TreeMap;
@@ -39,15 +39,15 @@ public abstract class ObjectTransformer {
         return Long.parseLong(values.get(key));
     }
 
-    public OffsetDateTime getDate(String key, String pattern) {
+    public ZonedDateTime getDate(String key, String pattern) {
         if (!values.containsKey(key))
-            return OffsetDateTime.now();
-        OffsetDateTime date = OffsetDateTime.now();
+            return ZonedDateTime.now();
+        ZonedDateTime date = ZonedDateTime.now();
 
         try {
-            date = OffsetDateTime.of(
+            date = ZonedDateTime.of(
                     LocalDate.parse(values.get(key), DateTimeFormatter.ofPattern(pattern)).atTime(0, 0),
-                    ZoneOffset.UTC
+                    ZoneId.systemDefault()
             );
             //date = OffsetDateTime.parse(values.get(key), DateTimeFormatter.ofPattern(pattern));
         }
