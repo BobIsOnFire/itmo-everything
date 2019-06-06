@@ -21,6 +21,22 @@ public class Location implements Comparable<Location>, Serializable {
         return location;
     }
 
+    public Coordinate getCoordinate() {
+        return coordinate;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
     @Override
     public int compareTo(Location other) {
         return coordinate.compareTo(other.coordinate);

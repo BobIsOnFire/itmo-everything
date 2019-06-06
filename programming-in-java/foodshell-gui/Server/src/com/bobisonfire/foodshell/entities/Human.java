@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Human implements Comparable<Human>, Serializable {
     private String name;
@@ -17,6 +18,38 @@ public class Human implements Comparable<Human>, Serializable {
     private Gender gender;
     private ZonedDateTime creationDate;
     private Coordinate coordinate;
+
+    public String getName() {
+        return name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getCreatorID() {
+        return creatorID;
+    }
+
+    public int getLocationID() {
+        return locationID;
+    }
+
+    public String getBirthday() {
+        return birthday.format( DateTimeFormatter.ofPattern("dd.MM.yyyy") );
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public String getCreationDate() {
+        return creationDate.toString();
+    }
+
+    public Coordinate getCoordinate() {
+        return coordinate;
+    }
 
     public static Human from(ResultSet set) throws SQLException {
         Human human = new Human();

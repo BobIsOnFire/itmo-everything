@@ -1,37 +1,43 @@
 package com.bobisonfire.foodshell;
 
+import com.bobisonfire.foodshell.exchange.DBExchanger;
+import com.bobisonfire.foodshell.exchange.MailSender;
+import com.bobisonfire.foodshell.exchange.Request;
+
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 
 public class Main {
-    private static final String PATH_PREFIX = "";
     private static final String FS_VERSION = "7.0.0";
 
     private static final int PORT = 31678;
-
-    private static String EMAIL_LOGIN;
-    private static String EMAIL_PASSWORD;
-    private static String DB_LOGIN;
-    private static String DB_PASSWORD;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         try {
+            String username, password;
+
             System.out.print("Введите данные для входа на внешние ресурсы:" + "\n" +
                     "Почта" + "\n\t" + "Логин: ");
-            EMAIL_LOGIN = scanner.nextLine();
+            username = scanner.nextLine();
             System.out.print("\t" + "Пароль: ");
-            EMAIL_PASSWORD = new String( System.console().readPassword() );
+            password = new String( System.console().readPassword() );
+            MailSender.setCredentials(username, password);
+
             System.out.print("База данных" + "\n\t" + "Логин: ");
-            DB_LOGIN = scanner.nextLine();
+            username = scanner.nextLine();
             System.out.print("\t" + "Пароль: ");
-            DB_PASSWORD = new String( System.console().readPassword() );
+            password = new String( System.console().readPassword() );
+            DBExchanger.setCredentials(username, password);
         } catch (Exception exc) {
             System.exit(0);
         }
+
+        System.out.println("\nFoodShellServer v." + FS_VERSION + ". Some rights reserved.");
 
         try {
             TCPServerRunner.instance()
@@ -43,7 +49,17 @@ public class Main {
                                 socketChannel.socket().getInetAddress(), socketChannel.socket().getPort());
                     })
                     .setOnRead(key -> {
-                        // todo client request handling
+                        SocketChannel socketChannel = (SocketChannel) key.channel();
+
+                        ByteBuffer buffer = ByteBuffer.allocate(256);
+                        if (socketChannel.read(buffer) < 0) socketChannel.socket().close(); // todo log connections
+
+                        buffer.flip();
+                        byte[] bytes = new byte[buffer.limit()];
+                        buffer.get(bytes);
+                        String message = new String(bytes);
+
+                        Request.execute(message, socketChannel);
                     })
                     .run(PORT);
         } catch (ServerException exc) {

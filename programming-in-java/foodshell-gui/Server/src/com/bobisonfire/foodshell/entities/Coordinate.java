@@ -10,13 +10,25 @@ public class Coordinate implements Comparable<Coordinate>, Serializable {
     private double y;
     private double z;
 
-    public Coordinate(double x, double y, double z) {
+    private Coordinate(double x, double y, double z) {
         this.x = x;
         this.y = y;
         this.z = z;
     }
 
-    public static Coordinate from(ResultSet set) throws SQLException {
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public double getZ() {
+        return z;
+    }
+
+    static Coordinate from(ResultSet set) throws SQLException {
         double x = set.getDouble("x");
         double y = set.getDouble("y");
         double z = set.getDouble("z");

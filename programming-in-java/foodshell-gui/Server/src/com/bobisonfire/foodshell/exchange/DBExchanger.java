@@ -11,20 +11,17 @@ import java.util.Properties;
 
 public class DBExchanger implements AutoCloseable {
     private final static String PROPERTIES_PATH = "database.properties";
-    private static String DB_LOGIN = "";
+    private static String DB_USERNAME = "";
     private static String DB_PASSWORD = "";
+
     private Connection connection;
 
-    public static void setInitials(String login, String password) {
-        DB_LOGIN = login;
+    public static void setCredentials(String username, String password) {
+        DB_USERNAME = username;
         DB_PASSWORD = password;
     }
 
-    public DBExchanger() throws ServerException {
-        this(DB_LOGIN, DB_PASSWORD);
-    }
-
-    private DBExchanger(String login, String password) throws ServerException {
+    DBExchanger() throws ServerException {
         Properties props = new Properties();
         try (InputStream in = Files.newInputStream(Paths.get(PROPERTIES_PATH))) {
             props.load(in);
@@ -36,15 +33,15 @@ public class DBExchanger implements AutoCloseable {
         try {
             connection = DriverManager.getConnection(
                     props.getProperty("jdbc.url"),
-                    login,
-                    password
+                    DB_USERNAME,
+                    DB_PASSWORD
             );
         } catch (SQLException exc) {
             throw new ServerException("Невозможно подключиться к БД", exc);
         }
     }
 
-    public ResultSet getQuery(String sql, Object... preps) throws ServerException {
+    ResultSet getQuery(String sql, Object... preps) throws ServerException {
         try {
             PreparedStatement statement = connection.prepareStatement(sql);
             fillStatement(statement, preps);
@@ -54,7 +51,7 @@ public class DBExchanger implements AutoCloseable {
         }
     }
 
-    public int update(String sql, Object... preps) throws ServerException {
+    int update(String sql, Object... preps) throws ServerException {
         try {
             PreparedStatement statement = connection.prepareStatement(sql);
             fillStatement(statement, preps);

@@ -11,6 +11,30 @@ public class User implements Comparable<User>, Serializable {
     private String name;
     private int color;
 
+    public int getId() {
+        return id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getColor() {
+        return color;
+    }
+
     public static User from(ResultSet set) throws SQLException {
         User user = new User();
 

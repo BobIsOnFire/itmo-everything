@@ -1,6 +1,7 @@
 package com.bobisonfire.foodshell.exchange;
 
 import com.bobisonfire.foodshell.ServerException;
+import com.bobisonfire.foodshell.entities.Coordinate;
 import com.bobisonfire.foodshell.entities.Human;
 import com.bobisonfire.foodshell.entities.Location;
 import com.bobisonfire.foodshell.entities.User;
@@ -16,7 +17,7 @@ public enum Request {
     SORT {
         @Override
         protected void run(String message, SocketChannel socketChannel) throws ServerException {
-            String[] tokens = message.split("\\s+");
+            String[] tokens = message.split("\\s+", 2);
             String field = tokens[0];
             String order = tokens[1];
 
@@ -38,12 +39,12 @@ public enum Request {
     FILTER {
         @Override
         protected void run(String message, SocketChannel socketChannel) throws ServerException {
-            String[] tokens = message.split("\\s+");
+            String[] tokens = message.split("\\s+", 2);
             String field = tokens[0];
             String value = tokens[1];
 
             try (DBExchanger exchanger = new DBExchanger()) {
-                ResultSet set = exchanger.getQuery("SELECT * FROM humans WHERE ? LIKE ?", field, value);
+                ResultSet set = exchanger.getQuery("SELECT * FROM humans WHERE ? = ?", field, value);
                 while (set.next()) {
                     Gson gson = new Gson();
                     String serialized = gson.toJson(Human.from(set), Human.class);
@@ -60,7 +61,7 @@ public enum Request {
     GET {
         @Override
         protected void run(String message, SocketChannel socketChannel) throws ServerException {
-            String[] tokens = message.split("\\s+");
+            String[] tokens = message.split("\\s+", 3);
             String className = tokens[0];
             String field = tokens[1];
             String value = tokens[2];
@@ -96,22 +97,97 @@ public enum Request {
 
     SET {
         @Override
-        protected void run(String message, SocketChannel socketChannel) {
+        protected void run(String message, SocketChannel socketChannel) throws ServerException {
+            String[] tokens = message.split("\\s+", 2);
+            String className = tokens[0];
+            String serialized = tokens[1];
 
+            try (DBExchanger exchanger = new DBExchanger()) {
+                int changed = 0;
+                Gson gson = new Gson();
+                Coordinate crd;
+
+                switch (className) {
+                    case "User":
+                        User user = gson.fromJson(serialized, User.class);
+                        changed = exchanger.update(
+                                "INSERT INTO users (id, email, password, name, color) " +
+                                "VALUES (?, ?, ?, ?, ?)",
+                                user.getId(), user.getEmail(), user.getPassword(),
+                                user.getName(), user.getColor() // todo add conflict info
+                        );
+                        break;
+                    case "Human":
+                        Human human = gson.fromJson(serialized, Human.class);
+                        crd = human.getCoordinate();
+                        changed = exchanger.update(
+                                "INSERT INTO humans (id, creator_id, name, birthday, gender, " +
+                                "location_id, creation_date, x, y, z) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                                human.getId(), human.getCreatorID(), human.getName(), human.getBirthday(),
+                                human.getGender().ordinal(), human.getLocationID(), human.getCreationDate(),
+                                crd.getX(), crd.getY(), crd.getZ()
+                        );
+                        break;
+                    case "Location":
+                        Location location = gson.fromJson(serialized, Location.class);
+                        crd = location.getCoordinate();
+                        changed = exchanger.update(
+                                "INSERT INTO locations (id, name, size, x, y, z)" +
+                                "VALUES (?, ?, ?, ?, ?, ?)",
+                                location.getId(), location.getName(), location.getSize(),
+                                crd.getX(), crd.getY(), crd.getZ()
+                        );
+                        break;
+                }
+
+                socketChannel.write( ByteBuffer.wrap( String.valueOf(changed).getBytes() ) );
+            } catch (IOException exc) {
+                throw new ServerException("Ошибка записи в канал.", exc);
+            }
         }
     },
 
     REMOVE {
         @Override
-        protected void run(String message, SocketChannel socketChannel) {
+        protected void run(String message, SocketChannel socketChannel) throws ServerException {
+            String[] tokens = message.split("\\s+", 2);
+            String className = tokens[0];
+            int id = Integer.parseInt( tokens[1] );
 
+            try (DBExchanger exchanger = new DBExchanger()) {
+                String tableName = className + "s";
+                int changed = exchanger.update("DELETE FROM ? WHERE id = ?", tableName, id);
+                socketChannel.write( ByteBuffer.wrap( String.valueOf(changed).getBytes() ) );
+            } catch (IOException exc) {
+                throw new ServerException("Ошибка записи в канал.", exc);
+            }
         }
     },
 
     PWGENERATE {
         @Override
-        public void run(String message, SocketChannel socketChannel) {
+        public void run(String message, SocketChannel socketChannel) throws ServerException {
+            Gson gson = new Gson();
+            Password password = new Password();
 
+            User user = gson.fromJson(message, User.class);
+            user.setPassword( password.getHashCode() );
+
+            new Thread( () -> {
+                try {
+                    MailSender sender = new MailSender();
+                    sender.sendMessage(user.getEmail(), "Пароль для FoodShell",
+                            "Привет! Ваш пароль от FoodShell:\n" + password.get());
+                } catch (Exception exc) {
+                    // todo logging?
+                }
+            }).start();
+
+            try {
+                socketChannel.write( ByteBuffer.wrap( String.valueOf(1).getBytes() ) );
+            } catch (IOException exc) {
+                throw new ServerException("Ошибка записи в канал.", exc);
+            }
         }
     };
 

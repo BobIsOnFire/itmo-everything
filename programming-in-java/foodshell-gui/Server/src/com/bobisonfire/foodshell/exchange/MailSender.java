@@ -13,11 +13,17 @@ import java.util.Properties;
 
 public class MailSender {
     private static final String PROPERTIES_PATH = "mail.properties";
-    private Session mailSession;
-    private final String senderEmail;
-    private final String senderPassword;
+    private static String MAIL_USERNAME;
+    private static String MAIL_PASSWORD;
 
-    MailSender(String mail, String password) throws ServerException {
+    private Session mailSession;
+
+    public static void setCredentials(String username, String password) {
+        MAIL_USERNAME = username;
+        MAIL_PASSWORD = password;
+    }
+
+    MailSender() throws ServerException {
         Properties properties = new Properties();
         try (InputStream in = Files.newInputStream(Paths.get(PROPERTIES_PATH))) {
             properties.load(in);
@@ -25,13 +31,10 @@ public class MailSender {
             throw new ServerException("Произошла ошибка чтения свойств SMTP.", exc);
         }
 
-        this.senderEmail = mail;
-        this.senderPassword = password;
-
         this.mailSession = Session.getDefaultInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(senderEmail, senderPassword);
+                return new PasswordAuthentication(MAIL_USERNAME, MAIL_PASSWORD);
             }
         });
     }
@@ -39,7 +42,7 @@ public class MailSender {
     void sendMessage(String to, String subject, String text) {
         try {
             MimeMessage message = new MimeMessage(mailSession);
-            message.setFrom(senderEmail);
+            message.setFrom(MAIL_USERNAME);
             message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
             message.setSubject(subject);
             message.setText(text, "UTF-8");
@@ -48,7 +51,7 @@ public class MailSender {
         } catch (MessagingException exc) {
             System.out.println("Невозможно отправить сообщение.\n" +
                     "Вот сообщение, которое должно было быть отправлено:" +
-                    "Отправитель: "+ senderEmail + "\nПолучатель: " + to + "\nТема: " + subject + "\n" + text);
+                    "Отправитель: "+ MAIL_USERNAME + "\nПолучатель: " + to + "\nТема: " + subject + "\n" + text);
             // todo logging but different
         }
     }
