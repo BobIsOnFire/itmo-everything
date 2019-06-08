@@ -1,4 +1,4 @@
-package com.bobisonfire.foodshell.entities;
+package com.bobisonfire.foodshell.client.entities;
 
 import java.io.Serializable;
 import java.sql.ResultSet;
@@ -50,5 +50,17 @@ public class User implements Comparable<User>, Serializable {
     @Override
     public int compareTo(User other) {
         return id - other.id;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
     }
 }

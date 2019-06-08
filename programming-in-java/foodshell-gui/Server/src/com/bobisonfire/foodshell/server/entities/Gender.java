@@ -1,6 +1,6 @@
-package com.bobisonfire.foodshell.entities;
+package com.bobisonfire.foodshell.server.entities;
 
-import com.bobisonfire.foodshell.ServerRuntimeException;
+import com.bobisonfire.foodshell.server.ServerRuntimeException;
 
 public enum Gender {
     MALE, FEMALE, CUTE_CAT, SHREK, GENDERFLUID_HELISEXUAL,

@@ -1,4 +1,4 @@
-package com.bobisonfire.foodshell.guiframe;
+package com.bobisonfire.foodshell.client.guiframe;
 
 import java.awt.*;
 

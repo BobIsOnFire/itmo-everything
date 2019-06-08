@@ -1,4 +1,4 @@
-package com.bobisonfire.foodshell;
+package com.bobisonfire.foodshell.server;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,7 +32,7 @@ class TCPServerRunner {
             selector = Selector.open();
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            System.out.printf("Открываю сервер на %s:%d", InetAddress.getLocalHost(), port);
+            System.out.printf("Открываю сервер на %s:%d\n", InetAddress.getLocalHost(), port);
 
             while (serverSocketChannel.isOpen()) {
                 selector.select();
@@ -47,6 +47,7 @@ class TCPServerRunner {
             }
         }
         catch (IOException exc) {
+            exc.printStackTrace();
             throw new ServerException("Ошибка подключения к серверу", exc);
         }
     }

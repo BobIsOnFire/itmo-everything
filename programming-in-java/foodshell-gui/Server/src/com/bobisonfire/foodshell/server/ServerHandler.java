@@ -1,4 +1,4 @@
-package com.bobisonfire.foodshell;
+package com.bobisonfire.foodshell.server;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package com.bobisonfire.foodshell;
+package com.bobisonfire.foodshell.server;
 
 public class ServerException extends Exception {
     public ServerException(String message) {

@@ -1,9 +1,10 @@
-package com.bobisonfire.foodshell;
+package com.bobisonfire.foodshell.server;
 
-import com.bobisonfire.foodshell.exchange.DBExchanger;
-import com.bobisonfire.foodshell.exchange.MailSender;
-import com.bobisonfire.foodshell.exchange.Request;
+import com.bobisonfire.foodshell.server.exchange.DBExchanger;
+import com.bobisonfire.foodshell.server.exchange.MailSender;
+import com.bobisonfire.foodshell.server.exchange.Request;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
@@ -23,21 +24,23 @@ public class Main {
 
             System.out.print("Введите данные для входа на внешние ресурсы:" + "\n" +
                     "Почта" + "\n\t" + "Логин: ");
-            username = scanner.nextLine();
+            username = "frfntdakatevin@gmail.com"; // scanner.nextLine();
             System.out.print("\t" + "Пароль: ");
-            password = new String( System.console().readPassword() );
+            password = "HereWeStand"; // scanner.nextLine();
+            // password = new String( System.console().readPassword() );
             MailSender.setCredentials(username, password);
 
             System.out.print("База данных" + "\n\t" + "Логин: ");
-            username = scanner.nextLine();
+            username = "nikitos"; // scanner.nextLine();
             System.out.print("\t" + "Пароль: ");
-            password = new String( System.console().readPassword() );
+            password = "Fuckyouk1le"; // scanner.nextLine();
+            // password = new String( System.console().readPassword() );
             DBExchanger.setCredentials(username, password);
         } catch (Exception exc) {
             System.exit(0);
         }
 
-        System.out.println("\nFoodShellServer v." + FS_VERSION + ". Some rights reserved.");
+        System.out.println("\nFoodShellServer v" + FS_VERSION + ". Some rights reserved.");
 
         try {
             TCPServerRunner.instance()
@@ -45,25 +48,29 @@ public class Main {
                         SocketChannel socketChannel = ( (ServerSocketChannel) key.channel() ).accept();
                         socketChannel.configureBlocking(false);
                         socketChannel.register(key.selector(), SelectionKey.OP_READ);
-                        System.out.printf("Получено соединение от %s:%d",
+                        System.out.printf("Получено соединение от %s:%d\n",
                                 socketChannel.socket().getInetAddress(), socketChannel.socket().getPort());
                     })
                     .setOnRead(key -> {
                         SocketChannel socketChannel = (SocketChannel) key.channel();
 
-                        ByteBuffer buffer = ByteBuffer.allocate(256);
-                        if (socketChannel.read(buffer) < 0) socketChannel.socket().close(); // todo log connections
+                        try {
+                            ByteBuffer buffer = ByteBuffer.allocate(256);
+                            if (socketChannel.read(buffer) < 0) socketChannel.close(); // todo log connections
 
-                        buffer.flip();
-                        byte[] bytes = new byte[buffer.limit()];
-                        buffer.get(bytes);
-                        String message = new String(bytes);
+                            buffer.flip();
+                            byte[] bytes = new byte[buffer.limit()];
+                            buffer.get(bytes);
+                            String message = new String(bytes);
 
-                        Request.execute(message, socketChannel);
+                            Request.execute(message, socketChannel);
+                        } catch (IOException exc) {
+                            socketChannel.close();
+                        }
                     })
                     .run(PORT);
         } catch (ServerException exc) {
-            // todo logging
+            exc.printStackTrace();
         }
     }
 }

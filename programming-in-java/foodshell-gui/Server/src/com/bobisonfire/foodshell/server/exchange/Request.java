@@ -1,10 +1,10 @@
-package com.bobisonfire.foodshell.exchange;
+package com.bobisonfire.foodshell.server.exchange;
 
-import com.bobisonfire.foodshell.ServerException;
-import com.bobisonfire.foodshell.entities.Coordinate;
-import com.bobisonfire.foodshell.entities.Human;
-import com.bobisonfire.foodshell.entities.Location;
-import com.bobisonfire.foodshell.entities.User;
+import com.bobisonfire.foodshell.server.ServerException;
+import com.bobisonfire.foodshell.server.entities.Coordinate;
+import com.bobisonfire.foodshell.server.entities.Human;
+import com.bobisonfire.foodshell.server.entities.Location;
+import com.bobisonfire.foodshell.server.entities.User;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -22,11 +22,11 @@ public enum Request {
             String order = tokens[1];
 
             try (DBExchanger exchanger = new DBExchanger()) {
-                ResultSet set = exchanger.getQuery("SELECT * FROM humans ORDER BY ? ?", field, order);
+                ResultSet set = exchanger.getQuery("SELECT * FROM humans ORDER BY " + field + " " + order);
                 while (set.next()) {
                     Gson gson = new Gson();
                     String serialized = gson.toJson(Human.from(set), Human.class);
-                    socketChannel.write( ByteBuffer.wrap(serialized.getBytes()) );
+                    write(socketChannel, serialized);
                 }
             } catch (SQLException exc) {
                 throw new ServerException("Ошибка при чтении объекта из БД.", exc);
@@ -44,11 +44,11 @@ public enum Request {
             String value = tokens[1];
 
             try (DBExchanger exchanger = new DBExchanger()) {
-                ResultSet set = exchanger.getQuery("SELECT * FROM humans WHERE ? = ?", field, value);
+                ResultSet set = exchanger.getQuery("SELECT * FROM humans WHERE " + field + " = ?", value);
                 while (set.next()) {
                     Gson gson = new Gson();
                     String serialized = gson.toJson(Human.from(set), Human.class);
-                    socketChannel.write( ByteBuffer.wrap(serialized.getBytes()) );
+                    write(socketChannel, serialized);
                 }
             } catch (SQLException exc) {
                 throw new ServerException("Ошибка при чтении объекта из БД.", exc);
@@ -61,7 +61,7 @@ public enum Request {
     GET {
         @Override
         protected void run(String message, SocketChannel socketChannel) throws ServerException {
-            String[] tokens = message.split("\\s+", 3);
+            String[] tokens = message.trim().split("\\s+", 3);
             String className = tokens[0];
             String field = tokens[1];
             String value = tokens[2];
@@ -69,8 +69,10 @@ public enum Request {
             try (DBExchanger exchanger = new DBExchanger()) {
                 String tableName = className + "s";
 
-                ResultSet set = exchanger.getQuery("SELECT * FROM ? WHERE ? LIKE ?", tableName, field, value);
+                ResultSet set = exchanger.getQuery("SELECT * FROM " + tableName +
+                        " WHERE " + field + " LIKE ?", value);
                 set.next();
+                System.out.println(set.getString("password"));
 
                 String serialized = "";
                 Gson gson = new Gson();
@@ -86,7 +88,7 @@ public enum Request {
                         break;
                 }
 
-                socketChannel.write( ByteBuffer.wrap(serialized.getBytes()) );
+                write(socketChannel, serialized);
             } catch (SQLException exc) {
                 throw new ServerException("Ошибка при чтении объекта из БД.", exc);
             } catch (IOException exc) {
@@ -111,9 +113,10 @@ public enum Request {
                     case "User":
                         User user = gson.fromJson(serialized, User.class);
                         changed = exchanger.update(
-                                "INSERT INTO users (id, email, password, name, color) " +
-                                "VALUES (?, ?, ?, ?, ?)",
-                                user.getId(), user.getEmail(), user.getPassword(),
+                                "INSERT INTO users (email, password, name, color) " +
+                                "VALUES (?, ?, ?, ?) ON CONFLICT ON CONSTRAINT users_email_key DO UPDATE SET " +
+                                "password = EXCLUDED.password, name = EXCLUDED.name, color = EXCLUDED.color",
+                                user.getEmail(), user.getPassword(),
                                 user.getName(), user.getColor() // todo add conflict info
                         );
                         break;
@@ -140,7 +143,7 @@ public enum Request {
                         break;
                 }
 
-                socketChannel.write( ByteBuffer.wrap( String.valueOf(changed).getBytes() ) );
+                write(socketChannel, String.valueOf(changed));
             } catch (IOException exc) {
                 throw new ServerException("Ошибка записи в канал.", exc);
             }
@@ -156,8 +159,8 @@ public enum Request {
 
             try (DBExchanger exchanger = new DBExchanger()) {
                 String tableName = className + "s";
-                int changed = exchanger.update("DELETE FROM ? WHERE id = ?", tableName, id);
-                socketChannel.write( ByteBuffer.wrap( String.valueOf(changed).getBytes() ) );
+                int changed = exchanger.update("DELETE FROM " + tableName + " WHERE id = ?", id);
+                write(socketChannel, String.valueOf(changed));
             } catch (IOException exc) {
                 throw new ServerException("Ошибка записи в канал.", exc);
             }
@@ -166,7 +169,7 @@ public enum Request {
 
     PWGENERATE {
         @Override
-        public void run(String message, SocketChannel socketChannel) throws ServerException {
+        protected void run(String message, SocketChannel socketChannel) throws ServerException {
             Gson gson = new Gson();
             Password password = new Password();
 
@@ -179,12 +182,14 @@ public enum Request {
                     sender.sendMessage(user.getEmail(), "Пароль для FoodShell",
                             "Привет! Ваш пароль от FoodShell:\n" + password.get());
                 } catch (Exception exc) {
+                    exc.printStackTrace();
                     // todo logging?
                 }
             }).start();
 
             try {
-                socketChannel.write( ByteBuffer.wrap( String.valueOf(1).getBytes() ) );
+                String serialized = gson.toJson(user, User.class);
+                write(socketChannel, serialized);
             } catch (IOException exc) {
                 throw new ServerException("Ошибка записи в канал.", exc);
             }
@@ -194,12 +199,18 @@ public enum Request {
     protected abstract void run(String message, SocketChannel socketChannel) throws ServerException;
 
     public static void execute(String req, SocketChannel socketChannel) {
+        System.out.println("Received request: " + req);
         String[] tokens = req.split("\\s+", 2);
         Request request = Request.valueOf( tokens[0].toUpperCase() );
         try {
             request.run(tokens[1], socketChannel);
         } catch (Exception e) {
-            // todo operation logging!!
+            e.printStackTrace();
         }
+    }
+
+    private static void write(SocketChannel socketChannel, String message) throws IOException {
+        String msg = message + "\n";
+        socketChannel.write(ByteBuffer.wrap(msg.getBytes()));
     }
 }

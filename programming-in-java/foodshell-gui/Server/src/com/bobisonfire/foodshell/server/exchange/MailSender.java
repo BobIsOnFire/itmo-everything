@@ -1,6 +1,6 @@
-package com.bobisonfire.foodshell.exchange;
+package com.bobisonfire.foodshell.server.exchange;
 
-import com.bobisonfire.foodshell.ServerException;
+import com.bobisonfire.foodshell.server.ServerException;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;

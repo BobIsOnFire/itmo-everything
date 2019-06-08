@@ -1,6 +1,6 @@
-package com.bobisonfire.foodshell.exchange;
+package com.bobisonfire.foodshell.server.exchange;
 
-import com.bobisonfire.foodshell.ServerException;
+import com.bobisonfire.foodshell.server.ServerException;
 
 import java.io.IOException;
 import java.io.InputStream;

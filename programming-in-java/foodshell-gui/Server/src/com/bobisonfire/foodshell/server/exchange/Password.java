@@ -1,4 +1,4 @@
-package com.bobisonfire.foodshell.exchange;
+package com.bobisonfire.foodshell.server.exchange;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;

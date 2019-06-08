@@ -1,4 +1,4 @@
-package com.bobisonfire.foodshell.entities;
+package com.bobisonfire.foodshell.server.entities;
 
 import java.io.Serializable;
 import java.sql.ResultSet;
