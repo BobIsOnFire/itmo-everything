@@ -17,17 +17,28 @@ public enum Request {
     SORT {
         @Override
         protected void run(String message, SocketChannel socketChannel) throws ServerException {
-            String[] tokens = message.split("\\s+", 2);
-            String field = tokens[0];
-            String order = tokens[1];
+            String[] tokens = message.split("\\s+", 3);
+            String className = tokens[0];
+            String field = tokens[1];
+            String order = tokens[2];
 
             try (DBExchanger exchanger = new DBExchanger()) {
-                ResultSet set = exchanger.getQuery("SELECT * FROM humans ORDER BY " + field + " " + order);
+                String tableName = className + "s";
+                ResultSet set = exchanger.getQuery("SELECT * FROM " + tableName + " ORDER BY " + field + " " + order);
                 while (set.next()) {
                     Gson gson = new Gson();
-                    String serialized = gson.toJson(Human.from(set), Human.class);
+                    String serialized = "";
+                    switch (className) {
+                        case "Human":
+                            serialized = gson.toJson(Human.from(set), Human.class);
+                            break;
+                        case "Location":
+                            serialized = gson.toJson(Location.from(set), Location.class);
+                            break;
+                    }
                     write(socketChannel, serialized);
                 }
+                write(socketChannel, "END REQUEST");
             } catch (SQLException exc) {
                 throw new ServerException("Ошибка при чтении объекта из БД.", exc);
             } catch (IOException exc) {
@@ -39,17 +50,27 @@ public enum Request {
     FILTER {
         @Override
         protected void run(String message, SocketChannel socketChannel) throws ServerException {
-            String[] tokens = message.split("\\s+", 2);
-            String field = tokens[0];
-            String value = tokens[1];
+            String[] tokens = message.split("\\s+", 3);
+            String className = tokens[0];
+            String field = tokens[1];
+            String value = tokens[2];
 
             try (DBExchanger exchanger = new DBExchanger()) {
-                ResultSet set = exchanger.getQuery("SELECT * FROM humans WHERE " + field + " = ?", value);
+                String tableName = className + "s";
+                ResultSet set = exchanger.getQuery("SELECT * FROM " + tableName + " WHERE " + field + " = ?", value);
                 while (set.next()) {
                     Gson gson = new Gson();
-                    String serialized = gson.toJson(Human.from(set), Human.class);
-                    write(socketChannel, serialized);
+                    String serialized = "";
+                    switch (className) {
+                        case "Human":
+                            serialized = gson.toJson(Human.from(set), Human.class);
+                            break;
+                        case "Location":
+                            serialized = gson.toJson(Location.from(set), Location.class);
+                            break;
+                    }                    write(socketChannel, serialized);
                 }
+                write(socketChannel, "END REQUEST");
             } catch (SQLException exc) {
                 throw new ServerException("Ошибка при чтении объекта из БД.", exc);
             } catch (IOException exc) {

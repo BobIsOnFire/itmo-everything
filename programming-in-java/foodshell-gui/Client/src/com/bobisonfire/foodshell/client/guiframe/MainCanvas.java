@@ -1,12 +1,13 @@
 package com.bobisonfire.foodshell.client.guiframe;
-
 import java.awt.*;
 
 class MainCanvas extends Canvas {
+
     MainCanvas() {
         super();
         this.setBackground(Color.WHITE);
         this.setForeground(Color.BLACK);
+        this.setBounds(660, 400, 600, 300);
     }
 
     @Override

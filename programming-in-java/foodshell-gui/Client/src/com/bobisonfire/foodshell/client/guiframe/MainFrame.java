@@ -1,59 +1,81 @@
 package com.bobisonfire.foodshell.client.guiframe;
 
+import com.bobisonfire.foodshell.client.entities.Human;
+import com.bobisonfire.foodshell.client.entities.Location;
+import com.bobisonfire.foodshell.client.entities.User;
+import com.bobisonfire.foodshell.client.exchange.Request;
+
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class MainFrame extends JFrame {
+class MainFrame extends JFrame {
+    static User user;
+    static List<Human> humanList = new ArrayList<>();
+    static List<Location> locationList = new ArrayList<>();
+    private JComboBox<String> locationBox;
 
-    private class CustomLabel extends JLabel {
-        CustomLabel(String label, int alignment) {
-            super(label, alignment);
-            this.setFont(this.getFont().deriveFont(36.0f));
-        }
-    }
+    MainFrame(String title, User user) {
+        super(title);
+        MainFrame.user = user;
 
-    private class CustomComboBox<T> extends JComboBox<T> {
-        CustomComboBox(T[] args) {
-            super(args);
-            this.setBackground(Color.WHITE);
-            this.setForeground(Color.BLACK);
-        }
-    }
+        new Thread( () -> {
+            Object[] list = Request.execute(Request.SORT, Human.class, "id", "ASC");
+            humanList = Arrays.stream(list).map( elem -> (Human) elem).collect(Collectors.toList());
+            list = Request.execute(Request.SORT, Location.class, "id", "ASC");
+            locationList = Arrays.stream(list).map( elem -> (Location) elem).collect(Collectors.toList());
+        } ).start();
 
-    public MainFrame(String header) {
-        super(header);
+        MainTable table = new MainTable();
+        locationBox = CustomComponentFactory.getComboBox( new String[]{} );
+        fillLocationBox();
+
         this.setBounds(0, 0, 1280, 720);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Container container = this.getContentPane();
         container.setBackground(Color.WHITE);
         container.setForeground(Color.BLACK);
-        container.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
+        container.setLayout(new BorderLayout());
 
-        c.fill = GridBagConstraints.BOTH;
-        c.weightx = 1.0;
-        c.weighty = 1.0;
-        c.insets = new Insets(20, 20, 20, 20);
-        container.add(new CustomLabel("Персонажи", SwingConstants.CENTER), c);
+        JPanel header = CustomComponentFactory.getEmptyPanel();
+        header.setBorder(new EmptyBorder(new Insets(20, 20, 20, 20)));
+        header.setLayout(new GridLayout(1, 2));
+        header.add(CustomComponentFactory.getLabel("Персонажи", SwingConstants.CENTER, 36.0f, false));
+        header.add(CustomComponentFactory.getLabel("Профиль", SwingConstants.CENTER, 36.0f, false));
 
-        c.gridwidth = GridBagConstraints.REMAINDER;
-        container.add(new CustomLabel("Профиль", SwingConstants.CENTER), c);
-        c.weighty = 5.0;
-        c.gridheight = 3;
-        c.gridwidth = 1;
-        container.add(new MainTable(), c);
+        JPanel right = CustomComponentFactory.getEmptyPanel();
+        right.setBorder(new EmptyBorder(new Insets(20, 20, 20, 20)));
+        right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
+        right.add(new MainProfile());
+        right.add(Box.createVerticalStrut(20));
+        right.add(locationBox);
+        right.add(Box.createVerticalStrut(20));
+        right.add(new MainCanvas());
 
-        c.gridheight = 1;
-        c.weighty = 4.0;
-        c.gridwidth = GridBagConstraints.REMAINDER;
-        container.add(new MainProfile(), c);
+        container.add(header, BorderLayout.NORTH);
+        container.add(table, BorderLayout.WEST);
+        container.add(right, BorderLayout.EAST);
 
-        c.weighty = 1.0;
-        c.insets = new Insets(0, 20, 20, 20);
-        container.add(new CustomComboBox<>( new String[] {"123", "231", "333"} ), c);
+        table.setColumnWidth();
+    }
 
-        c.weighty = 20.0;
-        container.add(new MainCanvas(), c);
+    void fillLocationBox() {
+        while (locationList.size() == 0) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        locationBox.removeAllItems();
+
+        locationList.stream()
+                .map(Location::getName)
+                .forEach(elem -> locationBox.addItem(elem));
     }
 }

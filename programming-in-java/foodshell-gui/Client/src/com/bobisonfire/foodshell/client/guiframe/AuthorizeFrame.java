@@ -10,10 +10,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class AuthorizeFrame extends JFrame {
-    private JTextField emailField = new CustomTextField("Email");
-    private JTextField nameField = new CustomTextField("Имя");
-    private JPasswordField passwordField = new CustomPasswordField("Пароль");
-    private CustomLabel authLabel = new CustomLabel("");
+    // GisCom7KuBoMybHoMo7Ni
+    private JTextField emailField = CustomComponentFactory.getTextField(20.0f, "Email");
+    private JTextField nameField = CustomComponentFactory.getTextField(20.0f, "Имя");
+    private JPasswordField passwordField = CustomComponentFactory.getPasswordField(20.0f, "Пароль");
+    private JLabel authLabel = CustomComponentFactory.getLabel("", SwingConstants.CENTER, 20.0f, false);
     private JButton authorizeButton = new JButton();
     private JButton registerButton = new JButton();
 
@@ -30,9 +31,7 @@ public class AuthorizeFrame extends JFrame {
     }
 
     private void authorizeLayout() {
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.WHITE);
-        panel.setForeground(Color.BLACK);
+        JPanel panel = CustomComponentFactory.getEmptyPanel();
         panel.setLayout(new GridBagLayout());
 
         this.getContentPane().removeAll();
@@ -86,46 +85,6 @@ public class AuthorizeFrame extends JFrame {
         return !email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)$");
     }
 
-    private class CustomLabel extends JLabel {
-        CustomLabel(String label) {
-            super(label, SwingConstants.CENTER);
-            this.setFont(this.getFont().deriveFont(20.0f));
-        }
-
-        @Override
-        public void setText(String text) {
-            String htmlText = "<html><div style='text-align: center;'>" +
-                    text.replaceAll("\n", "<br>") +
-                    "</div></html>";
-
-            super.setText(htmlText);
-        }
-    }
-
-    private class CustomTextField extends JTextField {
-        CustomTextField(String placeholder) {
-            super();
-            this.setMargin(new Insets(0, 10, 0, 10));
-            this.setFont(this.getFont().deriveFont(20.0f));
-            this.addFocusListener(new PlaceholderListener(this, placeholder));
-        }
-    }
-
-    private class CustomPasswordField extends JPasswordField {
-        CustomPasswordField(String placeholder) {
-            super();
-            this.setMargin(new Insets(0, 10, 0, 10));
-            this.setFont(this.getFont().deriveFont(20.0f));
-            this.addFocusListener(new PlaceholderListener(this, placeholder));
-        }
-
-        @Override
-        public char[] getPassword() {
-            this.grabFocus();
-            return super.getPassword();
-        }
-    }
-
     private class AuthorizeAction extends AbstractAction {
         AuthorizeAction(String name) {
             super(name);
@@ -150,9 +109,11 @@ public class AuthorizeFrame extends JFrame {
 
             Password password = new Password( pword );
             if (password.getHashCode().equals(user.getPassword())) {
-                JFrame frame = new MainFrame("FoodShell v." + Main.FS_VERSION);
+                JFrame frame = new MainFrame("FoodShell v." + Main.FS_VERSION, user);
                 frame.setVisible(true);
+
                 AuthorizeFrame.this.setVisible(false);
+                AuthorizeFrame.this.dispose();
             } else {
                 list = Request.execute(Request.PWGENERATE, user);
                 user = (User) list[0];

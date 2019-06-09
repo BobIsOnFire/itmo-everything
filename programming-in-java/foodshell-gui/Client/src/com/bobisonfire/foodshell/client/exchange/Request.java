@@ -1,6 +1,5 @@
 package com.bobisonfire.foodshell.client.exchange;
 
-import com.bobisonfire.foodshell.client.entities.Human;
 import com.bobisonfire.foodshell.client.entities.User;
 import com.google.gson.Gson;
 
@@ -15,18 +14,19 @@ public enum Request {
     SORT {
         @Override
         protected Object[] run(Scanner in, PrintWriter out, Object... args) throws IOException {
-            String field = (String) args[0];
-            String order = (String) args[1];
-            out.printf("SORT %s %s\n", field, order);
+            Class<?> clazz = (Class<?>) args[0];
+            String field = (String) args[1];
+            String order = (String) args[2];
+            out.printf("SORT %s %s %s\n", clazz.getSimpleName(), field, order);
 
             List<Object> list = new ArrayList<>();
             Gson gson = new Gson();
 
-            while(in.hasNextLine()) {
-                Human human = gson.fromJson(in.nextLine(), Human.class);
-                list.add(human);
+            String serialized;
+            while( !( serialized = in.nextLine() ).equals("END REQUEST") ) {
+                Object object = gson.fromJson(serialized, clazz);
+                list.add(object);
             }
-
             return list.toArray();
         }
     },
@@ -34,16 +34,18 @@ public enum Request {
     FILTER {
         @Override
         protected Object[] run(Scanner in, PrintWriter out, Object... args) {
-            String field = (String) args[0];
-            String value = (String) args[1];
-            out.printf("FILTER %s %s\n", field, value);
+            Class<?> clazz = (Class<?>) args[0];
+            String field = (String) args[1];
+            String value = (String) args[2];
+            out.printf("FILTER %s %s %s\n", clazz.getSimpleName(), field, value);
 
             List<Object> list = new ArrayList<>();
             Gson gson = new Gson();
 
-            while(in.hasNextLine()) {
-                Human human = gson.fromJson(in.nextLine(), Human.class);
-                list.add(human);
+            String serialized;
+            while( !( serialized = in.nextLine() ).equals("END REQUEST") ) {
+                Object object = gson.fromJson(serialized, clazz);
+                list.add(object);
             }
 
             return list.toArray();

@@ -46,7 +46,7 @@ public class Coordinate implements Comparable<Coordinate>, Serializable {
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "(%.3f, %.3f, %.3f)", x, y, z);
+        return String.format(Locale.US, "(%.1f, %.1f, %.1f)", x, y, z);
     }
 
     @Override
