@@ -35,6 +35,8 @@ public enum Request {
                         case "Location":
                             serialized = gson.toJson(Location.from(set), Location.class);
                             break;
+                        case "User":
+                            serialized = gson.toJson(User.from(set), User.class);
                     }
                     write(socketChannel, serialized);
                 }
@@ -53,7 +55,7 @@ public enum Request {
             String[] tokens = message.split("\\s+", 3);
             String className = tokens[0];
             String field = tokens[1];
-            String value = tokens[2];
+            int value = Integer.parseInt( tokens[2] );
 
             try (DBExchanger exchanger = new DBExchanger()) {
                 String tableName = className + "s";
@@ -68,7 +70,8 @@ public enum Request {
                         case "Location":
                             serialized = gson.toJson(Location.from(set), Location.class);
                             break;
-                    }                    write(socketChannel, serialized);
+                    }
+                    write(socketChannel, serialized);
                 }
                 write(socketChannel, "END REQUEST");
             } catch (SQLException exc) {
@@ -93,8 +96,6 @@ public enum Request {
                 ResultSet set = exchanger.getQuery("SELECT * FROM " + tableName +
                         " WHERE " + field + " LIKE ?", value);
                 set.next();
-                System.out.println(set.getString("password"));
-
                 String serialized = "";
                 Gson gson = new Gson();
                 switch (className) {
@@ -145,10 +146,10 @@ public enum Request {
                         Human human = gson.fromJson(serialized, Human.class);
                         crd = human.getCoordinate();
                         changed = exchanger.update(
-                                "INSERT INTO humans (id, creator_id, name, birthday, gender, " +
-                                "location_id, creation_date, x, y, z) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                                human.getId(), human.getCreatorID(), human.getName(), human.getBirthday(),
-                                human.getGender().ordinal(), human.getLocationID(), human.getCreationDate(),
+                                "INSERT INTO humans (creator_id, name, birthday, gender, " +
+                                "location_id, creation_date, x, y, z) VALUES(?,?,?,?,?,?,?,?,?)",
+                                human.getCreatorID(), human.getName(), human.getBirthdayAsDate(),
+                                human.getGender().ordinal(), human.getLocationID(), human.getCreationDateAsTimestamp(),
                                 crd.getX(), crd.getY(), crd.getZ()
                         );
                         break;
@@ -221,7 +222,7 @@ public enum Request {
 
     public static void execute(String req, SocketChannel socketChannel) {
         System.out.println("Received request: " + req);
-        String[] tokens = req.split("\\s+", 2);
+        String[] tokens = req.trim().split("\\s+", 2);
         Request request = Request.valueOf( tokens[0].toUpperCase() );
         try {
             request.run(tokens[1], socketChannel);

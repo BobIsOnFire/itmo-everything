@@ -1,8 +1,12 @@
 package com.bobisonfire.foodshell.server.entities;
 
 import java.io.Serializable;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,9 +18,9 @@ public class Human implements Comparable<Human>, Serializable {
     private int creatorID;
     private int locationID;
 
-    private ZonedDateTime birthday;
+    private String birthday;
     private Gender gender;
-    private ZonedDateTime creationDate;
+    private String creationDate;
     private Coordinate coordinate;
 
     public String getName() {
@@ -36,7 +40,7 @@ public class Human implements Comparable<Human>, Serializable {
     }
 
     public String getBirthday() {
-        return birthday.format( DateTimeFormatter.ofPattern("dd.MM.yyyy") );
+        return birthday;
     }
 
     public Gender getGender() {
@@ -44,7 +48,7 @@ public class Human implements Comparable<Human>, Serializable {
     }
 
     public String getCreationDate() {
-        return creationDate.toString();
+        return creationDate;
     }
 
     public Coordinate getCoordinate() {
@@ -56,20 +60,37 @@ public class Human implements Comparable<Human>, Serializable {
 
         human.id = set.getInt("id");
         human.name = set.getString("name");
-        human.birthday = set.getTimestamp("birthday").toInstant().atZone(ZoneId.systemDefault());
+
+        human.birthday = set.getTimestamp("birthday").toInstant().atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         human.gender = Gender.getGenderByNumber( set.getInt("gender") );
 
         human.creatorID = set.getInt("creator_id");
         human.locationID = set.getInt("location_id");
 
         human.coordinate = Coordinate.from(set);
-        human.creationDate = set.getTimestamp("creation_date").toInstant().atZone(ZoneId.systemDefault());
+        human.creationDate = set.getTimestamp("creation_date").toInstant().atZone(ZoneId.systemDefault()).toString();
 
         return human;
+    }
+
+    public Date getBirthdayAsDate() {
+        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
+        try {
+            return new Date( format.parse(birthday).getTime() );
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return new Date(0);
+        }
+    }
+
+    public Timestamp getCreationDateAsTimestamp() {
+        ZonedDateTime time = ZonedDateTime.parse(creationDate);
+        return new Timestamp( time.toInstant().toEpochMilli() );
     }
 
     @Override
     public int compareTo(Human o) {
         return birthday.compareTo(o.birthday);
-    }
+    } // todo rewrite compareTo
 }

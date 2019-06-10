@@ -36,7 +36,7 @@ public enum Request {
         protected Object[] run(Scanner in, PrintWriter out, Object... args) {
             Class<?> clazz = (Class<?>) args[0];
             String field = (String) args[1];
-            String value = (String) args[2];
+            int value = (int) args[2];
             out.printf("FILTER %s %s %s\n", clazz.getSimpleName(), field, value);
 
             List<Object> list = new ArrayList<>();

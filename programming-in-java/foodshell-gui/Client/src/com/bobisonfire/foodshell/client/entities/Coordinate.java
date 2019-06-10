@@ -10,7 +10,7 @@ public class Coordinate implements Comparable<Coordinate>, Serializable {
     private double y;
     private double z;
 
-    private Coordinate(double x, double y, double z) {
+    public Coordinate(double x, double y, double z) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -32,6 +32,17 @@ public class Coordinate implements Comparable<Coordinate>, Serializable {
         double x = set.getDouble("x");
         double y = set.getDouble("y");
         double z = set.getDouble("z");
+
+        return new Coordinate(x, y, z);
+    }
+
+    public static Coordinate from(String string) {
+        String[] tokens = string
+                .substring(1, string.length() - 1)
+                .split(",\\s*");
+        double x = Double.parseDouble(tokens[0]);
+        double y = Double.parseDouble(tokens[1]);
+        double z = Double.parseDouble(tokens[2]);
 
         return new Coordinate(x, y, z);
     }

@@ -82,6 +82,15 @@ public class DBExchanger implements AutoCloseable {
             }
             if (preps[i] instanceof Boolean) {
                 statement.setBoolean(i + 1, (Boolean) preps[i]);
+                continue;
+            }
+            if (preps[i] instanceof Date) {
+                statement.setDate(i + 1, (Date) preps[i]);
+                continue;
+            }
+            if (preps[i] instanceof Timestamp) {
+                statement.setTimestamp(i + 1, (Timestamp) preps[i]);
+                continue;
             }
             statement.setString(i + 1, preps[i].toString());
         }

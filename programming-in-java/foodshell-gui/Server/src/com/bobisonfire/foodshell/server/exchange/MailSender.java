@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-public class MailSender {
+public class MailSender { // todo mail not working!!
     private static final String PROPERTIES_PATH = "mail.properties";
     private static String MAIL_USERNAME;
     private static String MAIL_PASSWORD;

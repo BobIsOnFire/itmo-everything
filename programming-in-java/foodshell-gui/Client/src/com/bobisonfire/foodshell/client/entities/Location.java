@@ -38,6 +38,11 @@ public class Location implements Comparable<Location>, Serializable {
     }
 
     @Override
+    public String toString() {
+        return getName();
+    }
+
+    @Override
     public int compareTo(Location other) {
         return coordinate.compareTo(other.coordinate);
     }

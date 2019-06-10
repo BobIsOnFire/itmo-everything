@@ -23,7 +23,7 @@ public class LabelEditListener implements MouseListener {
         container.setLayout(new GridBagLayout());
 
         JLabel editLabel = CustomComponentFactory.getLabel("Введите значение:", SwingUtilities.CENTER, 20.0f, false);
-        JTextField textField = CustomComponentFactory.getTextField(20.0f);
+        JTextField textField = CustomComponentFactory.getTextField(16.0f);
         JButton cancelButton = new JButton();
         JButton okButton = new JButton();
 

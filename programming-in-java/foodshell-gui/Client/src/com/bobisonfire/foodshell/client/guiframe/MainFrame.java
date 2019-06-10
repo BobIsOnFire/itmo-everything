@@ -17,7 +17,8 @@ class MainFrame extends JFrame {
     static User user;
     static List<Human> humanList = new ArrayList<>();
     static List<Location> locationList = new ArrayList<>();
-    private JComboBox<String> locationBox;
+    static JComboBox<Location> locationBox;
+    static MainCanvas canvas;
 
     MainFrame(String title, User user) {
         super(title);
@@ -25,13 +26,15 @@ class MainFrame extends JFrame {
 
         new Thread( () -> {
             Object[] list = Request.execute(Request.SORT, Human.class, "id", "ASC");
-            humanList = Arrays.stream(list).map( elem -> (Human) elem).collect(Collectors.toList());
+            humanList = Arrays.stream(list).map( elem -> (Human) elem ).collect(Collectors.toList());
             list = Request.execute(Request.SORT, Location.class, "id", "ASC");
-            locationList = Arrays.stream(list).map( elem -> (Location) elem).collect(Collectors.toList());
+            locationList = Arrays.stream(list).map( elem -> (Location) elem ).collect(Collectors.toList());
         } ).start();
 
+        canvas = new MainCanvas();
         MainTable table = new MainTable();
-        locationBox = CustomComponentFactory.getComboBox( new String[]{} );
+        locationBox = CustomComponentFactory.getComboBox( new Location[]{} );
+        locationBox.addActionListener(e -> MainFrame.canvas.repaint());
         fillLocationBox();
 
         this.setBounds(0, 0, 1280, 720);
@@ -55,16 +58,14 @@ class MainFrame extends JFrame {
         right.add(Box.createVerticalStrut(20));
         right.add(locationBox);
         right.add(Box.createVerticalStrut(20));
-        right.add(new MainCanvas());
+        right.add(canvas);
 
         container.add(header, BorderLayout.NORTH);
         container.add(table, BorderLayout.WEST);
         container.add(right, BorderLayout.EAST);
-
-        table.setColumnWidth();
     }
 
-    void fillLocationBox() {
+    private void fillLocationBox() {
         while (locationList.size() == 0) {
             try {
                 Thread.sleep(50);
@@ -73,9 +74,6 @@ class MainFrame extends JFrame {
             }
         }
         locationBox.removeAllItems();
-
-        locationList.stream()
-                .map(Location::getName)
-                .forEach(elem -> locationBox.addItem(elem));
+        locationList.forEach(elem -> locationBox.addItem(elem));
     }
 }

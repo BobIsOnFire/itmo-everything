@@ -121,6 +121,7 @@ class MainProfile extends JPanel {
             Request.execute(Request.SET, User.class, MainFrame.user);
 
             colorPanel.setBackground(new Color(hex));
+            MainFrame.canvas.repaint();
         }
     }
 }

@@ -3,6 +3,8 @@ package com.bobisonfire.foodshell.client.guiframe;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 class CustomComponentFactory {
     static JPanel getEmptyPanel() {
@@ -80,7 +82,7 @@ class CustomComponentFactory {
         Container container = messageFrame.getContentPane();
         container.setLayout(new GridBagLayout());
 
-        JLabel messageLabel = getLabel("", SwingUtilities.CENTER, 20.0f, false);
+        JLabel messageLabel = getLabel("", SwingUtilities.CENTER, 16.0f, false);
         messageLabel.setText(message);
         JButton closeButton = new JButton();
         closeButton.setAction(new AbstractAction("OK") {
@@ -103,5 +105,51 @@ class CustomComponentFactory {
         container.add(closeButton, c);
 
         messageFrame.setVisible(true);
+    }
+
+    static void showChoice(String message, Supplier<?> onOKClick) {
+        JFrame choiceFrame = new JFrame("Выбор");
+        choiceFrame.setBounds(400, 400, 300, 200);
+        Container container = choiceFrame.getContentPane();
+        container.setLayout(new GridBagLayout());
+
+        JLabel messageLabel = getLabel("", SwingUtilities.CENTER, 16.0f, false);
+        messageLabel.setText(message);
+        JButton cancelButton = new JButton();
+        JButton okButton = new JButton();
+        cancelButton.setAction(new AbstractAction("Отмена") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                choiceFrame.setVisible(false);
+                choiceFrame.dispose();
+            }
+        });
+        okButton.setAction(new AbstractAction("OK") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                choiceFrame.setVisible(false);
+                choiceFrame.dispose();
+                onOKClick.get();
+            }
+        });
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        c.insets = new Insets(10, 10, 10, 10);
+        c.weightx = 2.0;
+        c.weighty = 1.0;
+        c.gridwidth = GridBagConstraints.REMAINDER;
+
+        container.add(messageLabel, c);
+
+        c.gridwidth = 1;
+        c.weightx = 1.0;
+        container.add(cancelButton, c);
+
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        container.add(okButton, c);
+
+        choiceFrame.setVisible(true);
+
     }
 }

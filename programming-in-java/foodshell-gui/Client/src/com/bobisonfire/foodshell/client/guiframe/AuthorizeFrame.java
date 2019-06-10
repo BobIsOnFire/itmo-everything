@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class AuthorizeFrame extends JFrame {
-    // GisCom7KuBoMybHoMo7Ni
+    // GisCom7KuBoMybHoMo7Ni PoCo6GefBo4GyPaz1Kub
     private JTextField emailField = CustomComponentFactory.getTextField(20.0f, "Email");
     private JTextField nameField = CustomComponentFactory.getTextField(20.0f, "Имя");
     private JPasswordField passwordField = CustomComponentFactory.getPasswordField(20.0f, "Пароль");

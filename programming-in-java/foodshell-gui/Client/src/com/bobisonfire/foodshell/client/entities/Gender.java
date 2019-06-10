@@ -25,4 +25,10 @@ public enum Gender {
     public static Gender getGenderByName(String name) {
         return Gender.valueOf(name.toUpperCase().replaceAll("\\s", "_"));
     }
+
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

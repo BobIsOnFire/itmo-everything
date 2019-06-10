@@ -56,14 +56,16 @@ public class Main {
 
                         try {
                             ByteBuffer buffer = ByteBuffer.allocate(256);
-                            if (socketChannel.read(buffer) < 0) socketChannel.close(); // todo log connections
+                            StringBuilder message = new StringBuilder(); // todo log exceptions
+                            while (socketChannel.read(buffer) > 0) {
+                                buffer.flip();
+                                byte[] bytes = new byte[buffer.limit()];
+                                buffer.get(bytes);
+                                message.append( new String(bytes) );
+                                buffer.clear();
+                            }
 
-                            buffer.flip();
-                            byte[] bytes = new byte[buffer.limit()];
-                            buffer.get(bytes);
-                            String message = new String(bytes);
-
-                            Request.execute(message, socketChannel);
+                            Request.execute(message.toString(), socketChannel);
                         } catch (IOException exc) {
                             socketChannel.close();
                         }
