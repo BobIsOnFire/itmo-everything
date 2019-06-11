@@ -14,6 +14,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.Date;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.List;
@@ -369,13 +370,27 @@ class MainTable extends JPanel {
             if (row < 0 || column < 0)
                 return;
 
-            if (SwingUtilities.isRightMouseButton(e)) {
+            if (SwingUtilities.isRightMouseButton(e) && table.getModel().isCellEditable(row, 1)) {
                 JPopupMenu menu = new JPopupMenu();
-                JMenuItem item = new JMenuItem("Удалить"); // todo add items to remove older/younger
-                menu.add(item);
-                item.addActionListener(
-                        evt -> CustomComponentFactory.showChoice("Хотите удалить персонажа?", new RemoveHuman(row))
-                );
+                JMenuItem removeItem = new JMenuItem("Удалить"); // todo add items to remove older/younger
+                JMenuItem olderItem = new JMenuItem("Удалить старших");
+                JMenuItem youngerItem = new JMenuItem("Удалить моложе");
+                menu.add(removeItem);
+                menu.add(olderItem);
+                menu.add(youngerItem);
+
+                removeItem.addActionListener( evt -> CustomComponentFactory.showChoice(
+                        "Хотите удалить персонажа?",
+                        new RemoveHuman(row)
+                ));
+                olderItem.addActionListener( evt -> CustomComponentFactory.showChoice(
+                        "Хотите удалить персонажей, которые старше данного?",
+                        new RemoveOlderHumans(row)
+                ));
+                youngerItem.addActionListener( evt -> CustomComponentFactory.showChoice(
+                        "Хотите удалить персонажей, которые моложе данного?",
+                        new RemoveYoungerHumans(row)
+                ));
                 menu.show(e.getComponent(), e.getX(), e.getY());
             }
         }
@@ -395,4 +410,39 @@ class MainTable extends JPanel {
             return null;
         }
     }
-}
+
+    private class RemoveOlderHumans implements Supplier {
+        int row;
+        RemoveOlderHumans(int row) {
+            this.row = row;
+        }
+        @Override
+        public Object get() {
+            int id = Integer.parseInt( (String) table.getModel().getValueAt(row, 0) );
+            Human human = (Human) Request.execute(Request.GET, Human.class, "id", String.valueOf(id))[0];
+            String[] tokens = human.getBirthday().split("\\.");
+            String date = tokens[2] + "-" + tokens[1] + "-" + tokens[0];
+            Request.execute(Request.REMOVE_CONDITION, Human.class,
+                    "birthday < '" + date + "' AND creator_id = " + human.getCreatorID());
+            new Thread(new TableSortUpdater("id", "ASC")).start();
+            return null;
+        }
+    }
+
+    private class RemoveYoungerHumans implements Supplier {
+        int row;
+        RemoveYoungerHumans(int row) {
+            this.row = row;
+        }
+        @Override
+        public Object get() {
+            int id = Integer.parseInt( (String) table.getModel().getValueAt(row, 0) );
+            Human human = (Human) Request.execute(Request.GET, Human.class, "id", String.valueOf(id))[0];
+            String[] tokens = human.getBirthday().split("\\.");
+            String date = tokens[2] + "-" + tokens[1] + "-" + tokens[0];
+            Request.execute(Request.REMOVE_CONDITION, Human.class,
+                    "birthday > '" + date + "' AND creator_id = " + human.getCreatorID());
+            new Thread(new TableSortUpdater("id", "ASC")).start();
+            return null;
+        }
+    }}

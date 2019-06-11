@@ -93,9 +93,17 @@ public enum Request {
             try (DBExchanger exchanger = new DBExchanger()) {
                 String tableName = className + "s";
 
-                ResultSet set = exchanger.getQuery("SELECT * FROM " + tableName +
-                        " WHERE " + field + " LIKE ?", value);
-                set.next();
+                ResultSet set;
+                if (field.equals("id"))
+                    set = exchanger.getQuery("SELECT * FROM " + tableName + " WHERE " + field + " = ?", Integer.parseInt(value));
+                else
+                    set = exchanger.getQuery("SELECT * FROM " + tableName + " WHERE " + field + " LIKE ?", value);
+
+                if (!set.next()){
+                    write(socketChannel, "NULL");
+                    return;
+                }
+
                 String serialized = "";
                 Gson gson = new Gson();
                 switch (className) {
@@ -157,9 +165,9 @@ public enum Request {
                         Location location = gson.fromJson(serialized, Location.class);
                         crd = location.getCoordinate();
                         changed = exchanger.update(
-                                "INSERT INTO locations (id, name, size, x, y, z)" +
-                                "VALUES (?, ?, ?, ?, ?, ?)",
-                                location.getId(), location.getName(), location.getSize(),
+                                "INSERT INTO locations (name, size, x, y, z)" +
+                                "VALUES (?, ?, ?, ?, ?)",
+                                location.getName(), location.getSize(),
                                 crd.getX(), crd.getY(), crd.getZ()
                         );
                         break;
@@ -182,6 +190,23 @@ public enum Request {
             try (DBExchanger exchanger = new DBExchanger()) {
                 String tableName = className + "s";
                 int changed = exchanger.update("DELETE FROM " + tableName + " WHERE id = ?", id);
+                write(socketChannel, String.valueOf(changed));
+            } catch (IOException exc) {
+                throw new ServerException("Ошибка записи в канал.", exc);
+            }
+        }
+    },
+
+    REMOVE_CONDITION {
+        @Override
+        protected void run(String message, SocketChannel socketChannel) throws ServerException {
+            String[] tokens = message.split("\\s+", 2);
+            String className = tokens[0];
+            String condition = tokens[1];
+
+            try (DBExchanger exchanger = new DBExchanger()) {
+                String tableName = className + "s";
+                int changed = exchanger.update("DELETE FROM " + tableName + " WHERE " + condition);
                 write(socketChannel, String.valueOf(changed));
             } catch (IOException exc) {
                 throw new ServerException("Ошибка записи в канал.", exc);

@@ -33,6 +33,22 @@ public class Location implements Comparable<Location>, Serializable {
         return name;
     }
 
+    public void setCoordinate(Coordinate coordinate) {
+        this.coordinate = coordinate;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public int getId() {
         return id;
     }

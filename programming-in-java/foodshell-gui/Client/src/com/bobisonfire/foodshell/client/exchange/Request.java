@@ -63,6 +63,7 @@ public enum Request {
 
             Gson gson = new Gson();
             String serialized = in.nextLine();
+            if (serialized.equals("NULL")) return new Object[]{};
             return new Object[] {gson.fromJson(serialized, clazz)};
         }
     },
@@ -94,6 +95,18 @@ public enum Request {
         }
     },
 
+    REMOVE_CONDITION {
+        @Override
+        protected Object[] run(Scanner in, PrintWriter out, Object... args) throws IOException {
+            Class<?> clazz = (Class<?>) args[0];
+            String condition = (String) args[1];
+
+            out.printf("REMOVE_CONDITION %s %s\n", clazz.getSimpleName(), condition);
+            int completed = Integer.parseInt( in.nextLine() );
+            return new Object[] {completed};
+        }
+    },
+
     PWGENERATE {
         @Override
         public Object[] run(Scanner in, PrintWriter out, Object... args) {
@@ -119,7 +132,7 @@ public enum Request {
         Request.socket = socket;
     }
 
-    public static Object[] execute(Request req, Object... args) { // todo put execution into a new thread
+    public static Object[] execute(Request req, Object... args) {
         try {
             Scanner in = new Scanner(socket.getInputStream());
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);

@@ -29,11 +29,11 @@ class MainProfile extends JPanel {
         Color color = new Color(MainFrame.user.getColor());
 
         nameLabel.setText(name);
-        nameLabel.addMouseListener(new LabelEditListener());
+        nameLabel.addMouseListener(new LabelEditListener(elem -> !elem.isEmpty(), "любой"));
         nameLabel.addPropertyChangeListener("text", new NameChangeListener());
 
         colorHexLabel.setText(colorHex.toString());
-        colorHexLabel.addMouseListener(new LabelEditListener());
+        colorHexLabel.addMouseListener(new LabelEditListener(elem -> elem.matches("^#[0-9a-fA-F]{6}$"), "# + 6-значное 16-ричное число"));
         colorHexLabel.addPropertyChangeListener("text", new ColorChangeListener());
 
         newPasswordButton.setAction(new NewPasswordAction("Сменить пароль"));

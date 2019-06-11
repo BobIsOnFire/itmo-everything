@@ -53,11 +53,10 @@ class MainCanvas extends Canvas {
                             (elemCrd.getY() - locCrd.getY()) / location.getSize(),
                             (elemCrd.getZ() - locCrd.getZ()) / location.getSize()
                             );
+
                     int x = 20 + (int) ( ( getWidth() - 40 ) * ( 0.5 + 1.0/3 * relativeCrd.getX() - 1.0/6 * relativeCrd.getY() ) );
                     int y = 20 + (int) ( ( getHeight() - 40 ) * ( 0.5 - 1.0/3 * relativeCrd.getZ() + 1.0/6 * relativeCrd.getY() ) );
                     int size = (int) ( 40 * Math.pow(2, relativeCrd.getY()) );
-                    System.out.printf("%s %s %d %d %d\n", elemCrd, relativeCrd, x, y, size);
-
                     drawMan( g, x, y, size, new Color(user.getColor()) );
                 });
     }

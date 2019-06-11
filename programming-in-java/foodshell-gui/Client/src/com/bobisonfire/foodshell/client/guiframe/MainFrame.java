@@ -1,5 +1,6 @@
 package com.bobisonfire.foodshell.client.guiframe;
 
+import com.bobisonfire.foodshell.client.entities.Coordinate;
 import com.bobisonfire.foodshell.client.entities.Human;
 import com.bobisonfire.foodshell.client.entities.Location;
 import com.bobisonfire.foodshell.client.entities.User;
@@ -8,6 +9,8 @@ import com.bobisonfire.foodshell.client.exchange.Request;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +37,7 @@ class MainFrame extends JFrame {
         canvas = new MainCanvas();
         MainTable table = new MainTable();
         locationBox = CustomComponentFactory.getComboBox( new Location[]{} );
-        locationBox.addActionListener(e -> MainFrame.canvas.repaint());
+        locationBox.addActionListener(new LocationBoxListener());
         fillLocationBox();
 
         this.setBounds(0, 0, 1280, 720);
@@ -75,5 +78,84 @@ class MainFrame extends JFrame {
         }
         locationBox.removeAllItems();
         locationList.forEach(elem -> locationBox.addItem(elem));
+
+        Location loc = new Location();
+        loc.setName("<Создать>");
+        locationBox.addItem(loc);
+    }
+
+    private class LocationBoxListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Location location = (Location) locationBox.getSelectedItem();
+            if (location == null) return;
+
+            if (location.getName().equals("<Создать>") && location.getCoordinate() == null) {
+                JFrame createFrame = new JFrame();
+                createFrame.setBounds(300, 300, 300, 300);
+                Container container = createFrame.getContentPane();
+                container.setBackground(Color.WHITE);
+                container.setForeground(Color.BLACK);
+                container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+
+                JLabel infoLabel = CustomComponentFactory.getLabel("", SwingUtilities.CENTER, 16.0f, false);
+                infoLabel.setText("<html><div 'text-align: center;'>Введите данные новой локации:");
+                JTextField nameField = CustomComponentFactory.getTextField(16.0f, "Название");
+                JTextField sizeField = CustomComponentFactory.getTextField(16.0f, "Размер");
+                JTextField coordinateField = CustomComponentFactory.getTextField(16.0f, "Координаты в формате (x, y, z)");
+
+                JButton cancelButton = new JButton();
+                cancelButton.setAction(new AbstractAction("Отмена") {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        createFrame.setVisible(false);
+                        createFrame.dispose();
+                    }
+                });
+                JButton okButton = new JButton();
+                okButton.setAction(new AbstractAction("ОК") {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        location.setName(nameField.getText()); // todo validate
+                        location.setSize( Integer.parseInt(sizeField.getText()) );
+                        location.setCoordinate( Coordinate.from(coordinateField.getText()) );
+                        createFrame.setVisible(false);
+                        createFrame.dispose();
+
+                        Request.execute(Request.SET, Location.class, location);
+                        locationList.clear();
+                        new Thread( () -> {
+                            Object[] list = Request.execute(Request.SORT, Human.class, "id", "ASC");
+                            humanList = Arrays.stream(list).map( elem -> (Human) elem ).collect(Collectors.toList());
+                            list = Request.execute(Request.SORT, Location.class, "id", "ASC");
+                            locationList = Arrays.stream(list).map( elem -> (Location) elem ).collect(Collectors.toList());
+                        } ).start();
+
+                        fillLocationBox();
+                    }
+                });
+
+                JPanel inputPanel = CustomComponentFactory.getEmptyPanel();
+                inputPanel.setLayout(new GridLayout(4, 1));
+                inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                inputPanel.add(infoLabel);
+                inputPanel.add(nameField);
+                inputPanel.add(sizeField);
+                inputPanel.add(coordinateField);
+
+                JPanel buttonPanel = CustomComponentFactory.getEmptyPanel();
+                buttonPanel.setLayout(new GridLayout(1, 2));
+                buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                buttonPanel.add(cancelButton);
+                buttonPanel.add(okButton);
+
+                container.add(inputPanel);
+                container.add(buttonPanel);
+                createFrame.setVisible(true);
+                return;
+            }
+
+            MainFrame.canvas.repaint();
+        }
     }
 }

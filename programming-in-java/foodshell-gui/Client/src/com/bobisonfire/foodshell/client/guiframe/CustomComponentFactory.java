@@ -3,7 +3,6 @@ package com.bobisonfire.foodshell.client.guiframe;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 class CustomComponentFactory {
@@ -27,22 +26,7 @@ class CustomComponentFactory {
                 css = "left";
         }
 
-        JLabel label = new JLabel(text, alignment) {
-            private String text;
-            @Override
-            public void setText(String text) {
-                this.text = text;
-                String htmlText = "<html><div style='text-align: " + css + ";'>" +
-                        text.replaceAll("\n", "<br>") +
-                        "</div></html>";
-                super.setText(htmlText);
-            }
-
-            @Override
-            public String getText() {
-                return text;
-            }
-        };
+        JLabel label = new JLabel(text, alignment);
         label.setFont(label.getFont().deriveFont(fontSize));
         if (border) label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         return label;
@@ -83,7 +67,7 @@ class CustomComponentFactory {
         container.setLayout(new GridBagLayout());
 
         JLabel messageLabel = getLabel("", SwingUtilities.CENTER, 16.0f, false);
-        messageLabel.setText(message);
+        messageLabel.setText("<html><div style='text-align: center;'>" + message);
         JButton closeButton = new JButton();
         closeButton.setAction(new AbstractAction("OK") {
             @Override
@@ -114,7 +98,7 @@ class CustomComponentFactory {
         container.setLayout(new GridBagLayout());
 
         JLabel messageLabel = getLabel("", SwingUtilities.CENTER, 16.0f, false);
-        messageLabel.setText(message);
+        messageLabel.setText("<html><div style='text-align: center;'>" + message);
         JButton cancelButton = new JButton();
         JButton okButton = new JButton();
         cancelButton.setAction(new AbstractAction("Отмена") {

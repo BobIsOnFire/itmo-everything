@@ -8,7 +8,7 @@
       <ObjectId>16394</ObjectId>
       <StateNumber>572</StateNumber>
       <Owner>postgres</Owner>
-      <IntrospectionStateNumber>703</IntrospectionStateNumber>
+      <IntrospectionStateNumber>794</IntrospectionStateNumber>
       <Current>1</Current>
       <Visible>1</Visible>
       <Relations>sequence|table|16460|16462|1
@@ -112,7 +112,7 @@ sequence|table|16482|16484|1
       <Comment>standard public schema</Comment>
       <StateNumber>360</StateNumber>
       <Owner>postgres</Owner>
-      <IntrospectionStateNumber>704</IntrospectionStateNumber>
+      <IntrospectionStateNumber>795</IntrospectionStateNumber>
       <Current>1</Current>
       <Visible>1</Visible>
     </schema>
@@ -377,14 +377,26 @@ name</ColNames>
       <ColNames>id</ColNames>
       <Unique>1</Unique>
     </index>
-    <key id="56" parent="31" name="locations_pkey">
+    <index id="56" parent="31" name="locations_name_key">
+      <ObjectId>16509</ObjectId>
+      <StateNumber>793</StateNumber>
+      <ColNames>name</ColNames>
+      <Unique>1</Unique>
+    </index>
+    <key id="57" parent="31" name="locations_pkey">
       <ObjectId>16481</ObjectId>
       <StateNumber>695</StateNumber>
       <ColNames>id</ColNames>
       <UnderlyingIndexName>locations_pkey</UnderlyingIndexName>
       <Primary>1</Primary>
     </key>
-    <column id="57" parent="32" name="id">
+    <key id="58" parent="31" name="locations_name_key">
+      <ObjectId>16510</ObjectId>
+      <StateNumber>793</StateNumber>
+      <ColNames>name</ColNames>
+      <UnderlyingIndexName>locations_name_key</UnderlyingIndexName>
+    </key>
+    <column id="59" parent="32" name="id">
       <Position>1</Position>
       <DataType>integer|0s</DataType>
       <NotNull>1</NotNull>
@@ -392,50 +404,50 @@ name</ColNames>
       <DefaultExpression>nextval(&apos;users_id_seq&apos;::regclass)</DefaultExpression>
       <TypeId>23</TypeId>
     </column>
-    <column id="58" parent="32" name="email">
+    <column id="60" parent="32" name="email">
       <Position>2</Position>
       <DataType>varchar(64)|0s</DataType>
       <StateNumber>692</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="59" parent="32" name="password">
+    <column id="61" parent="32" name="password">
       <Position>3</Position>
       <DataType>char(32)|0s</DataType>
       <StateNumber>692</StateNumber>
       <TypeId>1042</TypeId>
     </column>
-    <column id="60" parent="32" name="name">
+    <column id="62" parent="32" name="name">
       <Position>4</Position>
       <DataType>varchar(64)|0s</DataType>
       <StateNumber>692</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="61" parent="32" name="color">
+    <column id="63" parent="32" name="color">
       <Position>5</Position>
       <DataType>integer|0s</DataType>
       <StateNumber>692</StateNumber>
       <TypeId>23</TypeId>
     </column>
-    <index id="62" parent="32" name="users_pkey">
+    <index id="64" parent="32" name="users_pkey">
       <ObjectId>16466</ObjectId>
       <StateNumber>692</StateNumber>
       <ColNames>id</ColNames>
       <Unique>1</Unique>
     </index>
-    <index id="63" parent="32" name="users_email_key">
+    <index id="65" parent="32" name="users_email_key">
       <ObjectId>16468</ObjectId>
       <StateNumber>692</StateNumber>
       <ColNames>email</ColNames>
       <Unique>1</Unique>
     </index>
-    <key id="64" parent="32" name="users_pkey">
+    <key id="66" parent="32" name="users_pkey">
       <ObjectId>16467</ObjectId>
       <StateNumber>692</StateNumber>
       <ColNames>id</ColNames>
       <UnderlyingIndexName>users_pkey</UnderlyingIndexName>
       <Primary>1</Primary>
     </key>
-    <key id="65" parent="32" name="users_email_key">
+    <key id="67" parent="32" name="users_email_key">
       <ObjectId>16469</ObjectId>
       <StateNumber>692</StateNumber>
       <ColNames>email</ColNames>

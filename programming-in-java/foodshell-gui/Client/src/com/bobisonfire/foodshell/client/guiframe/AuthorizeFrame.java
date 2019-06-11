@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class AuthorizeFrame extends JFrame {
-    // GisCom7KuBoMybHoMo7Ni PoCo6GefBo4GyPaz1Kub
+    // VyvGeSaFuk9HinZaMorPi PoCo6GefBo4GyPaz1Kub
     private JTextField emailField = CustomComponentFactory.getTextField(20.0f, "Email");
     private JTextField nameField = CustomComponentFactory.getTextField(20.0f, "Имя");
     private JPasswordField passwordField = CustomComponentFactory.getPasswordField(20.0f, "Пароль");
@@ -151,19 +151,23 @@ public class AuthorizeFrame extends JFrame {
                 return;
             }
 
-            //todo check if user exists
-            User user = new User();
-            user.setEmail(email);
-            user.setName(name);
-            user.setColor(0);
+            Object[] users = Request.execute(Request.GET, User.class, "email", email);
+            if (users.length == 0) {
+                User user = new User();
+                user.setEmail(email);
+                user.setName(name);
+                user.setColor(0);
 
-            Object[] list = Request.execute(Request.PWGENERATE, user);
-            user = (User) list[0];
-            Request.execute(Request.SET, User.class, user);
+                Object[] list = Request.execute(Request.PWGENERATE, user);
+                user = (User) list[0];
+                Request.execute(Request.SET, User.class, user);
+            }
 
             authorizeLayout();
             registerMode = false;
-            authLabel.setText("Регистрация завершена. Пароль выслан вам на почту.");
+
+            if (users.length == 0) authLabel.setText("Регистрация завершена. Пароль выслан вам на почту.");
+            else authLabel.setText("Такой аккаунт уже существует.");
         }
     }
     // todo go through IDEA code inspection when everything is done!
