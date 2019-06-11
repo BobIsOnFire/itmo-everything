@@ -39,7 +39,7 @@ class MainCanvas extends Canvas {
         Location location = (Location) MainFrame.locationBox.getSelectedItem();
         if (location == null) return;
 
-        MainFrame.humanList.stream() // todo can I put a human in this location in these coordinates?
+        MainFrame.humanList.stream()
                 .filter(elem -> elem.getLocationID() == location.getId())
                 .forEach(elem -> {
                     User user = userList.stream()

@@ -55,7 +55,8 @@ public class Location implements Comparable<Location>, Serializable {
 
     @Override
     public String toString() {
-        return getName();
+        if (coordinate == null) return "<Создать>";
+        return name + " " + coordinate.toString() + " size " + size + "pt";
     }
 
     @Override

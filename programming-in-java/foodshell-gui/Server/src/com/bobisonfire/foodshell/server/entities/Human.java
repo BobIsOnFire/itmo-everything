@@ -91,6 +91,13 @@ public class Human implements Comparable<Human>, Serializable {
 
     @Override
     public int compareTo(Human o) {
-        return birthday.compareTo(o.birthday);
-    } // todo rewrite compareTo
+        try {
+            SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
+            java.util.Date self = format.parse(birthday);
+            java.util.Date other = format.parse(o.birthday);
+            return self.compareTo(other);
+        } catch (ParseException exc) {
+            return birthday.compareTo(o.birthday);
+        }
+    }
 }

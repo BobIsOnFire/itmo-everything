@@ -116,11 +116,22 @@ class MainFrame extends JFrame {
                 okButton.setAction(new AbstractAction("ОК") {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        location.setName(nameField.getText()); // todo validate
-                        location.setSize( Integer.parseInt(sizeField.getText()) );
-                        location.setCoordinate( Coordinate.from(coordinateField.getText()) );
+                        try {
+                            location.setName(nameField.getText());
+                            location.setSize(Integer.parseInt(sizeField.getText()));
+                            location.setCoordinate(Coordinate.from(coordinateField.getText()));
+                        } catch (NumberFormatException exc) {
+                            infoLabel.setText("<html><div 'text-align: center;'>Данные некорректны.");
+                            return;
+                        }
                         createFrame.setVisible(false);
                         createFrame.dispose();
+
+                        Object[] checklist = Request.execute(Request.GET, Location.class, "name", location.getName());
+                        if (checklist.length > 0) {
+                            infoLabel.setText("<html><div 'text-align: center;'>Такая локация уже существует.");
+                            return;
+                        }
 
                         Request.execute(Request.SET, Location.class, location);
                         locationList.clear();

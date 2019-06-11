@@ -14,18 +14,22 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.Date;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class MainTable extends JPanel {
     private static final Object[] columnNames = {"#", "Имя", "Дата рождения", "Гендер", "Локация и координаты"};
     private static final double[] percentage = {0.04, 0.12, 0.24, 0.24, 0.36};
+    private static final String[] format =
+            {"Любой", "ДД.ММ.ГГГГ", "Один из существующих гендеров (ПКМ по столбцу Гендер)", "Название локации (X, Y, Z)"};
+
     private static String[] newHuman = {"<>", "<Создать>", "<Создать>", "<Создать>", "<Создать>"};
     private static boolean[] newHumanCreated = {false, false, false, false};
+    private static Predicate<String>[] validators;
 
     private int position;
     private int createIndex;
@@ -53,6 +57,20 @@ class MainTable extends JPanel {
 
         this.add(table.getTableHeader());
         this.add(table);
+
+        validators = new Predicate[4];
+        validators[0] = elem -> !elem.isEmpty();
+        validators[1] = elem -> elem.matches("^[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}$");
+        validators[2] = elem -> Gender.getGenderByName(elem) != null;
+        validators[3] = elem -> {
+            String[] tokens = elem.split("\\s+", 2);
+            try {
+                Coordinate.from(tokens[1]);
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException exc) {
+                return false;
+            }
+            return !tokens[0].isEmpty();
+        };
     }
 
     private void fillData() {
@@ -121,57 +139,90 @@ class MainTable extends JPanel {
     }
 
     private class CellChangeListener implements TableModelListener {
+        private boolean suppress = false;
         @Override
         public void tableChanged(TableModelEvent e) {
+            if (suppress) return;
             int row = e.getFirstRow();
             int column = e.getColumn();
+            String cellValue = (String) table.getModel().getValueAt(row, column);
 
             if (row == createIndex && e.getType() == TableModelEvent.UPDATE) {
-                String cellValue = (String) table.getModel().getValueAt(row, column);
-                if (!cellValue.isEmpty()) {
-                    newHuman[column] = cellValue;
-                    newHumanCreated[column - 1] = true;
-                }
-                else {
+                if (!validators[column - 1].test(cellValue)) {
+                    if (!cellValue.isEmpty()) CustomComponentFactory.showMessage(
+                            "Неверный формат данных. Необходимый формат: " + format[column - 1]);
                     newHuman[column] = "<Создать>";
+                    suppress = true;
                     table.getModel().setValueAt("<Создать>", row, column);
+                    suppress = false;
                     newHumanCreated[column - 1] = false;
+                    return;
                 }
+
+                newHuman[column] = cellValue;
+                newHumanCreated[column - 1] = true;
 
                 int i = 0;
                 while (i < 4 && newHumanCreated[i]) i++;
                 if (i < 4) return;
 
-                Human human = createHuman(newHuman);
-                Request.execute(Request.SET, Human.class, human);
+                Object[] list = Request.execute(Request.GET, Human.class, "name", newHuman[1]);
+                if (list.length > 0) {
+                    CustomComponentFactory.showMessage("Такой персонаж уже существует.");
+                } else {
+                    Human human = createHuman(newHuman);
+                    if (human != null) Request.execute(Request.SET, Human.class, human);
+                }
                 new Thread(new TableSortUpdater("id", "ASC")).start();
                 return;
             }
 
-            int id = Integer.parseInt( (String) table.getModel().getValueAt(row, 0) );
-            // todo id is constantly going up!!!
+            if (!validators[column - 1].test(cellValue)) {
+                CustomComponentFactory.showMessage("Неверный формат данных. Необходимый формат: " + format[column - 1]);
+                fillData();
+                return;
+            }
+
             if (e.getType() == TableModelEvent.UPDATE) {
                 String[] data = new String[5];
                 for (int i = 0; i < 5; i++) {
                     data[i] = (String) table.getModel().getValueAt(row, i);
                 }
                 Human newHuman = createHuman(data);
-                Request.execute(Request.REMOVE, Human.class, id);
+                if (newHuman == null) {
+                    fillData();
+                    return;
+                }
                 Request.execute(Request.SET, Human.class, newHuman);
                 new Thread(new TableSortUpdater("id", "ASC")).start();
             }
         }
 
         private Human createHuman(String[] data) {
-            Human human = new Human(); // todo check if human exists
+            Human human = new Human();
             String name = data[1].trim();
             String birthday = data[2].trim();
-            Gender gender = Gender.getGenderByName( data[3].trim() ); // todo add list of genders
+            Gender gender = Gender.getGenderByName( data[3].trim() );
             String[] tokens = data[4].split("\\s+", 2);
 
             Object[] list = Request.execute(Request.GET, Location.class, "name", tokens[0]);
+            if (list.length == 0) {
+                CustomComponentFactory.showMessage("Такой локации не существует: " + tokens[0]);
+                return null;
+            }
             Location location = (Location) list[0];
-            Coordinate coordinate = Coordinate.from(tokens[1]); // todo check if data is valid
+            Coordinate humanCrd = Coordinate.from(tokens[1]);
+            Coordinate locCrd = location.getCoordinate();
+
+            if (
+                Math.abs(humanCrd.getX() - locCrd.getX()) > location.getSize() ||
+                Math.abs(humanCrd.getY() - locCrd.getY()) > location.getSize() ||
+                Math.abs(humanCrd.getZ() - locCrd.getZ()) > location.getSize()
+            ) {
+                CustomComponentFactory.showMessage("Персонаж не может быть размещен по таким координатам. " +
+                        "Локация - " + location.toString());
+                return null;
+            }
 
             human.setName(name);
             human.setCreatorID(MainFrame.user.getId());
@@ -179,7 +230,7 @@ class MainTable extends JPanel {
             human.setGender(gender);
             human.setLocationID(location.getId());
             human.setBirthday( birthday );
-            human.setCoordinate(coordinate);
+            human.setCoordinate(humanCrd);
 
             return human;
         }
@@ -251,7 +302,7 @@ class MainTable extends JPanel {
     private class HeaderClickListener extends MouseAdapter {
         private final String[] sorterFields = {"id", "name", "birthday", "gender", "y"};
         @Override
-        public void mouseClicked(MouseEvent e) { // todo add filter there (smh)
+        public void mouseClicked(MouseEvent e) {
             int column = table.columnAtPoint(e.getPoint());
             if (SwingUtilities.isLeftMouseButton(e)) {
 
@@ -263,10 +314,17 @@ class MainTable extends JPanel {
             }
             else if (SwingUtilities.isRightMouseButton(e) && (column == 3 || column == 4)) {
                 JPopupMenu menu = new JPopupMenu();
-                JMenuItem item = new JMenuItem("Фильтр...");
 
+                JMenuItem item = new JMenuItem("Фильтр...");
                 item.addActionListener(new FilterListener(column));
                 menu.add(item);
+
+                if (column == 3) {
+                    JMenuItem allGendersItem = new JMenuItem("Все гендеры");
+                    allGendersItem.addActionListener(new AllGenderListener());
+                    menu.add(allGendersItem);
+                }
+
                 menu.show(e.getComponent(), e.getX(), e.getY());
             }
         }
@@ -360,7 +418,40 @@ class MainTable extends JPanel {
             selectFrame.setVisible(true);
 
         }
-    } // todo customize buttons
+    }
+
+    private class AllGenderListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFrame genderFrame = new JFrame("Лист всех гендеров");
+            genderFrame.setBounds(400, 400, 300, 450);
+
+            JPanel panel = new JPanel();
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+            Gender[] values = Gender.values();
+            panel.add(CustomComponentFactory.getLabel(
+                    "There are only " + values.length + " genders.", SwingUtilities.CENTER, 16.0f, true
+            ));
+
+            for (Gender value : values) {
+                panel.add(CustomComponentFactory.getLabel(value.getName(), SwingUtilities.CENTER, 16.0f, false));
+            }
+
+            JButton okButton = new JButton();
+            okButton.setAction(new AbstractAction("ОК") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    genderFrame.setVisible(false);
+                    genderFrame.dispose();
+                }
+            });
+
+            panel.add(okButton);
+            genderFrame.add(panel);
+            genderFrame.setVisible(true);
+        }
+    }
 
     private class CellPopupListener extends MouseAdapter {
         @Override
@@ -372,8 +463,8 @@ class MainTable extends JPanel {
 
             if (SwingUtilities.isRightMouseButton(e) && table.getModel().isCellEditable(row, 1)) {
                 JPopupMenu menu = new JPopupMenu();
-                JMenuItem removeItem = new JMenuItem("Удалить"); // todo add items to remove older/younger
-                JMenuItem olderItem = new JMenuItem("Удалить старших");
+                JMenuItem removeItem = new JMenuItem("Удалить");
+                JMenuItem olderItem = new JMenuItem("Удалить старше");
                 JMenuItem youngerItem = new JMenuItem("Удалить моложе");
                 menu.add(removeItem);
                 menu.add(olderItem);

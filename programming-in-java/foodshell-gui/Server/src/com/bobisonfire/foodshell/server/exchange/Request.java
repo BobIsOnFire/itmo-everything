@@ -147,7 +147,7 @@ public enum Request {
                                 "VALUES (?, ?, ?, ?) ON CONFLICT ON CONSTRAINT users_email_key DO UPDATE SET " +
                                 "password = EXCLUDED.password, name = EXCLUDED.name, color = EXCLUDED.color",
                                 user.getEmail(), user.getPassword(),
-                                user.getName(), user.getColor() // todo add conflict info
+                                user.getName(), user.getColor()
                         );
                         break;
                     case "Human":
@@ -155,7 +155,10 @@ public enum Request {
                         crd = human.getCoordinate();
                         changed = exchanger.update(
                                 "INSERT INTO humans (creator_id, name, birthday, gender, " +
-                                "location_id, creation_date, x, y, z) VALUES(?,?,?,?,?,?,?,?,?)",
+                                "location_id, creation_date, x, y, z) VALUES(?,?,?,?,?,?,?,?,?)" +
+                                "ON CONFLICT ON CONSTRAINT humans_creator_id_name_key DO UPDATE SET " +
+                                "birthday = EXCLUDED.birthday, gender = EXCLUDED.gender, location_id = EXCLUDED.location_id, " +
+                                "x = EXCLUDED.x, y = EXCLUDED.y, z = EXCLUDED.z",
                                 human.getCreatorID(), human.getName(), human.getBirthdayAsDate(),
                                 human.getGender().ordinal(), human.getLocationID(), human.getCreationDateAsTimestamp(),
                                 crd.getX(), crd.getY(), crd.getZ()
@@ -166,7 +169,8 @@ public enum Request {
                         crd = location.getCoordinate();
                         changed = exchanger.update(
                                 "INSERT INTO locations (name, size, x, y, z)" +
-                                "VALUES (?, ?, ?, ?, ?)",
+                                "VALUES (?, ?, ?, ?, ?) ON CONFLICT ON CONSTRAINT locations_name_key DO UPDATE SET " +
+                                "size = EXCLUDED.size, x = EXCLUDED.x, y = EXCLUDED.y, z = EXCLUDED.z",
                                 location.getName(), location.getSize(),
                                 crd.getX(), crd.getY(), crd.getZ()
                         );

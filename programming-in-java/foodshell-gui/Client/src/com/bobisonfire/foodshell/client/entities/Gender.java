@@ -23,7 +23,11 @@ public enum Gender {
     }
 
     public static Gender getGenderByName(String name) {
-        return Gender.valueOf(name.toUpperCase().replaceAll("\\s", "_"));
+        try {
+            return Gender.valueOf(name.toUpperCase().replaceAll("\\s", "_"));
+        } catch (IllegalArgumentException exc) {
+            return null;
+        }
     }
 
 
