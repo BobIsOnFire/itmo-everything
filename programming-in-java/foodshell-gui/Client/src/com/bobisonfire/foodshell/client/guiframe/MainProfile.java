@@ -29,15 +29,15 @@ class MainProfile extends JPanel {
         Color color = new Color(MainFrame.user.getColor());
 
         nameLabel.setText(name);
-        nameLabel.addMouseListener(new LabelEditListener(elem -> !elem.isEmpty(), "любой"));
+        nameLabel.addMouseListener(new LabelEditListener(elem -> !elem.isEmpty(), Main.R.getString("any")));
         nameLabel.addPropertyChangeListener("text", new NameChangeListener());
 
         colorHexLabel.setText(colorHex.toString());
-        colorHexLabel.addMouseListener(new LabelEditListener(elem -> elem.matches("^#[0-9a-fA-F]{6}$"), "# + 6-значное 16-ричное число"));
+        colorHexLabel.addMouseListener(new LabelEditListener(elem -> elem.matches("^#[0-9a-fA-F]{6}$"), Main.R.getString("colorhex_format")));
         colorHexLabel.addPropertyChangeListener("text", new ColorChangeListener());
 
-        newPasswordButton.setAction(new NewPasswordAction("Сменить пароль"));
-        logoutButton.setAction(new LogoutAction("Выход"));
+        newPasswordButton.setAction(new NewPasswordAction( Main.R.getString("password_change") ));
+        logoutButton.setAction(new LogoutAction( Main.R.getString("logout") ));
 
         colorPanel.setSize(24, 24);
         colorPanel.setBackground(color);
@@ -53,13 +53,13 @@ class MainProfile extends JPanel {
         c.weighty = 1.0;
         c.insets = new Insets(10, 10, 10, 10);
         c.fill = GridBagConstraints.BOTH;
-        this.add(CustomComponentFactory.getLabel("Имя", SwingConstants.LEFT, 24.0f, false), c);
+        this.add(CustomComponentFactory.getLabel(Main.R.getString("name"), SwingConstants.LEFT, 24.0f, false), c);
 
         c.gridwidth = GridBagConstraints.REMAINDER;
         this.add(nameLabel, c);
 
         c.gridwidth = 1;
-        this.add(CustomComponentFactory.getLabel("Цвет", SwingConstants.LEFT, 24.0f, false), c);
+        this.add(CustomComponentFactory.getLabel(Main.R.getString("color"), SwingConstants.LEFT, 24.0f, false), c);
 
         c.weightx = 0.1;
         this.add(colorPanel, c);
@@ -100,7 +100,7 @@ class MainProfile extends JPanel {
             Object[] list = Request.execute(Request.PWGENERATE, MainFrame.user);
             MainFrame.user = (User) list[0];
             Request.execute(Request.SET, User.class, MainFrame.user);
-            CustomComponentFactory.showMessage("Ваш пароль был изменен.\nНовый пароль выслан вам на почту.");
+            CustomComponentFactory.showMessage( Main.R.getString("new_password") );
         }
     }
 

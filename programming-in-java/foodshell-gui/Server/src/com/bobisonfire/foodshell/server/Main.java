@@ -56,7 +56,7 @@ public class Main {
 
                         try {
                             ByteBuffer buffer = ByteBuffer.allocate(256);
-                            StringBuilder message = new StringBuilder(); // todo log exceptions
+                            StringBuilder message = new StringBuilder();
                             while (socketChannel.read(buffer) > 0) {
                                 buffer.flip();
                                 byte[] bytes = new byte[buffer.limit()];

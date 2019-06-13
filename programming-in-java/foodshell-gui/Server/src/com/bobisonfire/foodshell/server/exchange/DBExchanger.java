@@ -66,7 +66,6 @@ public class DBExchanger implements AutoCloseable {
             connection.close();
         } catch (SQLException exc) {
             System.out.println("Caught exception during work with database.");
-            // todo logging but different
         }
     }
 

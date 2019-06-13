@@ -1,5 +1,7 @@
 package com.bobisonfire.foodshell.client.guiframe;
 
+import com.bobisonfire.foodshell.client.Main;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -18,7 +20,7 @@ public class LabelEditListener implements MouseListener {
     public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e)) {
             JPopupMenu menu = new JPopupMenu();
-            JMenuItem item = new JMenuItem("Изменить...");
+            JMenuItem item = new JMenuItem( Main.R.getString("edit") + "...");
             item.addActionListener(evt -> createEditor(e));
             menu.add(item);
             menu.show(e.getComponent(), e.getX(), e.getY());
@@ -58,18 +60,19 @@ public class LabelEditListener implements MouseListener {
         Container container = editFrame.getContentPane();
         container.setLayout(new GridBagLayout());
 
-        JLabel editLabel = CustomComponentFactory.getLabel("Введите значение:", SwingUtilities.CENTER, 20.0f, false);
+        JLabel editLabel = CustomComponentFactory.getLabel( Main.R.getString("value_enter") + ":", SwingUtilities.CENTER, 20.0f, false);
         JLabel formatLabel = CustomComponentFactory.getLabel("", SwingUtilities.CENTER, 16.0f, false);
-        formatLabel.setText("<html><div style='text-align: center;'>Формат: " + format);
+        formatLabel.setText("<html><div style='text-align: center;'>" + Main.R.getString("format") + ": " + format);
         JTextField textField = CustomComponentFactory.getTextField(16.0f);
         JButton cancelButton = new JButton();
         JButton okButton = new JButton();
 
-        cancelButton.setAction(new AbstractAction("Отмена") {
+        cancelButton.setAction(new AbstractAction( Main.R.getString("cancel") ) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 editFrame.setVisible(false);
                 editFrame.dispose();
+                MainFrame.instance.setEnabled(true);
             }
         });
 
@@ -78,15 +81,16 @@ public class LabelEditListener implements MouseListener {
             public void actionPerformed(ActionEvent e) {
                 String text = textField.getText();
                 if (text.isEmpty()) {
-                    editLabel.setText("<html><div style='text-align: center;'>Новое значение не может быть пустым.");
+                    editLabel.setText("<html><div style='text-align: center;'>" + Main.R.getString("value_empty"));
                     return;
                 }
                 if (!validator.test(text)) {
-                    editLabel.setText("<html><div style='text-align: center;'>Значение не соответствует формату.");
+                    editLabel.setText("<html><div style='text-align: center;'>" + Main.R.getString("value_format_incorrect"));
                     return;
                 }
                 editFrame.setVisible(false);
                 editFrame.dispose();
+                MainFrame.instance.setEnabled(true);
                 label.setText(text.trim());
             }
         });
@@ -109,6 +113,7 @@ public class LabelEditListener implements MouseListener {
         c.gridwidth = GridBagConstraints.REMAINDER;
         container.add(okButton, c);
 
+        MainFrame.instance.setEnabled(false);
         editFrame.setVisible(true);
     }
 }

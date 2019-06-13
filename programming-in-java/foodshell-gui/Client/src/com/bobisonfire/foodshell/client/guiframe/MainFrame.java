@@ -1,5 +1,6 @@
 package com.bobisonfire.foodshell.client.guiframe;
 
+import com.bobisonfire.foodshell.client.Main;
 import com.bobisonfire.foodshell.client.entities.Coordinate;
 import com.bobisonfire.foodshell.client.entities.Human;
 import com.bobisonfire.foodshell.client.entities.Location;
@@ -22,9 +23,11 @@ class MainFrame extends JFrame {
     static List<Location> locationList = new ArrayList<>();
     static JComboBox<Location> locationBox;
     static MainCanvas canvas;
+    static MainFrame instance;
 
     MainFrame(String title, User user) {
         super(title);
+        instance = this;
         MainFrame.user = user;
 
         new Thread( () -> {
@@ -34,25 +37,29 @@ class MainFrame extends JFrame {
             locationList = Arrays.stream(list).map( elem -> (Location) elem ).collect(Collectors.toList());
         } ).start();
 
+        this.setBounds(0, 0, 1280, 800);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        drawMainFrame();
+    }
+
+    private void drawMainFrame() {
+        JPanel panel = CustomComponentFactory.getEmptyPanel();
+        panel.setLayout(new BorderLayout());
+
         canvas = new MainCanvas();
         MainTable table = new MainTable();
         locationBox = CustomComponentFactory.getComboBox( new Location[]{} );
         locationBox.addActionListener(new LocationBoxListener());
         fillLocationBox();
-
-        this.setBounds(0, 0, 1280, 720);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        Container container = this.getContentPane();
-        container.setBackground(Color.WHITE);
-        container.setForeground(Color.BLACK);
-        container.setLayout(new BorderLayout());
+        JPanel languagePanel = CustomComponentFactory.languageFooter(e -> drawMainFrame());
+        languagePanel.setBorder(new EmptyBorder(new Insets(20, 20, 20, 20)));
+        languagePanel.setSize(0, 50);
 
         JPanel header = CustomComponentFactory.getEmptyPanel();
         header.setBorder(new EmptyBorder(new Insets(20, 20, 20, 20)));
         header.setLayout(new GridLayout(1, 2));
-        header.add(CustomComponentFactory.getLabel("Персонажи", SwingConstants.CENTER, 36.0f, false));
-        header.add(CustomComponentFactory.getLabel("Профиль", SwingConstants.CENTER, 36.0f, false));
+        header.add(CustomComponentFactory.getLabel(Main.R.getString("humans"), SwingConstants.CENTER, 36.0f, false));
+        header.add(CustomComponentFactory.getLabel(Main.R.getString("profile"), SwingConstants.CENTER, 36.0f, false));
 
         JPanel right = CustomComponentFactory.getEmptyPanel();
         right.setBorder(new EmptyBorder(new Insets(20, 20, 20, 20)));
@@ -63,9 +70,13 @@ class MainFrame extends JFrame {
         right.add(Box.createVerticalStrut(20));
         right.add(canvas);
 
-        container.add(header, BorderLayout.NORTH);
-        container.add(table, BorderLayout.WEST);
-        container.add(right, BorderLayout.EAST);
+        panel.add(header, BorderLayout.NORTH);
+        panel.add(table, BorderLayout.WEST);
+        panel.add(right, BorderLayout.EAST);
+        panel.add(languagePanel, BorderLayout.SOUTH);
+
+        this.getContentPane().removeAll();
+        this.getContentPane().add(panel);
     }
 
     private void fillLocationBox() {
@@ -80,7 +91,7 @@ class MainFrame extends JFrame {
         locationList.forEach(elem -> locationBox.addItem(elem));
 
         Location loc = new Location();
-        loc.setName("<Создать>");
+        loc.setName("<" + Main.R.getString("create") + ">");
         locationBox.addItem(loc);
     }
 
@@ -90,7 +101,7 @@ class MainFrame extends JFrame {
             Location location = (Location) locationBox.getSelectedItem();
             if (location == null) return;
 
-            if (location.getName().equals("<Создать>") && location.getCoordinate() == null) {
+            if (location.getName().equals("<" + Main.R.getString("create") + ">") && location.getCoordinate() == null) {
                 JFrame createFrame = new JFrame();
                 createFrame.setBounds(300, 300, 300, 300);
                 Container container = createFrame.getContentPane();
@@ -99,17 +110,18 @@ class MainFrame extends JFrame {
                 container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
 
                 JLabel infoLabel = CustomComponentFactory.getLabel("", SwingUtilities.CENTER, 16.0f, false);
-                infoLabel.setText("<html><div 'text-align: center;'>Введите данные новой локации:");
-                JTextField nameField = CustomComponentFactory.getTextField(16.0f, "Название");
-                JTextField sizeField = CustomComponentFactory.getTextField(16.0f, "Размер");
-                JTextField coordinateField = CustomComponentFactory.getTextField(16.0f, "Координаты в формате (x, y, z)");
+                infoLabel.setText("<html><div 'text-align: center;'>" + Main.R.getString("location_data_enter") + ":");
+                JTextField nameField = CustomComponentFactory.getTextField(16.0f, Main.R.getString("title"));
+                JTextField sizeField = CustomComponentFactory.getTextField(16.0f, Main.R.getString("size"));
+                JTextField coordinateField = CustomComponentFactory.getTextField(16.0f, Main.R.getString("coordinate_format"));
 
                 JButton cancelButton = new JButton();
-                cancelButton.setAction(new AbstractAction("Отмена") {
+                cancelButton.setAction(new AbstractAction( Main.R.getString("cancel") ) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         createFrame.setVisible(false);
                         createFrame.dispose();
+                        MainFrame.instance.setEnabled(true);
                     }
                 });
                 JButton okButton = new JButton();
@@ -121,15 +133,13 @@ class MainFrame extends JFrame {
                             location.setSize(Integer.parseInt(sizeField.getText()));
                             location.setCoordinate(Coordinate.from(coordinateField.getText()));
                         } catch (NumberFormatException exc) {
-                            infoLabel.setText("<html><div 'text-align: center;'>Данные некорректны.");
+                            infoLabel.setText("<html><div 'text-align: center;'>" + Main.R.getString("data_incorrect"));
                             return;
                         }
-                        createFrame.setVisible(false);
-                        createFrame.dispose();
 
                         Object[] checklist = Request.execute(Request.GET, Location.class, "name", location.getName());
                         if (checklist.length > 0) {
-                            infoLabel.setText("<html><div 'text-align: center;'>Такая локация уже существует.");
+                            infoLabel.setText("<html><div 'text-align: center;'>" + Main.R.getString("location_exists"));
                             return;
                         }
 
@@ -141,6 +151,10 @@ class MainFrame extends JFrame {
                             list = Request.execute(Request.SORT, Location.class, "id", "ASC");
                             locationList = Arrays.stream(list).map( elem -> (Location) elem ).collect(Collectors.toList());
                         } ).start();
+
+                        createFrame.setVisible(false);
+                        createFrame.dispose();
+                        MainFrame.instance.setEnabled(true);
 
                         fillLocationBox();
                     }
@@ -162,6 +176,8 @@ class MainFrame extends JFrame {
 
                 container.add(inputPanel);
                 container.add(buttonPanel);
+
+                MainFrame.instance.setEnabled(false);
                 createFrame.setVisible(true);
                 return;
             }

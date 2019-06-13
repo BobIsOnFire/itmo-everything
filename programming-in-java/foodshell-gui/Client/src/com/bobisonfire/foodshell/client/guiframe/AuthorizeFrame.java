@@ -10,10 +10,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class AuthorizeFrame extends JFrame {
-    // TinBaMyFab7RugKecNyZe PoCo6GefBo4GyPaz1Kub
+    // MiSezGym0PyCahFenCiDo4 PoCo6GefBo4GyPaz1Kub
     private JTextField emailField = CustomComponentFactory.getTextField(20.0f, "Email");
-    private JTextField nameField = CustomComponentFactory.getTextField(20.0f, "Имя");
-    private JPasswordField passwordField = CustomComponentFactory.getPasswordField(20.0f, "Пароль");
+    private JTextField nameField = CustomComponentFactory.getTextField(20.0f);
+    private JPasswordField passwordField = CustomComponentFactory.getPasswordField(20.0f);
     private JLabel authLabel = CustomComponentFactory.getLabel("", SwingConstants.CENTER, 20.0f, false);
     private JButton authorizeButton = new JButton();
     private JButton registerButton = new JButton();
@@ -21,11 +21,11 @@ public class AuthorizeFrame extends JFrame {
     public AuthorizeFrame(String header) {
         super(header);
 
-        this.setBounds(0, 0, 500, 300);
+        this.setBounds(0, 0, 500, 400);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        authorizeButton.setAction(new AuthorizeAction("Вход"));
-        registerButton.setAction(new RegisterAction("Регистрация"));
+        authorizeButton.setAction(new AuthorizeAction());
+        registerButton.setAction(new RegisterAction());
 
         authorizeLayout();
     }
@@ -33,10 +33,11 @@ public class AuthorizeFrame extends JFrame {
     private void authorizeLayout() {
         JPanel panel = CustomComponentFactory.getEmptyPanel();
         panel.setLayout(new GridBagLayout());
-
-        this.getContentPane().removeAll();
-        this.getContentPane().add(panel);
-        authLabel.setText("Авторизация");
+        JPanel languagePanel = CustomComponentFactory.languageFooter(e -> authorizeLayout());
+        nameField.addFocusListener( new PlaceholderListener(nameField, Main.R.getString("name")) );
+        passwordField.addFocusListener( new PlaceholderListener(passwordField, Main.R.getString("password")) );
+        authorizeButton.setText( Main.R.getString("login") );
+        registerButton.setText( Main.R.getString("register") );
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
@@ -51,22 +52,23 @@ public class AuthorizeFrame extends JFrame {
 
         c.gridwidth = 1;
         c.weightx = 1.0;
-
         panel.add(authorizeButton, c);
+
+        c.gridwidth = GridBagConstraints.REMAINDER;
         panel.add(registerButton, c);
+
+        c.weightx = 2.0;
+        panel.add(languagePanel, c);
+
+        this.getContentPane().removeAll();
+        this.getContentPane().add(panel);
+        authLabel.setText( Main.R.getString("authorize") );
     }
 
     private void registerLayout() {
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.WHITE);
-        panel.setForeground(Color.BLACK);
+        JPanel panel = CustomComponentFactory.getEmptyPanel();
         panel.setLayout(new GridBagLayout());
-
-        SwingUtilities.invokeLater( () -> {
-            this.getContentPane().removeAll();
-            this.getContentPane().add(panel);
-            authLabel.setText("Регистрация");
-        });
+        JPanel languagePanel = CustomComponentFactory.languageFooter(e -> registerLayout());
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
@@ -79,6 +81,11 @@ public class AuthorizeFrame extends JFrame {
         panel.add(emailField, c);
         panel.add(nameField, c);
         panel.add(registerButton, c);
+        panel.add(languagePanel, c);
+
+        this.getContentPane().removeAll();
+        this.getContentPane().add(panel);
+        authLabel.setText( Main.R.getString("register") );
     }
 
     private boolean emailInvalid(String email) {
@@ -86,25 +93,21 @@ public class AuthorizeFrame extends JFrame {
     }
 
     private class AuthorizeAction extends AbstractAction {
-        AuthorizeAction(String name) {
-            super(name);
-        }
         @Override
         public void actionPerformed(ActionEvent e) {
             String email = emailField.getText();
             String pword = new String( passwordField.getPassword() );
 
-            if (email.isEmpty() || pword.isEmpty()) {
-                authLabel.setText("Введите email и пароль."); // this shit is still not working lol
-                return;
-            }
-
             if (emailInvalid(email)) {
-                authLabel.setText("Email не соответствует формату.");
+                authLabel.setText( Main.R.getString("email_format_incorrect") );
                 return;
             }
 
             Object[] list = Request.execute(Request.GET, User.class, "email", email);
+            if (list.length == 0) {
+                authLabel.setText( Main.R.getString("user_not_found") );
+                return;
+            }
             User user = (User) list[0];
 
             Password password = new Password( pword );
@@ -117,7 +120,7 @@ public class AuthorizeFrame extends JFrame {
             } else {
                 list = Request.execute(Request.PWGENERATE, user);
                 user = (User) list[0];
-                authLabel.setText("Пароль неверен. Вам на почту выслан новый.");
+                authLabel.setText( Main.R.getString("password_incorrect") );
                 Request.execute(Request.SET, User.class, user);
             }
         }
@@ -125,11 +128,6 @@ public class AuthorizeFrame extends JFrame {
 
     private class RegisterAction extends AbstractAction {
         private boolean registerMode = false;
-
-        RegisterAction(String name) {
-            super(name);
-        }
-
         @Override
         public void actionPerformed(ActionEvent e) {
             if (!registerMode) {
@@ -141,13 +139,8 @@ public class AuthorizeFrame extends JFrame {
             String email = emailField.getText();
             String name = nameField.getText();
 
-            if (email.isEmpty() || name.isEmpty()) {
-                authLabel.setText("Введите email и имя.");
-                return;
-            }
-
             if (emailInvalid(email)) {
-                authLabel.setText("Email не соответствует формату.");
+                authLabel.setText( Main.R.getString("email_format_incorrect") );
                 return;
             }
 
@@ -166,9 +159,8 @@ public class AuthorizeFrame extends JFrame {
             authorizeLayout();
             registerMode = false;
 
-            if (users.length == 0) authLabel.setText("Регистрация завершена. Пароль выслан вам на почту.");
-            else authLabel.setText("Такой аккаунт уже существует.");
+            if (users.length == 0) authLabel.setText( Main.R.getString("register_complete") );
+            else authLabel.setText( Main.R.getString("user_exists") );
         }
     }
-    // todo go through IDEA code inspection when everything is done!
 }

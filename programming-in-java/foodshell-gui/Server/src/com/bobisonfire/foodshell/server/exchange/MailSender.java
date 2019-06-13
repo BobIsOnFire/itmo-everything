@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-public class MailSender { // todo mail not working!!
+public class MailSender {
     private static final String PROPERTIES_PATH = "mail.properties";
     private static String MAIL_USERNAME;
     private static String MAIL_PASSWORD;
@@ -52,7 +52,6 @@ public class MailSender { // todo mail not working!!
             System.out.println("Невозможно отправить сообщение.\n" +
                     "Вот сообщение, которое должно было быть отправлено:" +
                     "Отправитель: "+ MAIL_USERNAME + "\nПолучатель: " + to + "\nТема: " + subject + "\n" + text);
-            // todo logging but different
         }
     }
 }

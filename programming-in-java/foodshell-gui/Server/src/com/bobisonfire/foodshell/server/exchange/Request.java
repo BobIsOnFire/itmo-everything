@@ -234,7 +234,6 @@ public enum Request {
                             "Привет! Ваш пароль от FoodShell:\n" + password.get());
                 } catch (Exception exc) {
                     exc.printStackTrace();
-                    // todo logging?
                 }
             }).start();
 

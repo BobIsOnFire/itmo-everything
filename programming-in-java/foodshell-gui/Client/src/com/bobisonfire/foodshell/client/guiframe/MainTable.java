@@ -1,5 +1,6 @@
 package com.bobisonfire.foodshell.client.guiframe;
 
+import com.bobisonfire.foodshell.client.Main;
 import com.bobisonfire.foodshell.client.entities.Coordinate;
 import com.bobisonfire.foodshell.client.entities.Gender;
 import com.bobisonfire.foodshell.client.entities.Human;
@@ -22,12 +23,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class MainTable extends JPanel {
-    private static final Object[] columnNames = {"#", "Имя", "Дата рождения", "Гендер", "Локация и координаты"};
     private static final double[] percentage = {0.04, 0.12, 0.24, 0.24, 0.36};
-    private static final String[] format =
-            {"Любой", "ДД.ММ.ГГГГ", "Один из существующих гендеров (ПКМ по столбцу Гендер)", "Название локации (X, Y, Z)"};
 
-    private static String[] newHuman = {"<>", "<Создать>", "<Создать>", "<Создать>", "<Создать>"};
+    private static Object[] columnNames;
+    private static String[] format;
+    private static String[] newHuman;
     private static boolean[] newHumanCreated = {false, false, false, false};
     private static Predicate<String>[] validators;
 
@@ -40,6 +40,28 @@ class MainTable extends JPanel {
 
     MainTable() {
         super();
+
+        columnNames = new Object[] {
+                "#",
+                Main.R.getString("name"),
+                Main.R.getString("birthday"),
+                Main.R.getString("gender"),
+                Main.R.getString("location_coordinates")
+        };
+        format = new String[] {
+                Main.R.getString("any"),
+                "dd.MM.yyyy",
+                Main.R.getString("gender_format"),
+                Main.R.getString("location_format")
+        };
+        newHuman = new String[] {
+                "<>",
+                "<" + Main.R.getString("create") + ">",
+                "<" + Main.R.getString("create") + ">",
+                "<" + Main.R.getString("create") + ">",
+                "<" + Main.R.getString("create") + ">"
+        };
+
         this.setBorder(new EmptyBorder(new Insets(20, 20, 20, 20)));
         this.setBackground(Color.WHITE);
         this.setForeground(Color.BLACK);
@@ -150,10 +172,12 @@ class MainTable extends JPanel {
             if (row == createIndex && e.getType() == TableModelEvent.UPDATE) {
                 if (!validators[column - 1].test(cellValue)) {
                     if (!cellValue.isEmpty()) CustomComponentFactory.showMessage(
-                            "Неверный формат данных. Необходимый формат: " + format[column - 1]);
-                    newHuman[column] = "<Создать>";
+                            Main.R.getString("value_format_incorrect") + " " +
+                            Main.R.getString("format") + ": " + format[column - 1]
+                    );
+                    newHuman[column] = "<" + Main.R.getString("create") + ">";
                     suppress = true;
-                    table.getModel().setValueAt("<Создать>", row, column);
+                    table.getModel().setValueAt("<" + Main.R.getString("create") + ">", row, column);
                     suppress = false;
                     newHumanCreated[column - 1] = false;
                     return;
@@ -168,7 +192,7 @@ class MainTable extends JPanel {
 
                 Object[] list = Request.execute(Request.GET, Human.class, "name", newHuman[1]);
                 if (list.length > 0) {
-                    CustomComponentFactory.showMessage("Такой персонаж уже существует.");
+                    CustomComponentFactory.showMessage( Main.R.getString("human_exists") );
                 } else {
                     Human human = createHuman(newHuman);
                     if (human != null) Request.execute(Request.SET, Human.class, human);
@@ -178,7 +202,10 @@ class MainTable extends JPanel {
             }
 
             if (!validators[column - 1].test(cellValue)) {
-                CustomComponentFactory.showMessage("Неверный формат данных. Необходимый формат: " + format[column - 1]);
+                CustomComponentFactory.showMessage(
+                        Main.R.getString("value_format_incorrect") + " " +
+                        Main.R.getString("format") + ": " + format[column - 1]
+                );
                 fillData();
                 return;
             }
@@ -207,7 +234,7 @@ class MainTable extends JPanel {
 
             Object[] list = Request.execute(Request.GET, Location.class, "name", tokens[0]);
             if (list.length == 0) {
-                CustomComponentFactory.showMessage("Такой локации не существует: " + tokens[0]);
+                CustomComponentFactory.showMessage( Main.R.getString("location_not_found") + " " + tokens[0] );
                 return null;
             }
             Location location = (Location) list[0];
@@ -219,8 +246,8 @@ class MainTable extends JPanel {
                 Math.abs(humanCrd.getY() - locCrd.getY()) > location.getSize() ||
                 Math.abs(humanCrd.getZ() - locCrd.getZ()) > location.getSize()
             ) {
-                CustomComponentFactory.showMessage("Персонаж не может быть размещен по таким координатам. " +
-                        "Локация - " + location.toString());
+                CustomComponentFactory.showMessage(Main.R.getString("coordinate_incorrect") + " " +
+                        Main.R.getString("location") + " - " + location.toString());
                 return null;
             }
 
@@ -267,7 +294,13 @@ class MainTable extends JPanel {
             MainFrame.locationList = Arrays.stream(list).map( elem -> (Location) elem).collect(Collectors.toList());
 
             position = 0;
-            newHuman = new String[] {"<>", "<Создать>", "<Создать>", "<Создать>", "<Создать>"};
+            newHuman = new String[] {
+                    "<>",
+                    "<" + Main.R.getString("create") + ">",
+                    "<" + Main.R.getString("create") + ">",
+                    "<" + Main.R.getString("create") + ">",
+                    "<" + Main.R.getString("create") + ">"
+            };
             newHumanCreated = new boolean[] {false, false, false, false};
             fillData();
             MainFrame.canvas.repaint();
@@ -292,7 +325,13 @@ class MainTable extends JPanel {
 
             currentSorterColumn = -1;
             position = 0;
-            newHuman = new String[] {"<>", "<Создать>", "<Создать>", "<Создать>", "<Создать>"};
+            newHuman = new String[] {
+                    "<>",
+                    "<" + Main.R.getString("create") + ">",
+                    "<" + Main.R.getString("create") + ">",
+                    "<" + Main.R.getString("create") + ">",
+                    "<" + Main.R.getString("create") + ">"
+            };
             newHumanCreated = new boolean[] {false, false, false, false};
             fillData();
             MainFrame.canvas.repaint();
@@ -315,12 +354,12 @@ class MainTable extends JPanel {
             else if (SwingUtilities.isRightMouseButton(e) && (column == 3 || column == 4)) {
                 JPopupMenu menu = new JPopupMenu();
 
-                JMenuItem item = new JMenuItem("Фильтр...");
+                JMenuItem item = new JMenuItem( Main.R.getString("filter") + "...");
                 item.addActionListener(new FilterListener(column));
                 menu.add(item);
 
                 if (column == 3) {
-                    JMenuItem allGendersItem = new JMenuItem("Все гендеры");
+                    JMenuItem allGendersItem = new JMenuItem( Main.R.getString("all_genders") );
                     allGendersItem.addActionListener(new AllGenderListener());
                     menu.add(allGendersItem);
                 }
@@ -338,7 +377,7 @@ class MainTable extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFrame selectFrame = new JFrame("Фильтр");
+            JFrame selectFrame = new JFrame( Main.R.getString("filter") );
             selectFrame.setBounds(400, 400, 300, 200);
             Container container = selectFrame.getContentPane();
             container.setLayout(new GridBagLayout());
@@ -359,12 +398,12 @@ class MainTable extends JPanel {
                         .collect(Collectors.toSet());
 
             JLabel infoLabel = CustomComponentFactory.getLabel("", SwingConstants.CENTER, 16.0f, false);
-            infoLabel.setText("Выберите фильтр из списка:");
+            infoLabel.setText( Main.R.getString("select_filter") );
             JComboBox selectBox = CustomComponentFactory.getComboBox( set.toArray() );
             JButton cancelButton = new JButton();
             JButton okButton = new JButton();
 
-            cancelButton.setAction(new AbstractAction("Отмена") {
+            cancelButton.setAction(new AbstractAction( Main.R.getString("cancel") ) {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     selectFrame.setVisible(false);
@@ -377,7 +416,7 @@ class MainTable extends JPanel {
                 public void actionPerformed(ActionEvent e) {
                     Object result = selectBox.getSelectedItem();
                     if (result == null) {
-                        infoLabel.setText("Ничего не выбрано.");
+                        infoLabel.setText( Main.R.getString("selected_nothing") );
                         return;
                     }
 
@@ -423,7 +462,7 @@ class MainTable extends JPanel {
     private class AllGenderListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFrame genderFrame = new JFrame("Лист всех гендеров");
+            JFrame genderFrame = new JFrame( Main.R.getString("all_genders") );
             genderFrame.setBounds(400, 400, 300, 450);
 
             JPanel panel = new JPanel();
@@ -463,23 +502,23 @@ class MainTable extends JPanel {
 
             if (SwingUtilities.isRightMouseButton(e) && table.getModel().isCellEditable(row, 1)) {
                 JPopupMenu menu = new JPopupMenu();
-                JMenuItem removeItem = new JMenuItem("Удалить");
-                JMenuItem olderItem = new JMenuItem("Удалить старше");
-                JMenuItem youngerItem = new JMenuItem("Удалить моложе");
+                JMenuItem removeItem = new JMenuItem( Main.R.getString("remove") );
+                JMenuItem olderItem = new JMenuItem( Main.R.getString("remove") + " " + Main.R.getString("older") );
+                JMenuItem youngerItem = new JMenuItem( Main.R.getString("remove") + " " + Main.R.getString("younger") );
                 menu.add(removeItem);
                 menu.add(olderItem);
                 menu.add(youngerItem);
 
                 removeItem.addActionListener( evt -> CustomComponentFactory.showChoice(
-                        "Хотите удалить персонажа?",
+                        Main.R.getString("remove_confirm"),
                         new RemoveHuman(row)
                 ));
                 olderItem.addActionListener( evt -> CustomComponentFactory.showChoice(
-                        "Хотите удалить персонажей, которые старше данного?",
+                        Main.R.getString("older_confirm"),
                         new RemoveOlderHumans(row)
                 ));
                 youngerItem.addActionListener( evt -> CustomComponentFactory.showChoice(
-                        "Хотите удалить персонажей, которые моложе данного?",
+                        Main.R.getString("younger_confirm"),
                         new RemoveYoungerHumans(row)
                 ));
                 menu.show(e.getComponent(), e.getX(), e.getY());
