@@ -24,17 +24,15 @@ public class Main {
 
             System.out.print("Введите данные для входа на внешние ресурсы:" + "\n" +
                     "Почта" + "\n\t" + "Логин: ");
-            username = "frfntdakatevin@gmail.com"; // scanner.nextLine();
+            username = scanner.nextLine();
             System.out.print("\t" + "Пароль: ");
-            password = "HereWeStand"; // scanner.nextLine();
-            // password = new String( System.console().readPassword() );
+            password = new String( System.console().readPassword() );
             MailSender.setCredentials(username, password);
 
             System.out.print("База данных" + "\n\t" + "Логин: ");
-            username = "nikitos"; // scanner.nextLine();
+            username = scanner.nextLine();
             System.out.print("\t" + "Пароль: ");
-            password = "Fuckyouk1le"; // scanner.nextLine();
-            // password = new String( System.console().readPassword() );
+            password = new String( System.console().readPassword() );
             DBExchanger.setCredentials(username, password);
         } catch (Exception exc) {
             System.exit(0);
