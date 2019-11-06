@@ -7,4 +7,5 @@ table {width: 50%; border: 3px solid yellow; margin-bottom: 10px;}
 .button:hover {background-color: #ADD;}
 .active {color: red; font-weight: bolder;}
 #textfield {width: 80%; font: 14pt sans-serif; background-color: yellow; color: black; text-align: center;}
+#radius-selector {width: 50%; font: 14pt sans-serif; color: black; background-color: yellow;}
 .result td {width: 50%; border: 1px solid yellow;}

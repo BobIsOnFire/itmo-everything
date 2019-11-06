@@ -10,12 +10,17 @@
     <link rel="shortcut icon" href="${pageContext.request.contextPath}/favicon.ico">
     <script src="${pageContext.request.contextPath}/jquery-3.4.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/script.js"></script>
+    <script src="${pageContext.request.contextPath}/canvas.js"></script>
 </head>
 <body>
     <div class="header centered">
         Акатьев Никита Львович группа P3211<br>
         Вариант 485<br>
-        <img src="areas.png" id="areas" alt="Areas not loaded WTF"><br>
+    </div>
+    <div class="label centered">
+        <label for="radius-selector">Выберите радиус из списка: </label><br>
+        <select id="radius-selector"></select><br>
+        <canvas id="canvas" height="400" width="400">Damn yo browser is old man...</canvas>
     </div>
     <form method="POST" id="main-form" action="area-check">
         <table class="label centered">

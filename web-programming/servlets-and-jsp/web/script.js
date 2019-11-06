@@ -1,8 +1,27 @@
 $(document).ready(function() {
+    let lightTheme = true;
     $(".X").click(function() {
         $(".X").removeClass("active");
         $(this).addClass("active");
         $("#X_field").val( $(this).val() );
+    });
+
+    $(".R").click(function() {
+        let html = "";
+        let checked = $(".R:checked");
+        checked.each( function() {
+            let val = $(this).val();
+            html += `<option class="radius" value="${val}">${val}</option>`
+        } );
+
+        if (checked.length > 0) paint(lightTheme, +checked.val());
+        else paint(lightTheme);
+
+        $("#radius-selector").html(html);
+    });
+
+    $("#radius-selector").on("change", function(e) {
+        paint(lightTheme, +e.target.value);
     });
 
     $("#main-form").on("submit", function() {
@@ -26,11 +45,13 @@ $(document).ready(function() {
         $("#timer").html( "Текущее время: " + new Date().toLocaleString());
     }, 1000);
 
-    let lightTheme = true;
     $("#swapButton").click(function() {
         $("#csslink").attr("href", contextPath + ( lightTheme ? "dark.css" : "light.css" ));
         $(this).val(lightTheme ? "Oh Shit, Go White Again" : "OK, Maybe Black Ain't That Bad");
         $("#areas").css("filter", "invert(" + (lightTheme ? "100%" : "0%") + ")");
         lightTheme = !lightTheme;
-    })
+        paint(lightTheme);
+    });
+
+    paint(lightTheme);
 });
