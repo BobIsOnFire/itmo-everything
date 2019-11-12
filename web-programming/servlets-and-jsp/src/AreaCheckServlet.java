@@ -2,6 +2,7 @@ import history.HistoryBean;
 import history.HistoryNode;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,12 +41,23 @@ public class AreaCheckServlet extends HttpServlet {
         } else bean = (HistoryBean) history;
 
         PrintWriter writer = resp.getWriter();
-        String contextPath = req.getContextPath();
+        String contextPath = req.getContextPath() + "/";
+        Cookie[] cookies = req.getCookies();
+        boolean lightTheme = true;
+
+        if (cookies != null)
+            for (Cookie c: cookies)
+                if (c.getName().equals("lightTheme")) {
+                    lightTheme = Boolean.parseBoolean(c.getValue());
+                }
+
+        String themePath = contextPath + ( lightTheme ? "light.css" : "dark.css" );
 
         writer.println("<html>");
         writer.println("<head>");
         writer.println("<title>Результаты</title>");
-        writer.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + contextPath + "/light.css\">");
+        writer.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themePath + "\">");
+        writer.println("<link rel=\"shortcut icon\" href=\"" + contextPath + "favicon.ico\">");
         writer.println("</head>");
         writer.println("<body>");
 
@@ -66,7 +78,7 @@ public class AreaCheckServlet extends HttpServlet {
 
         writer.println("<div class=\"centered\">");
         writer.println("<input type=\"button\" class=\"button\" value=\"Вернуться на главную страницу\"" +
-                " onclick=\"location.href='" + contextPath + "/';\">");
+                " onclick=\"location.href='" + contextPath + "';\">");
         writer.println("</div>");
 
         writer.println("</body>");

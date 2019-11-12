@@ -1,14 +1,20 @@
 const MARGIN = 25;
-function paint(lightTheme, radius=null) {
-    let canvas = document.getElementById("canvas");
-    let context = canvas.getContext("2d");
+let radius = null;
+
+function paint(lightTheme, r=null) {
+    radius = r;
+
+    let canvas = $("#canvas");
+    canvas.unbind();
+    let context = canvas.get(0).getContext("2d");
 
     let bgColor = lightTheme ? "#FFF" : "#000";
-    let gridColor = lightTheme ? "#DDD" : "#222";
+    let gridColor = lightTheme ? "#BBB" : "#444";
     let fgColor = lightTheme ? "#39F" : "#780";
     let axisColor = lightTheme ? "#000" : "#FFF";
+    let possibleAreaColor = lightTheme ? "#DDD" : "#222";
 
-    let coords = canvas.getBoundingClientRect();
+    let coords = canvas.get(0).getBoundingClientRect();
     let width = coords.right - coords.left;
     let height = coords.bottom - coords.top;
 
@@ -26,6 +32,48 @@ function paint(lightTheme, radius=null) {
 
     context.fillStyle = bgColor;
     context.fillRect(0, 0, width, height);
+
+    // DRAWING possible areas for x and y and setting click event
+    if (radius != null) {
+        let [left, bottom] = convertCleanToCanvasCoordinates(-4, -3, radius, centerX, centerY, pointDistance);
+        let [right, top] = convertCleanToCanvasCoordinates(4, 3, radius, centerX, centerY, pointDistance);
+
+        if (left == null) left = MARGIN;
+        if (top == null) top = MARGIN;
+        if (right == null) right = width - MARGIN;
+        if (bottom == null) bottom = height - MARGIN;
+
+        context.fillStyle = possibleAreaColor;
+        context.fillRect(MARGIN, MARGIN, width - 2 * MARGIN, height - 2 * MARGIN);
+        context.fillStyle = bgColor;
+        context.fillRect(left, top, right - left, bottom - top);
+
+        canvas.click( function(e) {
+            let coords = canvas.get(0).getBoundingClientRect();
+            let canvasX = e.clientX - coords.left;
+            let canvasY = e.clientY - coords.top;
+            console.log(canvasX + " " + canvasY);
+
+            if (canvasX < left || canvasX > right || canvasY <= top || canvasY >= bottom) {
+                $("#message").html("Точка не входит в ОДЗ.");
+                return;
+            }
+
+            let [x, y] = convertCanvasToCleanCoordinates(canvasX, canvasY, radius, centerX, centerY, pointDistance);
+            let form = document.createElement("form");
+            form.action = "area-check";
+            form.method = "POST";
+
+            form.innerHTML = `
+                <input name="X" value="${Math.round(x)}">
+                <input name="Y" value="${y}">
+                <input name="R" value="${radius}">
+            `;
+
+            document.body.append(form);
+            form.submit();
+        } );
+    }
 
     // DRAWING grid
     context.strokeStyle = gridColor;
@@ -92,8 +140,54 @@ function paint(lightTheme, radius=null) {
         let positionY = centerY + pointDistance * (i - 2);
         context.moveTo(centerX - arrowWidth, positionY);
         context.lineTo(centerX + arrowWidth, positionY);
-        context.fillText(text[i], centerX + textMarginX, positionY + textMarginY);
+        context.fillText(text[4 - i], centerX + textMarginX, positionY + textMarginY);
     }
 
     context.stroke();
+
+    // DRAWING history dots
+    if (radius == null) return;
+    let historyX = [];
+    $(".history-x").each(function() { historyX.push( +$(this).text().substring(0, 15) ) });
+
+    let historyY = [];
+    $(".history-y").each(function() { historyY.push( +$(this).text().substring(0, 15) ) });
+
+    context.beginPath();
+    for (let i = 0; i < historyX.length; i++) {
+        let [dotX, dotY] = convertCleanToCanvasCoordinates(historyX[i], historyY[i], radius, centerX, centerY, pointDistance);
+        if (dotX == null || dotY == null) continue;
+
+        context.moveTo(dotX, dotY);
+        context.arc(dotX, dotY, 5, 0, Math.PI * 2);
+    }
+    context.fill();
+}
+
+function convertCleanToCanvasCoordinates(x, y, r, centerX, centerY, pointDistance) {
+    let ratioX = x / r * 2;
+    let ratioY = y / r * 2;
+
+    let canvasX, canvasY;
+    if (ratioX < -3 || ratioX > 3) canvasX = null;
+    else canvasX = centerX + pointDistance * ratioX;
+
+    if (ratioY < -3 || ratioY > 3) canvasY = null;
+    else canvasY = centerY - pointDistance * ratioY;
+
+    return [canvasX, canvasY];
+}
+
+function convertCanvasToCleanCoordinates(canvasX, canvasY, r, centerX, centerY, pointDistance) {
+    let ratioX = ( canvasX - centerX ) / pointDistance;
+    let ratioY = ( centerY - canvasY ) / pointDistance;
+
+    let x, y;
+    if (ratioX < -3 || ratioX > 3) x = null;
+    else x = ratioX / 2 * r;
+
+    if (ratioY < -3 || ratioY > 3) y = null;
+    else y = ratioY / 2 * r;
+
+    return [x, y];
 }

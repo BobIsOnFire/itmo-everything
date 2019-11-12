@@ -2,10 +2,10 @@ body {background-color: white; color: black;}
 .header {font: 20pt monospace; margin-bottom: 10px;}
 .centered {text-align: center; margin-left: auto; margin-right: auto;}
 .label {font: 16pt monospace;}
-table {width: 50%; border: 3px solid black; margin-bottom: 10px;}
+table {width: 100%; border: 3px solid black; margin-bottom: 10px;}
 .button {width: 100%; background-color: transparent; font: 14pt sans-serif; color: black;}
 .button:hover {background-color: #ADD;}
 .active {color: red; font-weight: bolder;}
 #textfield {width: 80%; font: 14pt sans-serif; color: black; text-align: center;}
-#radius-selector {width: 50%; font: 14pt sans-serif; color: black;}
+#radius-selector {width: 500px; font: 14pt sans-serif; color: black;}
 .result td {width: 50%; border: 1px solid black;}

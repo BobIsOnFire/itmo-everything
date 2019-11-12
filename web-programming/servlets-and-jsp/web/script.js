@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    let lightTheme = true;
     $(".X").click(function() {
         $(".X").removeClass("active");
         $(this).addClass("active");
@@ -49,9 +48,11 @@ $(document).ready(function() {
         $("#csslink").attr("href", contextPath + ( lightTheme ? "dark.css" : "light.css" ));
         $(this).val(lightTheme ? "Oh Shit, Go White Again" : "OK, Maybe Black Ain't That Bad");
         $("#areas").css("filter", "invert(" + (lightTheme ? "100%" : "0%") + ")");
+
         lightTheme = !lightTheme;
-        paint(lightTheme);
+        document.cookie = "lightTheme=" + lightTheme;
+        paint(lightTheme, radius);
     });
 
-    paint(lightTheme);
+    paint(lightTheme, radius);
 });
