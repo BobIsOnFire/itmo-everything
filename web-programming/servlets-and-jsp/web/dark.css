@@ -1,11 +1,12 @@
 body {background-color: black; color: white;}
+#bg-text {font-size: 100vh; color: #111; position: absolute; bottom: 0; right: 0; z-index: -1;}
 .header {font: 20pt monospace; margin-bottom: 10px;}
 .centered {text-align: center; margin-left: auto; margin-right: auto;}
 .label {font: 16pt monospace;}
-table {width: 100%; border: 3px solid yellow; margin-bottom: 10px;}
-.button {width: 100%; background-color: yellow; font: 14pt sans-serif; color: black;}
+table {width: 100%; border: 3px solid #d4bb34; margin-bottom: 10px;}
+.button {width: 100%; background-color: #d4bb34; font: 14pt sans-serif; color: black;}
 .button:hover {background-color: #ADD;}
 .active {color: red; font-weight: bolder;}
-#textfield {width: 80%; font: 14pt sans-serif; background-color: yellow; color: black; text-align: center;}
-#radius-selector {width: 500px; font: 14pt sans-serif; color: black; background-color: yellow;}
-.result td {width: 50%; border: 1px solid yellow;}
+#textfield {width: 80%; font: 14pt sans-serif; background-color: #d4bb34; color: black; text-align: center;}
+#radius-selector {width: 500px; font: 14pt sans-serif; color: black; background-color: #d4bb34;}
+.result td {width: 50%; border: 1px solid #d4bb34;}

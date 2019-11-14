@@ -68,9 +68,10 @@ function paint(lightTheme, r=null) {
                 <input name="X" value="${Math.round(x)}">
                 <input name="Y" value="${y}">
                 <input name="R" value="${radius}">
+                <input type="submit">
             `;
 
-            document.body.append(form);
+            document.body.appendChild(form);
             form.submit();
         } );
     }

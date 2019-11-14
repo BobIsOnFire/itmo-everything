@@ -1,4 +1,5 @@
 body {background-color: white; color: black;}
+#bg-text {font-size: 100vh; color: #EEE; position: absolute; bottom: 0; right: 0; z-index: -1;}
 .header {font: 20pt monospace; margin-bottom: 10px;}
 .centered {text-align: center; margin-left: auto; margin-right: auto;}
 .label {font: 16pt monospace;}

@@ -3,17 +3,21 @@
 <jsp:useBean id="history" class="history.HistoryBean" scope="session"/>
 
 <c:set var="contextPath" value="${pageContext.request.contextPath}/" />
+<c:set var="lightTheme" value="${cookie.lightTheme.value}" />
+
 <c:if test="${not cookie.containsKey('lightTheme')}">
     <% response.addCookie(new Cookie("lightTheme", "true")); %>
+    <c:set var="lightTheme" value="true" />
 </c:if>
-<c:set var="themePath" value="${contextPath}${cookie.lightTheme.value ? 'light.css' : 'dark.css'}" />
+
+<c:set var="themePath" value="${contextPath}${lightTheme ? 'light.css' : 'dark.css'}" />
 
 <html>
 <head>
     <title>WEB - Лабораторная #2</title>
     <script>
         const contextPath = "${contextPath}";
-        let lightTheme = ${cookie.lightTheme.value};
+        let lightTheme = ${lightTheme};
     </script>
     <link rel="stylesheet" type="text/css" href="${themePath}" id="csslink">
     <link rel="shortcut icon" href="${contextPath}favicon.ico">
@@ -22,6 +26,7 @@
     <script src="${contextPath}canvas.js"></script>
 </head>
 <body>
+    <div id="bg-text">2</div>
     <table><tr><td style="width:50%">
         <div class="header centered">
             Акатьев Никита Львович группа P3211<br>
