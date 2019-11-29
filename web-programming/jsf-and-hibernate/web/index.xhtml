@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core">
+
+
+<ui:include src="header.xhtml" />
+<h:outputScript library="js" name="jquery-3.4.1.min.js"/>
+<h:body>
+    <div id="bg-text">3</div>
+    <h:outputText id="theme" style="display: none" value="${cookies.lightTheme}"/>
+
+    <div id="hello-text" class="label absolute-center" style="font-size: 100pt;" onclick="fade()" align="center">Hello</div>
+    <div id="index-info" class="absolute-center" style="width: 50%">
+        <div class="header" align="center">
+            Акатьев Никита Львович<br/>
+            Вариант 46582
+        </div>
+        <div class="label" align="center">
+            <canvas id="time-canvas" width="400" height="400">Damn yo browser is old man...</canvas><br/>
+            Текущая дата: <span id="date-span"/>
+            <h:form>
+                <h:commandButton styleClass="button" value="Переход к основной странице" action="main?faces-redirect=true"/>
+            </h:form>
+        </div>
+    </div>
+   <h:outputScript library="js" name="index.js"/>
+</h:body>
+</html>

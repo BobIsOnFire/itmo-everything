@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:include src="header.xhtml"/>
+<h:outputScript library="js" name="main.js"/>
+<h:body>
+    <p:growl id="growl" life="3000" sticky="false" showDetail="true"/>
+    <div id="bg-text">3</div>
+    <h:outputText id="theme" style="display: none" value="${cookies.lightTheme}"/>
+
+    <table><tr>
+        <td style="width:50%">
+            <div class="label centered">
+                <div id="message"></div>
+                <canvas id="canvas" width="400" height="400">Damn yo browser is old man...</canvas>
+            </div>
+            <div class="label centered bordered">
+                <h:form id="areaForm" prependId="false">
+                    <h:inputHidden id="areaInputX" value="#{history.node.x}"
+                                   required="true" requiredMessage="Значение X не установлено."
+                                   converter="decimalConverter" converterMessage="Невозможно преобразовать X."
+                                   validator="#{validator.validateX}" validatorMessage="Значение X некорректно."
+                    />
+
+                    <h:inputHidden id="areaInputY" value="#{history.node.y}"
+                                   required="true" requiredMessage="Значение Y не установлено."
+                                   converter="decimalConverter" converterMessage="Невозможно преобразовать Y."
+                                   validator="#{validator.validateY}" validatorMessage="Значение Y некорректно."
+                    />
+
+                    <h:inputHidden id="areaInputR" value="#{history.node.r}"
+                                   required="true" requiredMessage="Значение R не установлено."
+                                   converter="decimalConverter" converterMessage="Невозможно преобразовать R."
+                                   validator="#{validator.validateR}" validatorMessage="Значение R некорректно."
+                    />
+
+                    <p:commandButton id="areaButton" style="display: none;" update="history-table growl"
+                                     ajax="true" action="#{history.addNode}" oncomplete="paint()"/>
+                </h:form>
+                <h:form>
+                    <h:outputText value="X:"/><br/>
+                    <h:selectOneMenu styleClass="selector" id="inputX"
+                                     converter="decimalConverter" converterMessage="Невозможно преобразовать X."
+                                     validator="#{validator.validateX}" validatorMessage="Значение X некорректно."
+                                     value="#{history.node.x}">
+
+                        <c:forEach items="#{history.availableX}" var="x">
+                            <f:selectItem itemValue="#{x}" itemLabel="#{x}"/>
+                        </c:forEach>
+                    </h:selectOneMenu><br/><br/>
+
+                    <h:outputText value="Y:"/><br/>
+                    <p:inputText id="inputY" styleClass="textfield"
+                                 required="true" requiredMessage="Значение Y не установлено."
+                                 converter="decimalConverter" converterMessage="Невозможно преобразовать Y."
+                                 validator="#{validator.validateY}" validatorMessage="Значение Y некорректно."
+                                 value="#{history.node.y}"
+                                 placeholder="Число с плавающей запятой (-3; 3)"
+                    >
+                    </p:inputText><br/><br/>
+
+                    <h:outputText value="R:"/><br/>
+                    <h:selectOneMenu styleClass="selector" id="inputR"
+                                     converter="decimalConverter" converterMessage="Невозможно преобразовать R."
+                                     validator="#{validator.validateR}" validatorMessage="Значение R некорректно."
+                                     value="#{history.node.r}"
+                                     onchange="paint(this.options[this.selectedIndex].value)"
+                    >
+                        <c:forEach items="#{history.availableR}" var="r">
+                            <f:selectItem itemValue="#{r}" itemLabel="#{r}"/>
+                        </c:forEach>
+                    </h:selectOneMenu><br/><br/>
+
+                    <p:commandButton value="Проверить" styleClass="button"
+                                     update="growl history-table" ajax="true" action="#{history.addNode}"
+                                     oncomplete="paint()"
+                    />
+                </h:form>
+            </div>
+        </td>
+        <td style="width:50%">
+            <h:dataTable id="history-table"
+                         value="#{history.reversedNodeList}" var="node"
+                         styleClass="label centered #{ (history.scrollPage eq 0 and history.submitted) ? 'highlight-node' : '' }"
+                         columnClasses="history-x,history-y,history-r,history-result"
+            >
+                <f:facet name="caption">История запросов</f:facet>
+                <h:column>
+                    <f:facet name="header">X</f:facet>
+                    #{node.x}
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Y</f:facet>
+                    #{node.y}
+                </h:column>
+                <h:column>
+                    <f:facet name="header">R</f:facet>
+                    #{node.r}
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Результат</f:facet>
+                    #{node.hit ? "Попал!" : "Промазал!"}
+                </h:column>
+
+                <f:facet name="footer">
+                    <p:commandLink action="#{history.scrollLeft}" update="history-table"
+                                   oncomplete="paint()" disabled="#{!history.scrollableLeft}">
+                        <h:outputText value="  &#8592;  "/>
+                    </p:commandLink>
+
+                    <h:outputText value="Страница №#{history.scrollPage + 1}"/>
+
+                    <p:commandLink action="#{history.scrollRight}" update="history-table"
+                                   oncomplete="paint()" disabled="#{!history.scrollableRight}">
+                        <h:outputText value="  &#8594;  "/>
+                    </p:commandLink>
+                </f:facet>
+            </h:dataTable>
+        </td>
+    </tr></table>
+
+    <div class="label centered">
+    <h:form>
+        <p:commandButton value="Сменить тему" styleClass="button">
+            <p:ajax update="styleSheet theme" listener="#{cookies.switchTheme}" oncomplete="paint()"/>
+        </p:commandButton>
+        <h:commandButton styleClass="button" value="Вернуться на стартовую страницу" action="index?faces-redirect=true"/>
+    </h:form>
+    </div>
+</h:body>
+
+</html>

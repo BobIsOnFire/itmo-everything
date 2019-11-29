@@ -1,0 +1,10 @@
+body {background-color: white; color: black;}
+#bg-text {color: #EEE;}
+table {border-color: black;}
+.bordered {border-color: black;}
+.button {background-color: white; color: black;}
+.button:hover {background-color: #ADD;}
+.textfield {background-color: white; color: black;}
+.selector {background-color: white; color: black;}
+a:link {color: black;}
+a:hover {color: #3344FF;}
