@@ -6,7 +6,6 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity(name = "history")
-@Table(name = "history")
 public class ORMHistoryNode {
     @Id @GeneratedValue
     private long id;

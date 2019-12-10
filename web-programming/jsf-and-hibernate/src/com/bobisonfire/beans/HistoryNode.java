@@ -57,8 +57,6 @@ public class HistoryNode implements Serializable {
     }
 
     private boolean calculateHit(BigDecimal x, BigDecimal y, BigDecimal r) {
-        System.out.println(x.toString() + " " + y.toString() + " " + r.toString());
-
         if ( x.compareTo(BigDecimal.ZERO) < 0 && y.compareTo(BigDecimal.ZERO) > 0 ) // x < 0 and y > 0
             return false;
 

@@ -10,7 +10,6 @@
     <property name="connection.password">nzv239</property>
     <property name="current_session_context_class">thread</property>
 
-    <property name="hbm2ddl.auto">update</property>
     <property name="dialect">org.hibernate.dialect.Oracle10gDialect</property>
 
     <mapping class="com.bobisonfire.ORMHistoryNode" />
