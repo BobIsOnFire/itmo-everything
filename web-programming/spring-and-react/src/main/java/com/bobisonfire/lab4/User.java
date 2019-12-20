@@ -1,9 +1,8 @@
 package com.bobisonfire.lab4;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -12,8 +11,13 @@ public class User {
     @Id @GeneratedValue
     private long id;
 
+    @Column(unique = true)
     private String userName;
     private String password;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id")
+    private List<HistoryNode> userHistory = new ArrayList<>();
 
     public User() {
     }
@@ -45,5 +49,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<HistoryNode> getUserHistory() {
+        return userHistory;
+    }
+
+    public void setUserHistory(List<HistoryNode> userHistory) {
+        this.userHistory = userHistory;
     }
 }
