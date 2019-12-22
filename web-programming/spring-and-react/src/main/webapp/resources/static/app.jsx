@@ -15,7 +15,7 @@ class ToolBarTab extends React.Component {
 class HorizontalToolBar extends React.Component {
     render() {
         let model = this.props.tabs.map(tab => <ToolBarTab tab={tab} />);
-        return <table className="toolbar"><tr>{model}</tr></table>;
+        return <table className="toolbar centered"><tr>{model}</tr></table>;
     }
 }
 
@@ -62,99 +62,6 @@ class LoginApp extends React.Component {
     }
 }
 
-class LoginForm extends React.Component {
-    constructor(props) {
-        super(props);
-        console.log('constructor');
-        this.state = {
-            login: '',
-            password: ''
-        };
-
-        this.handleChange = this.handleChange.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-    }
-
-    render() {
-        return <div className="label">
-            <form name="login-form" onSubmit={this.handleSubmit}>
-            <label>
-            Логин:<br/>
-        <input type="text" className="textfield" name="login" value={this.state.login} onChange={this.handleChange}/>
-        </label>
-        <br/><br/>
-        <label>
-        Пароль:<br/>
-        <input type="password" className="textfield" name="password" value={this.state.password} onChange={this.handleChange}/>
-        </label>
-        <br/><br/>
-        <input type="submit" className="button" value="Вход"/>
-            </form>
-            </div>
-    }
-
-    handleChange(event) {
-        let state = this.state;
-        state[event.target.name] = event.target.value;
-        this.setState(state);
-    }
-
-    handleSubmit(event) {
-        console.log(this.state.login);
-        console.log(this.state.password);
-        event.preventDefault();
-    }
-}
-
-class RegisterForm extends React.Component {
-    constructor(props) {
-        super(props);
-        console.log('constructor');
-        this.state = {
-            login: '',
-            password: '',
-            passwordAgain: ''
-        };
-
-        this.handleChange = this.handleChange.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-    }
-
-    render() {
-        return <div className="label">
-            <form name="login-form" onSubmit={this.handleSubmit}>
-            <label>
-            Логин:<br/>
-        <input type="text" className="textfield" name="login" value={this.state.login} onChange={this.handleChange}/>
-        </label>
-        <br/><br/>
-        <label>
-        Пароль:<br/>
-        <input type="password" className="textfield" name="password" value={this.state.password} onChange={this.handleChange}/>
-        </label>
-        <br/><br/>
-        <label>
-        Пароль еще раз:<br/>
-        <input type="password" className="textfield" name="passwordAgain" value={this.state.passwordAgain} onChange={this.handleChange}/>
-        </label>
-        <br/><br/>
-        <input type="submit" className="button" value="Регистрация"/>
-            </form>
-            </div>
-    }
-
-    handleChange(event) {
-        let state = this.state;
-        state[event.target.name] = event.target.value;
-        this.setState(state);
-    }
-
-    handleSubmit(event) {
-        console.log(this.state.login);
-        console.log(this.state.password === this.state.passwordAgain);
-        event.preventDefault();
-    }
-}
 
 class Header extends React.Component {
     render() {
@@ -181,4 +88,33 @@ class Timer extends React.Component {
     }
 }
 
-ReactDOM.render(<LoginApp />, document.getElementById("root"));
+class MainApp extends React.Component {
+    render() {
+        return <div>User id: {this.props.id}<br/>History: {this.props.history}</div>
+    }
+}
+
+function getCookie(name) {
+    let matches = document.cookie.match(new RegExp(
+        "(?:^|; )" + name.replace(/([.$?*|{}()\[\]\\\/+^])/g, '\\$1') + "=([^;]*)"
+    ));
+    return matches ? decodeURIComponent(matches[1]) : null;
+}
+
+// todo put in different script file
+(function() {
+        let id = getCookie("user_id");
+        let history = null;
+        if (id != null)
+            fetch("http://localhost:14900/api/history/get/" + id)
+                .then(
+                    res => history = res,
+                    error => console.log(error)
+                );
+
+        if (id == null || history == null)
+            ReactDOM.render(<LoginApp/>, document.getElementById("root"));
+        else
+            ReactDOM.render(<MainApp id={id} history={history} />, document.getElementById("root"));
+    }
+)();

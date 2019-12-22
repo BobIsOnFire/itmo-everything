@@ -15,6 +15,8 @@ public class User {
     private String userName;
     private String password;
 
+    private String lastAddress;
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
     private List<HistoryNode> userHistory = new ArrayList<>();
@@ -22,9 +24,10 @@ public class User {
     public User() {
     }
 
-    public User(String userName, String password) {
+    public User(String userName, String password, String lastAddress) {
         this.userName = userName;
         this.password = password;
+        this.lastAddress = lastAddress;
     }
 
     public long getId() {
@@ -57,5 +60,13 @@ public class User {
 
     public void setUserHistory(List<HistoryNode> userHistory) {
         this.userHistory = userHistory;
+    }
+
+    public String getLastAddress() {
+        return lastAddress;
+    }
+
+    public void setLastAddress(String lastAddress) {
+        this.lastAddress = lastAddress;
     }
 }

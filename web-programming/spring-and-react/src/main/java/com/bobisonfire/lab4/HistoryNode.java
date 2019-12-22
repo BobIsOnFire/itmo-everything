@@ -17,11 +17,10 @@ public class HistoryNode {
     public HistoryNode() {
     }
 
-    public HistoryNode(BigDecimal x, BigDecimal y, BigDecimal r, int result) {
+    public HistoryNode(BigDecimal x, BigDecimal y, BigDecimal r) {
         this.x = x;
         this.y = y;
         this.r = r;
-        this.result = result;
     }
 
     public long getId() {
