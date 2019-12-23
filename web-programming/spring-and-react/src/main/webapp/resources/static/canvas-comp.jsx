@@ -38,9 +38,9 @@ class CanvasComponent extends React.Component {
                 {value}
             </label>
         );
-
+        // todo add canvas interaction
         return <div className="label centered">
-            <canvas id="canvas" height="500" width="500">Damn yo browser is old man...</canvas> <!-- todo add canvas interaction -->
+            <canvas id="canvas" height="500" width="500">Damn yo browser is old man...</canvas>
             <div className="message">{this.state.message}</div>
             <form onSubmit={this.handleSubmit}>
                 <div>X:</div>

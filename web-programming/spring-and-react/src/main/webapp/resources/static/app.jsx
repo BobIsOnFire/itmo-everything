@@ -8,12 +8,12 @@ class DynamicTable extends React.Component {
         const colStyle = this.props.colWidth.map(value => { return {width: value} });
 
         let i = 0;
-        while (i < rows && i * rows < elems.length) {
+        while (i < rows) {
             const tds = [];
-            for (let j = 0; j < cols && i * rows + j < elems.length; j++ ) {
-                tds.push(<td style={colStyle[j]}>{ elems[i * rows + j] }</td>);
+            for (let j = 0; j < cols && i * cols + j < elems.length; j++ ) {
+                tds.push(<td style={colStyle[j]} key={j}>{ elems[i * cols + j] }</td>);
             }
-            trs.push(<tr>{tds}</tr>);
+            trs.push(<tr key={i}>{tds}</tr>);
             i++;
         }
 
@@ -104,13 +104,22 @@ class Timer extends React.Component {
 
 class MainApp extends React.Component {
     render() {
-        return <div>
-            User id: { this.props.id }<br/>
-            History: { JSON.stringify(this.props.history) }
-            <CanvasComponent id={this.props.id} history={this.props.history} />
-        </div>
+        return <table style={{width: '100%'}}>
+            <caption>
+                User id: { this.props.id }<br/>
+                History: { JSON.stringify(this.props.history) }
+            </caption>
+            <tbody><tr>
+                <td style={{width: '50%'}}>
+                    <CanvasComponent id={this.props.id} history={this.props.history} />
+                </td>
+                <td style={{width: '50%'}}>
+                    <HistoryComponent history={this.props.history} />
+                </td>
+            </tr></tbody>
+        </table>
     }
-}
+} // todo history does not re-render?
 
 function getCookie(name) {
     let matches = document.cookie.match(new RegExp(
@@ -137,4 +146,3 @@ function getCookie(name) {
         else
             ReactDOM.render(<LoginApp/>, document.getElementById("root"));
 })(); // todo remove package.json from git
-// todo set cookie expiration time (more than session)

@@ -46,7 +46,7 @@ class RegisterForm extends React.Component {
     handleSubmit(event) {
         event.preventDefault();
 
-        if (this.state.login === '' || this.state.password === '') { // todo minimize
+        if (this.state.login === '' || this.state.password === '') {
             this.updateWithMessage('Заполните все необходимые поля.');
             return;
         }
@@ -79,7 +79,7 @@ class RegisterForm extends React.Component {
             return;
         }
 
-        document.cookie = 'user_id=' + id;
+        document.cookie = 'user_id=' + id +'; max-age=86400';
         ReactDOM.render(<MainApp id={id} history={'{}'} />, document.getElementById('root'));
     }
 
