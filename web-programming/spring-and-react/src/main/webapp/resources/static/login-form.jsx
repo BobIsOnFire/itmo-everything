@@ -15,7 +15,7 @@ class LoginForm extends React.Component {
     render() {
         return <div className="label">
             <div className="message">{this.state.message}</div>
-            <form name="login-form" onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleSubmit}>
                 <label>
                     Логин:<br/>
                     <input type="text" className="textfield" name="login" value={this.state.login} onChange={this.handleChange}/>
@@ -40,57 +40,54 @@ class LoginForm extends React.Component {
     handleSubmit(event) {
         event.preventDefault();
         if (this.state.login === '' || this.state.password === '') {
-            this.setState({
-                login: this.state.login,
-                password: '',
-                message: 'Заполните все необходимые поля.'
-            });
+            this.updateWithMessage('Заполните все необходимые поля.');
             return;
         }
 
-        let id = -2;
-        let message = '';
         fetch(`http://localhost:14900/api/user/authorize?userName=${this.state.login}&password=${this.state.password}`)
             .then(
-                res => id = res,
+                res => res.text(),
                 error => {
-                    message = 'Ошибка обмена данных с сервером.';
+                    this.updateWithMessage('Ошибка обмена данных с сервером.');
                     console.log(error);
                 }
-            );
+            )
+            .then(this.handleAuthorizeSuccess);
+    }
 
-        if (id === -1) message = 'Данный пользователь не существует.';
-        if (id === 0) message = 'Пароль некорректен.';
-
-        if (id <= 0) {
-            this.setState({
-                login: this.state.login,
-                password: '',
-                message: message
-            });
+    handleAuthorizeSuccess(res) {
+        let id = +res;
+        if (id === -1) {
+            this.updateWithMessage('Пользователь не найден.');
             return;
         }
 
-        let history = null;
+        if (id === 0) {
+            this.updateWithMessage('Неверный пароль.');
+            return;
+        }
+
         fetch("http://localhost:14900/api/history/get/" + id)
             .then(
-                res => history = res,
+                res => res.json(),
                 error => {
-                    message = 'Ошибка обмена данных с сервером.';
+                    this.updateWithMessage('Ошибка обмена данных с сервером.');
                     console.log(error);
                 }
+            )
+            .then(
+                history => {
+                    document.cookie = 'user_id=' + id;
+                    ReactDOM.render(<MainApp id={id} history={history} />, document.getElementById("root"));
+                }
             );
+    }
 
-        if (history == null) {
-            this.setState({
-                login: this.state.login,
-                password: '',
-                message: message
-            });
-            return;
-        }
-
-        document.cookie = 'user_id=' + id;
-        ReactDOM.render(<MainApp id={id} history={history} />, document.getElementById("root"));
+    updateWithMessage(msg) {
+        this.setState({
+            login: this.state.login,
+            password: '',
+            message: msg
+        });
     }
 }

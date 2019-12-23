@@ -16,7 +16,7 @@ class RegisterForm extends React.Component {
     render() {
         return <div className="label">
             <div className="message">{this.state.message}</div>
-            <form name="login-form" onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleSubmit}>
                 <label>
                     Логин:<br/>
                     <input type="text" className="textfield" name="login" value={this.state.login} onChange={this.handleChange}/>
@@ -47,50 +47,48 @@ class RegisterForm extends React.Component {
         event.preventDefault();
 
         if (this.state.login === '' || this.state.password === '') { // todo minimize
-            this.setState({
-                login: this.state.login,
-                password: '',
-                message: 'Заполните все необходимые поля.'
-            });
+            this.updateWithMessage('Заполните все необходимые поля.');
             return;
         }
 
         if (this.state.password !== this.state.passwordAgain) {
-            this.setState({
-                login: this.state.login,
-                password: '',
-                passwordAgain: '',
-                message: 'Пароли различаются.'
-            });
+            this.updateWithMessage('Пароли различаются.');
             return;
         }
 
-        let id = -2;
-        let message = '';
         fetch(`http://localhost:14900/api/user/register?userName=${this.state.login}&password=${this.state.password}`)
             .then(
-                res => id = res,
+                res => res.text(),
                 error => {
-                    message = 'Ошибка обмена данных с сервером.';
+                    this.updateWithMessage('Ошибка обмена данных с сервером.');
                     console.log(error);
                 }
-            ); // todo promises are async! do something with it
+            )
+            .then(this.handleRegisterSuccess);
+    }
 
-        console.log(id);
+    handleRegisterSuccess(res) {
+        let id = +res;
+        if (id === -1) {
+            this.updateWithMessage('Пользователь с таким именем уже существует.');
+            return;
+        }
 
-        if (id === -1) message = 'Данный пользователь уже существует.';
-        if (id === 0) message = 'Введите пароль.';
-
-        if (id <= 0) {
-            this.setState({
-                login: this.state.login,
-                password: '',
-                message: message
-            });
+        if (id === 0) {
+            this.updateWithMessage('Введите пароль.');
             return;
         }
 
         document.cookie = 'user_id=' + id;
         ReactDOM.render(<MainApp id={id} history={'{}'} />, document.getElementById('root'));
+    }
+
+    updateWithMessage(msg) {
+        this.setState({
+            login: this.state.login,
+            password: '',
+            passwordAgain: '',
+            message: msg
+        });
     }
 }

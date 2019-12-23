@@ -3,6 +3,7 @@
 .login-app {width: 50%; max-width: 600px; min-width: 400px; border: 5px solid black; background-color: white;}
 .header {border: 5px solid black; margin-bottom: 20px; width: 100%;}
 .header td {width: 50%;}
+.bordered-table {border: 1px solid black; width: 100%;}
 
 #bg-text {font-size: 100vh; position: absolute; bottom: 0; right: 0; pointer-events: none; z-index: -1; color: #DDDDDD;}
 .absolute-center {position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)}

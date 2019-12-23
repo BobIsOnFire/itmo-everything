@@ -1,21 +1,23 @@
-class ToolBarTab extends React.Component {
+class DynamicTable extends React.Component {
     render() {
-        let tab = this.props.tab;
-        let styleClass = (tab.selected ? "tab-selected " : "") + "label";
-        return (
-            <td>
-            <div className={styleClass} onClick={tab.onclick}>
-            {tab.name}
-            </div>
-            </td>
-    );
-    }
-}
+        // elems, rows, cols, className, colWidth
+        const trs = [];
+        const elems = this.props.elems;
+        const rows = +this.props.rows;
+        const cols = +this.props.cols;
+        const colStyle = this.props.colWidth.map(value => { return {width: value} });
 
-class HorizontalToolBar extends React.Component {
-    render() {
-        let model = this.props.tabs.map(tab => <ToolBarTab tab={tab} />);
-        return <table className="toolbar centered"><tr>{model}</tr></table>;
+        let i = 0;
+        while (i < rows && i * rows < elems.length) {
+            const tds = [];
+            for (let j = 0; j < cols && i * rows + j < elems.length; j++ ) {
+                tds.push(<td style={colStyle[j]}>{ elems[i * rows + j] }</td>);
+            }
+            trs.push(<tr>{tds}</tr>);
+            i++;
+        }
+
+        return <table className={this.props.className}><tbody>{trs}</tbody></table>
     }
 }
 
@@ -28,28 +30,34 @@ class LoginApp extends React.Component {
     }
 
     render() {
-        let tabs = [
-            {
-                selected: this.state.currentTab === 0,
-                name: "Авторизация",
-                onclick: () => this.handleClick(0)
-            },
-            {
-                selected: this.state.currentTab === 1,
-                name: "Регистрация",
-                onclick: () => this.handleClick(1)
-            }
+        const tabs = [
+            <ToolBarTab tab={
+                {
+                    selected: this.state.currentTab === 0,
+                    name: "Авторизация",
+                    onclick: () => this.handleClick(0)
+                }
+            }/>,
+            <ToolBarTab tab={
+                {
+                    selected: this.state.currentTab === 1,
+                    name: "Регистрация",
+                    onclick: () => this.handleClick(1)
+                }
+            }/>
         ];
-        let form;
-        if (this.state.currentTab === 0)
-            form = <LoginForm />;
-        else
-            form = <RegisterForm />;
+
+        const header = [
+            <div>Акатьев Никита Львович группа P3211<br/>Лабораторная №4</div>,
+            <Timer interval="1000" /> // todo theme switch button?
+        ];
+
+        const form = this.state.currentTab ? <RegisterForm /> : <LoginForm />;
 
         return <div>
-            <Header />
-                <div className="login-app absolute-center centered">
-                    <HorizontalToolBar tabs={tabs} />
+            <DynamicTable className="header label centered" elems={header} rows="1" cols="2" colWidth={['50%', '50%']}/>
+            <div className="login-app absolute-center centered">
+                <DynamicTable className="toolbar centered" elems={tabs} rows="1" cols="2" colWidth={['50%', '50%']} />
                 {form}
             </div>
         </div>
@@ -62,15 +70,17 @@ class LoginApp extends React.Component {
     }
 }
 
-
-class Header extends React.Component {
+class ToolBarTab extends React.Component {
     render() {
-        return <table className="header label centered">
-            <tr>
-            <td><div>Акатьев Никита Львович группа P3211<br/>Лабораторная №4</div></td>
-        <td><Timer interval="1000" /></td>
-            </tr>
-            </table>;
+        let tab = this.props.tab;
+        let styleClass = (tab.selected ? "tab-selected " : "") + "label";
+        return (
+            <td>
+                <div className={styleClass} onClick={tab.onclick}>
+                    {tab.name}
+                </div>
+            </td>
+        );
     }
 }
 
@@ -80,17 +90,25 @@ class Timer extends React.Component {
         this.state = {
             time: new Date().toLocaleString()
         };
-        setInterval( () => this.setState( {time: new Date().toLocaleString()} ), +props.interval );
+        this.timerId = setInterval( () => this.setState( {time: new Date().toLocaleString()} ), +props.interval );
     }
 
     render() {
         return <div>Текущее время:<br/>{this.state.time}</div>;
     }
+
+    componentWillUnmount() {
+        clearInterval(this.timerId);
+    }
 }
 
 class MainApp extends React.Component {
     render() {
-        return <div>User id: {this.props.id}<br/>History: {this.props.history}</div>
+        return <div>
+            User id: { this.props.id }<br/>
+            History: { JSON.stringify(this.props.history) }
+            <CanvasComponent id={this.props.id} history={this.props.history} />
+        </div>
     }
 }
 
@@ -104,17 +122,19 @@ function getCookie(name) {
 // todo put in different script file
 (function() {
         let id = getCookie("user_id");
-        let history = null;
         if (id != null)
             fetch("http://localhost:14900/api/history/get/" + id)
                 .then(
-                    res => history = res,
+                    res => res.json(),
                     error => console.log(error)
+                )
+                .then(
+                    history => ReactDOM.render(
+                        history == null ? <LoginApp/> : <MainApp id={id} history={history} />,
+                        document.getElementById("root")
+                    )
                 );
-
-        if (id == null || history == null)
-            ReactDOM.render(<LoginApp/>, document.getElementById("root"));
         else
-            ReactDOM.render(<MainApp id={id} history={history} />, document.getElementById("root"));
-    }
-)();
+            ReactDOM.render(<LoginApp/>, document.getElementById("root"));
+})(); // todo remove package.json from git
+// todo set cookie expiration time (more than session)
