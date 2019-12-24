@@ -27,6 +27,8 @@ class LoginApp extends React.Component {
         this.state = {
             currentTab: 0
         };
+
+        document.cookie = "user_id=0; max-age=0";
     }
 
     render() {
@@ -74,13 +76,9 @@ class ToolBarTab extends React.Component {
     render() {
         let tab = this.props.tab;
         let styleClass = (tab.selected ? "tab-selected " : "") + "label";
-        return (
-            <td>
-                <div className={styleClass} onClick={tab.onclick}>
-                    {tab.name}
-                </div>
-            </td>
-        );
+        return <div className={styleClass} onClick={tab.onclick}>
+            {tab.name}
+        </div>;
     }
 }
 
@@ -104,22 +102,37 @@ class Timer extends React.Component {
 
 class MainApp extends React.Component {
     render() {
+        let elems = [
+            <div>Акатьев Никита Львович группа P3211<br/>Лабораторная №4</div>,
+            <Timer interval="1000" />,
+            <LogoutButton/>
+        ];
+
         return <table style={{width: '100%'}}>
             <caption>
-                User id: { this.props.id }<br/>
-                History: { JSON.stringify(this.props.history) }
+                <DynamicTable className="header label centered" elems={elems} rows="1" cols="3" colWidth={['40%', '40%', '20%']}/>
             </caption>
             <tbody><tr>
                 <td style={{width: '50%'}}>
-                    <CanvasComponent id={this.props.id} history={this.props.history} />
+                    <CanvasComponent id={this.props.id} history={this.props.history.slice()} />
                 </td>
                 <td style={{width: '50%'}}>
-                    <HistoryComponent history={this.props.history} />
+                    <HistoryComponent history={this.props.history.slice()} />
                 </td>
             </tr></tbody>
         </table>
     }
-} // todo history does not re-render?
+}
+
+class LogoutButton extends React.Component {
+    render() {
+        return <input type="image" width="100" src="/img/logout.png" alt="Вернуться назад" onClick={this.handleClick}/>
+    }
+
+    handleClick() {
+        ReactDOM.render(<LoginApp/>, document.getElementById('root'));
+    }
+}
 
 function getCookie(name) {
     let matches = document.cookie.match(new RegExp(
@@ -133,16 +146,13 @@ function getCookie(name) {
         let id = getCookie("user_id");
         if (id != null)
             fetch("http://localhost:14900/api/history/get/" + id)
-                .then(
-                    res => res.json(),
-                    error => console.log(error)
-                )
-                .then(
-                    history => ReactDOM.render(
-                        history == null ? <LoginApp/> : <MainApp id={id} history={history} />,
+                .then(res => res.text())
+                .then(text => ReactDOM.render(
+                        !text.length ? <LoginApp/> : <MainApp id={id} history={JSON.parse(text)} />,
                         document.getElementById("root")
                     )
-                );
+                )
+                .catch(error => console.log(error));
         else
             ReactDOM.render(<LoginApp/>, document.getElementById("root"));
 })(); // todo remove package.json from git

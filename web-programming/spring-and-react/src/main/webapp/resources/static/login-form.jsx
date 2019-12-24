@@ -10,6 +10,7 @@ class LoginForm extends React.Component {
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleAuthorizeSuccess = this.handleAuthorizeSuccess.bind(this);
     }
 
     render() {
@@ -45,14 +46,12 @@ class LoginForm extends React.Component {
         }
 
         fetch(`http://localhost:14900/api/user/authorize?userName=${this.state.login}&password=${this.state.password}`)
-            .then(
-                res => res.text(),
-                error => {
-                    this.updateWithMessage('Ошибка обмена данных с сервером.');
-                    console.log(error);
-                }
-            )
-            .then(this.handleAuthorizeSuccess);
+            .then(res => res.text())
+            .then(this.handleAuthorizeSuccess)
+            .catch(error => {
+                this.updateWithMessage('Ошибка обмена данных с сервером.');
+                console.log(error);
+            });
     }
 
     handleAuthorizeSuccess(res) {
@@ -68,19 +67,16 @@ class LoginForm extends React.Component {
         }
 
         fetch("http://localhost:14900/api/history/get/" + id)
-            .then(
-                res => res.json(),
-                error => {
-                    this.updateWithMessage('Ошибка обмена данных с сервером.');
-                    console.log(error);
+            .then(res => res.text())
+            .then(text => {
+                    document.cookie = 'user_id=' + id +'; max-age=86400';
+                    ReactDOM.render(<MainApp id={id} history={JSON.parse(text)} />, document.getElementById("root"));
                 }
             )
-            .then(
-                history => {
-                    document.cookie = 'user_id=' + id;
-                    ReactDOM.render(<MainApp id={id} history={history} />, document.getElementById("root"));
-                }
-            );
+            .catch(error => {
+                this.updateWithMessage('Ошибка обмена данных с сервером.');
+                console.log(error);
+            });
     }
 
     updateWithMessage(msg) {

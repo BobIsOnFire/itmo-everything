@@ -11,6 +11,7 @@ class RegisterForm extends React.Component {
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleRegisterSuccess = this.handleRegisterSuccess.bind(this);
     }
 
     render() {
@@ -57,14 +58,12 @@ class RegisterForm extends React.Component {
         }
 
         fetch(`http://localhost:14900/api/user/register?userName=${this.state.login}&password=${this.state.password}`)
-            .then(
-                res => res.text(),
-                error => {
-                    this.updateWithMessage('Ошибка обмена данных с сервером.');
-                    console.log(error);
-                }
-            )
-            .then(this.handleRegisterSuccess);
+            .then(res => res.text())
+            .then(this.handleRegisterSuccess)
+            .catch(error => {
+                this.updateWithMessage('Ошибка обмена данных с сервером.');
+                console.log(error);
+            });
     }
 
     handleRegisterSuccess(res) {

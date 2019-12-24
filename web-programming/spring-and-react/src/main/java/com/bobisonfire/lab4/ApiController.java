@@ -87,7 +87,7 @@ public class ApiController {
 
         HistoryNode historyNode = new HistoryNode(x, y, r);
         if (x == null || y == null || r == null) return historyNode;
-        historyNode.setResult( calculateHit(x, y, r) ? 1 : 0 );
+        historyNode.setResult( calculateHit(x, y, r.abs()) ? 1 : 0 );
 
         Optional<User> userOpt = users.findById(id);
         if (!userOpt.isPresent())
@@ -114,7 +114,7 @@ public class ApiController {
         if ( y.compareTo(BigDecimal.ZERO) < 0 ) // y < 0
             return y.compareTo( x.multiply(BigDecimal.valueOf(2)).subtract(r) ) >= 0; // y >= 2 * x - r
 
-        return x.pow(2).add( y.pow(2) ).compareTo( r.pow(2) ) <= 0; // x^2 + y^2 <= r^2
+        return x.pow(2).add( y.pow(2) ).compareTo( r.pow(2).divide( BigDecimal.valueOf(4), BigDecimal.ROUND_HALF_UP ) ) <= 0; // x^2 + y^2 <= r^2 / 4
     }
 
     private BigDecimal convert(String query, Predicate<BigDecimal> rangePredicate) {

@@ -8,6 +8,6 @@
 #bg-text {font-size: 100vh; position: absolute; bottom: 0; right: 0; pointer-events: none; z-index: -1; color: #DDDDDD;}
 .absolute-center {position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)}
 .centered {text-align: center; margin-left: auto; margin-right: auto;}
-.label {font: 18pt monospace; padding: 10px;}
+.label {font: 16pt monospace; padding: 10px;}
 .textfield {width: 100%; font: 16pt monospace; color: black; text-align: center;}
 .button {width: 100%; font: 16pt monospace;}
