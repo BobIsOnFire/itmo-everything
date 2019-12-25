@@ -1,4 +1,4 @@
-package com.bobisonfire.lab4;
+package com.bobisonfire.lab4.data;
 
 import javax.persistence.*;
 import java.math.BigDecimal;

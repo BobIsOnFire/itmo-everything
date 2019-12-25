@@ -1,20 +1,39 @@
-<html lang="ru">
+<html lang="ru" xmlns:th="https://www.thymeleaf.org">
     <head>
+        <meta charset="UTF-8">
+        <meta name="_csrf" th:content="${_csrf.token}"/>
+        <meta name="_csrf_parameter" th:content="${_csrf.parameterName}"/>
+
         <title>WEB - Лабораторная #4</title>
-        <link rel="stylesheet" type="text/css" href="/common.css">
+        <link rel="stylesheet" type="text/css" href="/css/common.css">
         <link rel="shortcut icon" href="/img/favicon.ico">
         <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
         <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
         <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
-
-        <!-- todo add icon -->
     </head>
     <body>
         <div id="root"></div>
-        <script type="text/babel" src="/register-form.jsx"></script>
-        <script type="text/babel" src="/login-form.jsx"></script>
-        <script type="text/babel" src="/canvas-comp.jsx"></script>
-        <script type="text/babel" src="/history-comp.jsx"></script>
-        <script type="text/babel" src="/app.jsx"></script>
+
+        <script type="text/babel" src="/components/common.jsx"></script>
+        <script type="text/babel" src="/components/canvas-comp.jsx"></script>
+        <script type="text/babel" src="/components/history-comp.jsx"></script>
+        <script type="text/babel" src="/components/main-page.jsx"></script>
+
+        <script type="text/babel">
+            (function(){
+                const _csrf = {
+                    parameter: document.querySelector("meta[name='_csrf_parameter']").getAttribute('content'),
+                    token: document.querySelector("meta[name='_csrf']").getAttribute('content')
+                };
+
+                fetch(`http://localhost:14900/api/history/get?${_csrf.parameter}=${_csrf.token}`)
+                    .then(res => res.json())
+                    .then(json => ReactDOM.render(
+                        <MainPage history={json}/>,
+                        document.getElementById("root"))
+                    )
+                    .catch(error => console.log(error));
+            })();
+        </script>
     </body>
 </html>

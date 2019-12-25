@@ -1,12 +1,9 @@
-package com.bobisonfire.lab4;
+package com.bobisonfire.lab4.data;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    boolean existsByUserName(String userName);
-    Optional<User> findByUserName(String userName);
+    User findByUsername(String userName);
 }

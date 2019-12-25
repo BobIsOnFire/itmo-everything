@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}"/>
+
+    <title>WEB - Лабораторная #4</title>
+    <link rel="stylesheet" type="text/css" href="/css/common.css">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <div class="label centered">
+        <div th:if="${param.error}">
+            Неверное имя пользователя или пароль.
+        </div>
+        <div th:if="${param.logout}">
+            Вы вышли из системы.
+        </div>
+        <div th:if="${param.exists}">
+            Пользователь уже существует.
+        </div>
+    </div>
+    <script type="text/babel" src="/components/common.jsx"></script>
+    <script type="text/babel" src="/components/login-page.jsx"></script>
+    <script type="text/babel" src="/components/register-form.jsx"></script>
+    <script type="text/babel" src="/components/login-form.jsx"></script>
+
+    <script type="text/babel">
+        (function(){
+            ReactDOM.render( <LoginPage/>, document.getElementById('root') );
+        })();
+    </script>
+</body>
+</html>

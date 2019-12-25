@@ -1,82 +1,42 @@
-package com.bobisonfire.lab4;
+package com.bobisonfire.lab4.controller;
 
+import com.bobisonfire.lab4.data.HistoryNode;
+import com.bobisonfire.lab4.data.User;
+import com.bobisonfire.lab4.data.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletRequest;
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 @RestController
 @RequestMapping(value = "/api", method = RequestMethod.GET)
-public class ApiController {
+public class RestApiController {
     private final UserRepository users;
 
     @Autowired
-    public ApiController(UserRepository users) {
+    public RestApiController(UserRepository users) {
         this.users = users;
     }
 
-    @GetMapping("/user/register")
-    public long registerUser(
-            @RequestParam String userName,
-            @RequestParam(required = false) String password,
-            ServletRequest request) // returns -1 if user does not exist and 0 if no password is given
-    {
-        if (users.existsByUserName(userName))
-            return -1;
-        if (password == null || password.isEmpty())
-            return 0;
-
-        User user = new User( userName, password, request.getRemoteAddr() );
-        users.save(user);
-        return user.getId();
-    }
-
-    @GetMapping("/user/authorize")
-    public long authorizeUser(
-            @RequestParam String userName,
-            @RequestParam String password,
-            ServletRequest request)
-    {
-        Optional<User> userOpt = users.findByUserName(userName);
-        if (!userOpt.isPresent())
-            return -1;
-
-        User user = userOpt.get();
-        if (!password.equals(user.getPassword()))
-            return 0;
-
-        user.setLastAddress( request.getRemoteAddr() );
-        users.save(user);
-        return user.getId();
-    }
-
-    @GetMapping("/history/get/{id}")
+    @GetMapping("/history/get")
     public List<HistoryNode> getHistory(
-            @PathVariable long id,
-            ServletRequest request)
+            Principal principal)
     {
-        Optional<User> userOpt = users.findById(id);
-        if (!userOpt.isPresent())
-            return null;
-
-        User user = userOpt.get();
-        if (!user.getLastAddress().equals( request.getRemoteAddr() ))
-            return null;
+        User user = users.findByUsername(principal.getName());
+        if (user == null) return null;
 
         return user.getUserHistory();
     }
 
-    @GetMapping("/history/add/{id}")
+    @GetMapping("/history/add")
     public HistoryNode addHistoryNode(
-            @PathVariable long id,
             @RequestParam String xQuery,
             @RequestParam String yQuery,
             @RequestParam String rQuery,
-            ServletRequest request) // returns null when the user needs to authorize again, coordinate=null if it is not valid
+            Principal principal) // returns null when the user needs to authorize again, coordinate=null if it is not valid
     {
         BigDecimal x = convert(xQuery.trim(),
                 num -> num.compareTo(BigDecimal.valueOf(-3)) >= 0 && num.compareTo(BigDecimal.valueOf(5)) <= 0);
@@ -89,14 +49,8 @@ public class ApiController {
         if (x == null || y == null || r == null) return historyNode;
         historyNode.setResult( calculateHit(x, y, r.abs()) ? 1 : 0 );
 
-        Optional<User> userOpt = users.findById(id);
-        if (!userOpt.isPresent())
-            return null;
-
-        User user = userOpt.get();
-
-        if (!user.getLastAddress().equals( request.getRemoteAddr() ))
-            return null;
+        User user = users.findByUsername(principal.getName());
+        if (user == null) return null;
 
         user.getUserHistory().add(historyNode);
         users.save(user);

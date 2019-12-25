@@ -39,7 +39,7 @@ class CanvasComponent extends React.Component {
                 {value}
             </label>
         );
-        // todo add canvas interaction
+
         return <div className="label centered">
             <canvas id="canvas" height="500" width="500" onClick={this.handleCanvasClick}>Damn yo browser is old man...</canvas>
             <div className="message">{this.state.message}</div>
@@ -83,8 +83,9 @@ class CanvasComponent extends React.Component {
             return;
         }
 
-        fetch(`http://localhost:14900/api/history/add/${this.props.id}?` +
-            `xQuery=${this.state.xQuery}&yQuery=${this.state.yQuery}&rQuery=${this.state.rQuery}`)
+        fetch(`http://localhost:14900/api/history/add?` +
+            `xQuery=${this.state.xQuery}&yQuery=${this.state.yQuery}&rQuery=${this.state.rQuery}&` +
+            `${this.props._csrf.parameter}=${this.props._csrf.token}`)
             .then(res => res.text())
             .then(this.handleHistoryAddSuccess)
             .catch(error => {
@@ -95,11 +96,6 @@ class CanvasComponent extends React.Component {
     }
 
     handleHistoryAddSuccess(text) {
-        if (!text.length) {
-            ReactDOM.render(<LoginApp/>, document.getElementById("root"));
-            return;
-        }
-
         const node = JSON.parse(text);
         const nulls = [];
         if (node.x == null) nulls.push('X');
@@ -115,13 +111,9 @@ class CanvasComponent extends React.Component {
 
         this.updateWithMessage('');
 
-        fetch("http://localhost:14900/api/history/get/" + this.props.id)
-            .then(res => res.text())
-            .then(text => ReactDOM.render(
-                    !text.length ? <LoginApp/> : <MainApp id={this.props.id} history={JSON.parse(text)} />,
-                    document.getElementById("root")
-                )
-            )
+        fetch(`http://localhost:14900/api/history/get?${this.props._csrf.parameter}=${this.props._csrf.token}`)
+            .then(res => res.json())
+            .then(json => ReactDOM.render( <MainPage history={json} />, document.getElementById("root") ))
             .catch(error => console.log(error));
     }
 
@@ -142,7 +134,7 @@ class CanvasComponent extends React.Component {
         this.paint.call(this);
     }
 
-    paint() { // todo negative radius
+    paint() {
         const lightTheme = true;
         const radius = +this.state.rQuery;
         const canvas = document.getElementById('canvas');
