@@ -113,6 +113,8 @@ class CanvasComponent extends React.Component {
             return;
         }
 
+        this.updateWithMessage('');
+
         fetch("http://localhost:14900/api/history/get/" + this.props.id)
             .then(res => res.text())
             .then(text => ReactDOM.render(
@@ -125,8 +127,8 @@ class CanvasComponent extends React.Component {
 
     updateWithMessage(msg) {
         this.setState({
-            xQuery: this.state.xQuery,
-            yQuery: this.state.yQuery,
+            xQuery: '0',
+            yQuery: '',
             rQuery: this.state.rQuery,
             message: msg
         });

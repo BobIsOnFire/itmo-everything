@@ -25,7 +25,12 @@ class HistoryComponent extends React.Component {
 
         for (let i = start; i > end; i--) {
             const node = this.state.history[i];
-            elems.push(node.x, node.y, node.r, node.result ? 'Попадание!' : 'Промах!');
+            elems.push(
+                this.format(node.x, 10),
+                this.format(node.y, 10),
+                this.format(node.r, 10),
+                node.result ? 'Попадание!' : 'Промах!'
+            );
         }
 
         return <div>
@@ -53,5 +58,12 @@ class HistoryComponent extends React.Component {
             history: this.state.history,
             page: this.state.page + 1
         });
+    }
+
+    format(number, maxDigits) {
+        const text = number + '';
+        if (text.length <= maxDigits) return text;
+
+        return number.toFixed(maxDigits - 2) + '';
     }
 }

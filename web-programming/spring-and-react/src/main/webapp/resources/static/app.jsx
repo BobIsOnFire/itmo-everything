@@ -101,26 +101,105 @@ class Timer extends React.Component {
 }
 
 class MainApp extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            mode: this.getMode(window.innerWidth),
+            currentTab: 0
+        }
+    }
+
     render() {
-        let elems = [
+        const header = [
             <div>Акатьев Никита Львович группа P3211<br/>Лабораторная №4</div>,
             <Timer interval="1000" />,
             <LogoutButton/>
         ];
 
-        return <table style={{width: '100%'}}>
-            <caption>
-                <DynamicTable className="header label centered" elems={elems} rows="1" cols="3" colWidth={['40%', '40%', '20%']}/>
-            </caption>
-            <tbody><tr>
-                <td style={{width: '50%'}}>
-                    <CanvasComponent id={this.props.id} history={this.props.history.slice()} />
-                </td>
-                <td style={{width: '50%'}}>
-                    <HistoryComponent history={this.props.history.slice()} />
-                </td>
-            </tr></tbody>
-        </table>
+        if (this.state.mode === 2)
+            return <table style={{width: '100%'}}>
+                <caption>
+                    <DynamicTable className="header label centered" elems={header} rows="1" cols="3" colWidth={['40%', '40%', '20%']}/>
+                </caption>
+                <tbody><tr>
+                    <td style={{width: '50%'}}>
+                        <CanvasComponent id={this.props.id} history={this.props.history.slice()} />
+                    </td>
+                    <td style={{width: '50%'}}>
+                        <HistoryComponent history={this.props.history.slice()} />
+                    </td>
+                </tr></tbody>
+            </table>;
+
+        const toolbar = [
+            <ToolBarTab tab={
+                {
+                    selected: this.state.currentTab === 0,
+                    name: "Проверка",
+                    onclick: () => this.handleTabClick(0)
+                }
+            }/>,
+            <ToolBarTab tab={
+                {
+                    selected: this.state.currentTab === 1,
+                    name: "История",
+                    onclick: () => this.handleTabClick(1)
+                }
+            }/>,
+            <LogoutButton/>
+        ];
+
+        const component = this.state.currentTab
+            ? <HistoryComponent history={this.props.history.slice()} />
+            : <CanvasComponent id={this.props.id} history={this.props.history.slice()} />;
+
+        if (this.state.mode === 1)
+            return <table style={{width: '100%'}}>
+                <tbody><tr>
+                    <td style={{width: '25%', height: '100%'}}>
+                        <DynamicTable className="label centered bordered-table" elems={toolbar} rows="3" cols="1" colWidth={['100%']} />
+                    </td>
+                    <td style={{width: '75%'}}>
+                        {component}
+                    </td>
+                </tr></tbody>
+            </table>;
+
+        return <div>
+            <DynamicTable className="label centered bordered-table" elems={toolbar} rows="1" cols="3" colWidth={['40%', '40%', '20%']}/><br/>
+            {component}
+        </div>;
+    }
+
+    getMode(width) {
+        if (width >= 1210) return 2;
+        if (width >= 674) return 1;
+        return 0;
+    }
+
+    handleResize = () => {
+        const newMode = this.getMode(window.innerWidth);
+        if (this.state.mode === newMode) return;
+
+        this.setState({
+            mode: newMode,
+            currentTab: this.state.currentTab
+        });
+    };
+
+    handleTabClick = (index) => {
+        this.setState({
+            mode: this.state.mode,
+            currentTab: index
+        })
+    };
+
+    componentDidMount() {
+        window.addEventListener('resize', this.handleResize);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.handleResize);
     }
 }
 
