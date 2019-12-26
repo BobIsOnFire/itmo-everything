@@ -2,9 +2,10 @@ class MainPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            history: [],
             mode: this.getMode(window.innerWidth),
             currentTab: 0
-        }
+        };
     }
 
     _csrf = {
@@ -20,8 +21,8 @@ class MainPage extends React.Component {
         ];
 
 
-        const canvasComp = <CanvasComponent history={this.props.history} _csrf={this._csrf} />;
-        const historyComp = <HistoryComponent history={this.props.history} />;
+        const canvasComp = <CanvasComponent history={this.state.history} _csrf={this._csrf} onUpdate={this.getData} />;
+        const historyComp = <HistoryComponent history={this.state.history} />;
 
         if (this.state.mode === 2)
             return <table style={{width: '100%'}}>
@@ -53,16 +54,14 @@ class MainPage extends React.Component {
         ];
 
         if (this.state.mode === 1)
-            return <table style={{width: '100%'}}>
-                <tbody><tr>
-                    <td style={{width: '25%', height: '100%'}}>
-                        <DynamicTable className="label centered bordered-table" elems={toolbar} rows="3" cols="1" colWidth={['100%']} />
-                    </td>
-                    <td style={{width: '75%'}}>
-                        {this.state.currentTab ? historyComp : canvasComp}
-                    </td>
-                </tr></tbody>
-            </table>;
+            return <div>
+                <div style={{width: '25%', right: 0, position: 'absolute'}}>
+                    <DynamicTable className="label centered" elems={toolbar} rows="3" cols="1" colWidth={['100%']} />
+                </div>
+                <div style={{'margin-right': '25%'}}>
+                    {this.state.currentTab ? historyComp : canvasComp}
+                </div>
+            </div>;
 
         return <div>
             <DynamicTable className="label centered bordered-table" elems={toolbar} rows="1" cols="3" colWidth={['40%', '40%', '20%']}/><br/>
@@ -76,24 +75,45 @@ class MainPage extends React.Component {
         return 0;
     }
 
+    getData = () => {
+        fetch(`http://se.ifmo.ru:14900/history?${this._csrf.parameter}=${this._csrf.token}`, {method: 'GET'})
+            .then(res => {
+                if (res.ok) {
+                    res.json().then(json => {
+                        this.setState({
+                            history: json,
+                            mode: this.getMode(window.innerWidth),
+                            currentTab: 0
+                        });
+                    })
+                } else {
+                    if (res.status === 403) window.location = '/login';
+                    else res.text().then(text => console.log(text));
+                }
+            });
+    };
+
     handleResize = () => {
         const newMode = this.getMode(window.innerWidth);
         if (this.state.mode === newMode) return;
 
         this.setState({
             mode: newMode,
-            currentTab: this.state.currentTab
+            currentTab: this.state.currentTab,
+            history: this.state.history
         });
     };
 
     handleTabClick = (index) => {
         this.setState({
             mode: this.state.mode,
-            currentTab: index
+            currentTab: index,
+            history: this.state.history
         })
     };
 
     componentDidMount() {
+        this.getData();
         window.addEventListener('resize', this.handleResize);
     }
 

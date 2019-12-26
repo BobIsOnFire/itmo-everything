@@ -26,9 +26,9 @@ class HistoryComponent extends React.Component {
         for (let i = start; i > end; i--) {
             const node = this.state.history[i];
             elems.push(
-                this.format(node.x, 10),
-                this.format(node.y, 10),
-                this.format(node.r, 10),
+                this.format(node.x, 15),
+                this.format(node.y, 15),
+                this.format(node.r, 15),
                 node.result ? 'Попадание!' : 'Промах!'
             );
         }
@@ -60,10 +60,9 @@ class HistoryComponent extends React.Component {
         });
     }
 
-    format(number, maxDigits) {
-        const text = number + '';
-        if (text.length <= maxDigits) return text;
-
-        return number.toFixed(maxDigits - 2) + '';
+    format(string, maxSymbols) {
+        let s = string.replace(/(\.[0-9]*[1-9])0+$|\.0*$/,'$1');
+        if (s.length <= maxSymbols) return s;
+        return <div title={s}>{s.substring(0, maxSymbols - 3) + '...'}</div>;
     }
 }

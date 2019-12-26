@@ -8,7 +8,7 @@ import java.util.Set;
 @Table(name = "users")
 public class User {
 
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(unique = true)
@@ -18,7 +18,7 @@ public class User {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
-    private List<HistoryNode> userHistory;
+    private List<HistoryEntity> userHistory;
 
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
@@ -52,11 +52,11 @@ public class User {
         this.password = password;
     }
 
-    public List<HistoryNode> getUserHistory() {
+    public List<HistoryEntity> getUserHistory() {
         return userHistory;
     }
 
-    public void setUserHistory(List<HistoryNode> userHistory) {
+    public void setUserHistory(List<HistoryEntity> userHistory) {
         this.userHistory = userHistory;
     }
 

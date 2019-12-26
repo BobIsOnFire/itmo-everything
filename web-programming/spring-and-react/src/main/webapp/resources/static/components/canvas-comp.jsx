@@ -10,7 +10,7 @@ class CanvasComponent extends React.Component {
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
-        this.handleHistoryAddSuccess = this.handleHistoryAddSuccess.bind(this);
+        this.updateWithMessage = this.updateWithMessage.bind(this);
         this.handleCanvasClick = this.handleCanvasClick.bind(this);
     }
 
@@ -66,7 +66,7 @@ class CanvasComponent extends React.Component {
 
     handleChange(event) {
         let state = this.state;
-        state[event.target.name] = event.target.value.substring(0, 18);
+        state[event.target.name] = event.target.value.substring(0, 20);
         this.setState(state);
     }
 
@@ -83,38 +83,30 @@ class CanvasComponent extends React.Component {
             return;
         }
 
-        fetch(`http://localhost:14900/api/history/add?` +
-            `xQuery=${this.state.xQuery}&yQuery=${this.state.yQuery}&rQuery=${this.state.rQuery}&` +
-            `${this.props._csrf.parameter}=${this.props._csrf.token}`)
-            .then(res => res.text())
-            .then(this.handleHistoryAddSuccess)
-            .catch(error => {
-                this.updateWithMessage('Ошибка обмена данных с сервером.');
-                console.log(error);
+        const options = {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body:
+                `${this.props._csrf.parameter}=${this.props._csrf.token}&` +
+                `x=${this.state.xQuery}&y=${this.state.yQuery}&r=${this.state.rQuery}`
+        };
+
+        fetch('http://se.ifmo.ru:14900/history', options)
+            .then(res => {
+                if (res.ok) {
+                    this.updateWithMessage('');
+                    this.props.onUpdate();
+                } else {
+                    if (res.status === 403) {
+                        window.location = '/login';
+                        return;
+                    }
+                    if (res.status === 400) {
+                        res.json().then(json => this.updateWithMessage(json.errors[0].defaultMessage));
+                    }
+                }
             });
 
-    }
-
-    handleHistoryAddSuccess(text) {
-        const node = JSON.parse(text);
-        const nulls = [];
-        if (node.x == null) nulls.push('X');
-        if (node.y == null) nulls.push('Y');
-        if (node.r == null) nulls.push('R');
-
-        if (nulls.length > 0) {
-            const poly = (singular, plural) => (nulls.length > 1 ? plural : singular);
-            const msg = `Значени${poly('е', 'я')} переменн${poly('ой', 'ых')} ${nulls.join(', ')} некорректн${poly('о', 'ы')}.`;
-            this.updateWithMessage(msg);
-            return;
-        }
-
-        this.updateWithMessage('');
-
-        fetch(`http://localhost:14900/api/history/get?${this.props._csrf.parameter}=${this.props._csrf.token}`)
-            .then(res => res.json())
-            .then(json => ReactDOM.render( <MainPage history={json} />, document.getElementById("root") ))
-            .catch(error => console.log(error));
     }
 
     updateWithMessage(msg) {
@@ -257,8 +249,6 @@ class CanvasComponent extends React.Component {
         if (top == null) top = margin;
         if (right == null) right = width - margin;
         if (bottom == null) bottom = height - margin;
-
-        console.log(left, top, right, bottom);
 
         context.fillStyle = fgColor;
         context.globalAlpha = 0.2;

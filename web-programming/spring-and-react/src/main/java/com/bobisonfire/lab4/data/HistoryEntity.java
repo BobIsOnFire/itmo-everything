@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "history")
-public class HistoryNode {
-    @Id @GeneratedValue
+public class HistoryEntity {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(precision = 25, scale = 20) private BigDecimal x;
@@ -14,13 +14,7 @@ public class HistoryNode {
     @Column(precision = 25, scale = 20) private BigDecimal r;
     private int result;
 
-    public HistoryNode() {
-    }
-
-    public HistoryNode(BigDecimal x, BigDecimal y, BigDecimal r) {
-        this.x = x;
-        this.y = y;
-        this.r = r;
+    public HistoryEntity() {
     }
 
     public long getId() {

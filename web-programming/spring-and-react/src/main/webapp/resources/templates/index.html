@@ -21,18 +21,7 @@
 
         <script type="text/babel">
             (function(){
-                const _csrf = {
-                    parameter: document.querySelector("meta[name='_csrf_parameter']").getAttribute('content'),
-                    token: document.querySelector("meta[name='_csrf']").getAttribute('content')
-                };
-
-                fetch(`http://localhost:14900/api/history/get?${_csrf.parameter}=${_csrf.token}`)
-                    .then(res => res.json())
-                    .then(json => ReactDOM.render(
-                        <MainPage history={json}/>,
-                        document.getElementById("root"))
-                    )
-                    .catch(error => console.log(error));
+                ReactDOM.render(<MainPage/>, document.getElementById("root"));
             })();
         </script>
     </body>
