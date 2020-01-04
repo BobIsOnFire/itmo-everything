@@ -1,3 +1,8 @@
+const _csrf = {
+    parameter: document.querySelector("meta[name='_csrf_parameter']").getAttribute('content'),
+    token: document.querySelector("meta[name='_csrf']").getAttribute('content')
+};
+
 class MainPage extends React.Component {
     constructor(props) {
         super(props);
@@ -8,11 +13,6 @@ class MainPage extends React.Component {
         };
     }
 
-    _csrf = {
-        parameter: document.querySelector("meta[name='_csrf_parameter']").getAttribute('content'),
-        token: document.querySelector("meta[name='_csrf']").getAttribute('content')
-    };
-
     render() {
         const header = [
             <div>Акатьев Никита Львович группа P3211<br/>Лабораторная №4</div>,
@@ -21,7 +21,7 @@ class MainPage extends React.Component {
         ];
 
 
-        const canvasComp = <CanvasComponent history={this.state.history} _csrf={this._csrf} onUpdate={this.getData} />;
+        const canvasComp = <CanvasComponent history={this.state.history} _csrf={_csrf} onUpdate={this.getData} />;
         const historyComp = <HistoryComponent history={this.state.history} />;
 
         if (this.state.mode === 2)
@@ -76,7 +76,8 @@ class MainPage extends React.Component {
     }
 
     getData = () => {
-        fetch(`http://se.ifmo.ru:14900/history?${this._csrf.parameter}=${this._csrf.token}`, {method: 'GET'})
+        const host = `${location.protocol}//${location.hostname}:${location.port}`;
+        fetch( host + `/history?${_csrf.parameter}=${_csrf.token}`, {method: 'GET'} )
             .then(res => {
                 if (res.ok) {
                     res.json().then(json => {
@@ -124,8 +125,9 @@ class MainPage extends React.Component {
 
 class LogoutButton extends React.Component {
     render() {
-        return <form action="/logout" method="get">
-            <input type="image" width="100" src="/img/logout.png" alt="Вернуться назад" onClick={this.handleClick}/>
+        return <form action="/logout" method="post">
+            <input type="hidden" name={_csrf.parameter} value={_csrf.token}/>
+            <input type="image" width="100" src="/img/logout.png" alt="Вернуться назад"/>
         </form>
     }
 }

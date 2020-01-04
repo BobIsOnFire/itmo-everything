@@ -91,7 +91,8 @@ class CanvasComponent extends React.Component {
                 `x=${this.state.xQuery}&y=${this.state.yQuery}&r=${this.state.rQuery}`
         };
 
-        fetch('http://se.ifmo.ru:14900/history', options)
+        const host = `${location.protocol}//${location.hostname}:${location.port}`;
+        fetch(host + '/history', options)
             .then(res => {
                 if (res.ok) {
                     this.updateWithMessage('');
