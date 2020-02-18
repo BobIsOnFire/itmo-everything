@@ -1,12 +1,13 @@
 package com.bobisonfire.test;
 
-import com.bobisonfire.matrix.Rational;
-import com.bobisonfire.matrix.SquareMatrix;
+import com.bobisonfire.gauss.GaussSolver;
+import com.bobisonfire.gauss.matrix.Matrix;
+import com.bobisonfire.gauss.matrix.Rational;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SquareMatrixTest {
+class MatrixTransformTest {
 
     private Rational[][] starter = {
             {Rational.from(3), Rational.from(3), Rational.from(-1)},
@@ -20,7 +21,8 @@ class SquareMatrixTest {
             {Rational.ZERO, Rational.ZERO, Rational.from(-6)}
     };
 
-    private SquareMatrix matrix = SquareMatrix.from(starter);
+    private Matrix matrix = Matrix.from(starter);
+    private GaussSolver solver = new GaussSolver(matrix);
 
     @Test
     void from() {
@@ -31,18 +33,20 @@ class SquareMatrixTest {
 
     @Test
     void getTriangleMatrix() {
-        Rational[][] model = matrix.getTriangleMatrix().getModel();
+        Rational[][] model = solver.getTriangleMatrix().getModel();
         for (int i = 0; i < model.length; i++)
             assertArrayEquals(model[i], triangle[i]);
     }
 
     @Test
     void getRank() {
-        assertEquals(matrix.getRank(), 3);
+        assertEquals(solver.getRank(), 3);
     }
 
     @Test
     void getDeterminant() {
-        assertEquals(matrix.getDeterminant(), Rational.from(54));
+        assertEquals(solver.getDeterminant(), Rational.from(54));
     }
+
+
 }

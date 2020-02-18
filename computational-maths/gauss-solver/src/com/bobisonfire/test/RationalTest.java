@@ -1,6 +1,6 @@
 package com.bobisonfire.test;
 
-import com.bobisonfire.matrix.Rational;
+import com.bobisonfire.gauss.matrix.Rational;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

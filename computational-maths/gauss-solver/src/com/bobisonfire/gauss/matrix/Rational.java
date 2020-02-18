@@ -1,4 +1,4 @@
-package com.bobisonfire.matrix;
+package com.bobisonfire.gauss.matrix;
 
 import static java.lang.Math.*;
 
@@ -14,7 +14,7 @@ public class Rational implements Comparable<Rational> {
         Rational x = new Rational();
 
         int factor = greatestFactor(nom, denom);
-        int sign = denom > 0 ? 1 : -1;
+        int sign = denom / abs(denom);
         x.nom = sign * nom / factor;
         x.denom = sign * denom / factor;
         return x;
@@ -65,7 +65,7 @@ public class Rational implements Comparable<Rational> {
     }
 
     public Rational subtract(Rational r) {
-        return add(r.multiply(-1));
+        return add(from(-r.nom, r.denom));
     }
 
     public Rational subtract(int x) {
@@ -82,6 +82,18 @@ public class Rational implements Comparable<Rational> {
 
     public Rational negate() {
         return from(-nom, denom);
+    }
+
+    public Rational reverse() {
+        return from(denom, nom);
+    }
+
+    public Rational absolute() {
+        return from(abs(nom), denom);
+    }
+
+    public int sign() {
+        return nom == 0 ? 0 : (nom / abs(nom));
     }
 
     public int toInt() {

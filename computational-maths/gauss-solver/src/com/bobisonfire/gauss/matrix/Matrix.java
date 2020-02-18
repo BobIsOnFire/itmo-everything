@@ -1,11 +1,13 @@
-package com.bobisonfire.matrix;
+package com.bobisonfire.gauss.matrix;
 
 import java.util.StringJoiner;
 
-public class Matrix {
-    protected Rational[][] model;
-    protected int rows;
-    protected int cols;
+public class Matrix { // todo: write tests
+    private Rational[][] model;
+    private int rows;
+    private int cols;
+    private Matrix triangleMatrix = null;
+    private boolean negated = false;
 
     public static Matrix from(Rational[][] model) {
         if (model.length == 0 || model[0].length == 0) throw new RuntimeException(); // todo: replace with custom exception
@@ -39,6 +41,26 @@ public class Matrix {
                 newModel[i][j] = Rational.from( model[i][j] );
 
         return newModel;
+    }
+
+
+
+    public Rational[][] getModel() {
+        return model;
+    }
+
+    public Rational[] getRow(int i) {
+        return model[i];
+    }
+
+    public Rational[] getCol(int j) {
+        Rational[] col = new Rational[rows];
+        for (int i = 0; i < rows; i++) col[i] = model[i][j];
+        return col;
+    }
+
+    public Rational get(int i, int j) {
+        return model[i][j];
     }
 
 
@@ -158,8 +180,17 @@ public class Matrix {
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if ( !(obj instanceof Matrix) ) return false;
 
-    public Rational[][] getModel() {
-        return model;
+        Matrix m = (Matrix) obj;
+        if (rows != m.rows || cols != m.cols) return false;
+
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
+                if ( !get(i, j).equals(m.get(i, j)) ) return false;
+
+        return true;
     }
 }
