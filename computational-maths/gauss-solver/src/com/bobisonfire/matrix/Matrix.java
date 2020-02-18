@@ -1,4 +1,6 @@
-package com.bobisonfire.gauss;
+package com.bobisonfire.matrix;
+
+import java.util.StringJoiner;
 
 public class Matrix {
     protected Rational[][] model;
@@ -147,6 +149,17 @@ public class Matrix {
 
     @Override
     public String toString() {
-        return "your matrix";
+        StringBuilder sb = new StringBuilder();
+        for (Rational[] row : model) {
+            StringJoiner sj = new StringJoiner("\t");
+            for (Rational el : row) sj.add(el.toString());
+            sb.append(sj.toString()).append('\n');
+        }
+        return sb.toString();
+    }
+
+
+    public Rational[][] getModel() {
+        return model;
     }
 }

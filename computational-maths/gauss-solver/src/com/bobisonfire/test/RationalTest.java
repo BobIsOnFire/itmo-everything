@@ -1,6 +1,6 @@
 package com.bobisonfire.test;
 
-import com.bobisonfire.gauss.Rational;
+import com.bobisonfire.matrix.Rational;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,13 +27,14 @@ class RationalTest {
 
     @Test
     void multiply() {
-    }
-
-    @Test
-    void subtract() {
+        assertEquals( Rational.from(1, 5).multiply( Rational.from(2, 7) ), Rational.from(2, 35));
+        assertEquals( Rational.from(2, 3).multiply( Rational.from(3, 5) ), Rational.from(2, 5));
+        assertEquals( Rational.ZERO.multiply( Rational.from(213, 543) ), Rational.ZERO);
     }
 
     @Test
     void divide() {
+        assertEquals( Rational.from(2, 3).divide( Rational.from(2, 5) ), Rational.from(5, 3));
+        assertThrows(RuntimeException.class, () -> Rational.ONE.divide(Rational.ZERO));
     }
 }

@@ -1,4 +1,6 @@
-package com.bobisonfire.gauss;
+package com.bobisonfire.matrix;
+
+import static java.lang.Math.*;
 
 public class Rational implements Comparable<Rational> {
     public static final Rational ZERO = from(0);
@@ -18,9 +20,17 @@ public class Rational implements Comparable<Rational> {
         return x;
     }
 
+    public static Rational from(int x) {
+        return from(x, 1);
+    }
+
+    public static Rational from(Rational r) {
+        return from(r.nom, r.denom);
+    }
+
     private static int greatestFactor(int a, int b) {
-        int x1 = Math.max(a, b);
-        int x2 = Math.min(a, b);
+        int x1 = max(abs(a), abs(b));
+        int x2 = min(abs(a), abs(b));
 
         while (x2 != 0) {
             int r = x1 % x2;
@@ -33,16 +43,6 @@ public class Rational implements Comparable<Rational> {
 
     private static int leastMultiple(int a, int b) {
         return (a * b) / greatestFactor(a, b);
-    }
-
-
-
-    public static Rational from(int x) {
-        return from(x, 1);
-    }
-
-    public static Rational from(Rational r) {
-        return from(r.nom, r.denom);
     }
 
     public Rational add(Rational r) {
