@@ -9,6 +9,9 @@ public class Solution {
     private boolean[] isAny;
     private Rational[] freeMembers;
     private Rational[][] constants;
+    private Rational[] remainders;
+
+    private String[] variableNames;
 
     public boolean isInfiniteSolutions() {
         return infiniteSolutions;
@@ -28,6 +31,14 @@ public class Solution {
 
     public Rational[][] getConstants() {
         return constants;
+    }
+
+    public Rational[] getRemainders() {
+        return remainders;
+    }
+
+    public String[] getVariableNames() {
+        return variableNames;
     }
 
     void setInfiniteSolutions(boolean infiniteSolutions) {
@@ -50,6 +61,14 @@ public class Solution {
         this.constants = constants;
     }
 
+    void setRemainders(Rational[] remainders) {
+        this.remainders = remainders;
+    }
+
+    void setVariableNames(String[] variableNames) {
+        this.variableNames = variableNames;
+    }
+
     @Override
     public String toString() {
         if (noSolutions) return "No solutions";
@@ -57,7 +76,7 @@ public class Solution {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < freeMembers.length; i++) {
-            String s = String.format("x%d = %s", i + 1, freeMembers[i]);
+            String s = String.format("%s = %s", variableNames[i], freeMembers[i]);
 
             if (!infiniteSolutions) {
                 sb.append(s).append('\n');
@@ -65,7 +84,7 @@ public class Solution {
             }
 
             if (isAny[i]) {
-                sb.append( String.format("x%d = x%d", i + 1, i + 1) ).append('\n');
+                sb.append( String.format("%s = %s", variableNames[i], variableNames[i]) ).append('\n');
                 continue;
             }
 
@@ -76,7 +95,12 @@ public class Solution {
                 Rational r = constants[i][j];
                 if (r.equals(Rational.ZERO)) continue;
 
-                sb.append( String.format(" %s %s x%d", r.sign() == 1 ? "+" : "-", r.absolute().toString(), j + 1) );
+                if (r.absolute().equals(Rational.ONE)) {
+                    sb.append( String.format(" %s %s", r.sign() == 1 ? "+" : "-", variableNames[j]) );
+                    continue;
+                }
+
+                sb.append( String.format(" %s %s %s", r.sign() == 1 ? "+" : "-", r.absolute().toString(), variableNames[j]) );
             }
             sb.append('\n');
         }

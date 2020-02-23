@@ -92,7 +92,7 @@ public class GaussSolver {
         return t;
     }
 
-    public Solution getSolution() { // todo: check if rows > cols
+    public Solution getSolution(String[] variableNames) {
         Matrix t = getPartlyDiagonalMatrix();
 
         Rational[] freeMembers = new Rational[cols - 1];
@@ -105,6 +105,8 @@ public class GaussSolver {
                 continue;
             }
 
+            freeMembers[i] = Rational.ZERO;
+
             if ( i < rows && !t.get(i, cols - 1).equals(Rational.ZERO) )
                 return SolutionBuilder.instance().noSolutions(true).get();
 
@@ -112,15 +114,33 @@ public class GaussSolver {
             for (int j = 0; j < rows; j++) constants[j][i] = t.get(j, i).negate();
         }
 
-        if (!infiniteSolutions) {
-            return SolutionBuilder.instance().freeMembers(freeMembers).get();
+        Rational[] remainders = new Rational[rows];
+        for (int i = 0; i < rows; i++) {
+            Rational sum = Rational.ZERO;
+            for (int j = 0; j < cols - 1; j++) {
+                sum = sum.add( freeMembers[j].multiply(matrix.get(i, j)) );
+            }
+            remainders[i] = matrix.get(i, cols - 1).subtract(sum);
         }
 
-        return SolutionBuilder.instance()
-                .infiniteSolutions(true)
+        SolutionBuilder builder = SolutionBuilder.instance()
                 .freeMembers(freeMembers)
+                .remainders(remainders)
+                .variableNames(variableNames);
+
+        if (!infiniteSolutions) {
+            return builder.get();
+        }
+
+        return builder.infiniteSolutions(true)
                 .isAny(isZero)
                 .constants(constants)
                 .get();
+    }
+
+    public Solution getSolution() {
+        String[] variableNames = new String[cols - 1];
+        for (int i = 0; i < cols - 1; i++) variableNames[i] = "x" + (i + 1);
+        return getSolution(variableNames);
     }
 }

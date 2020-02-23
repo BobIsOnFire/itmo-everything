@@ -9,9 +9,9 @@ class RationalTest {
 
     @Test
     void from() {
-        assertEquals(Rational.from(3).toInt(), 3);
-        assertEquals(Rational.from(6, 2).toInt(), 3);
-        assertEquals(Rational.from(5, 2).toDouble(), 2.5);
+        assertEquals(Rational.from(3).intValue(), 3);
+        assertEquals(Rational.from(6, 2).intValue(), 3);
+        assertEquals(Rational.from(5, 2).doubleValue(), 2.5);
 
         assertThrows(RuntimeException.class, () -> Rational.from(1, 0));
 

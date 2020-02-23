@@ -1,8 +1,10 @@
 package com.bobisonfire.gauss.matrix;
 
+import java.io.Serializable;
+
 import static java.lang.Math.*;
 
-public class Rational implements Comparable<Rational> {
+public class Rational extends Number implements Serializable, Comparable<Rational> {
     public static final Rational ZERO = from(0);
     public static final Rational ONE = from(1);
 
@@ -24,8 +26,27 @@ public class Rational implements Comparable<Rational> {
         return from(x, 1);
     }
 
+    public static Rational from(double x) {
+        return parseDoubleString(Double.toString(x));
+    }
+
     public static Rational from(Rational r) {
         return from(r.nom, r.denom);
+    }
+
+    public static Rational parse(String s) {
+        if (s.isEmpty()) throw new NumberFormatException("empty String");
+
+        if (s.matches("-?\\d+")) return from( Integer.parseInt(s) );
+
+        if (s.matches("-?\\d+/-?\\d+")) {
+            String[] parts = s.split("/");
+            return from( Integer.parseInt(parts[0]), Integer.parseInt(parts[1]) );
+        }
+
+        if (s.matches("-?\\d*\\.\\d*")) return parseDoubleString(s);
+
+        throw new NumberFormatException("For input string: \"" + s + "\"");
     }
 
     private static int greatestFactor(int a, int b) {
@@ -44,6 +65,22 @@ public class Rational implements Comparable<Rational> {
     private static int leastMultiple(int a, int b) {
         return (a * b) / greatestFactor(a, b);
     }
+
+    private static Rational parseDoubleString(String s) {
+        String[] parts = s.split("\\.");
+
+        if (parts[0].isEmpty()) parts[0] = "0";
+        if (parts[1].isEmpty()) parts[1] = "0";
+
+        int exp = (int) pow(10, parts[1].length());
+
+        int whole = Integer.parseInt(parts[0]);
+        int fractional = Integer.parseInt(parts[1]);
+
+        return from(whole * exp + fractional, exp);
+    }
+
+
 
     public Rational add(Rational r) {
         int newDenom = leastMultiple(denom, r.denom);
@@ -96,11 +133,23 @@ public class Rational implements Comparable<Rational> {
         return nom == 0 ? 0 : (nom / abs(nom));
     }
 
-    public int toInt() {
+    @Override
+    public int intValue() {
         return nom / denom;
     }
 
-    public double toDouble() {
+    @Override
+    public long longValue() {
+        return intValue();
+    }
+
+    @Override
+    public float floatValue() {
+        return (float) doubleValue();
+    }
+
+    @Override
+    public double doubleValue() {
         return (double) nom / denom;
     }
 

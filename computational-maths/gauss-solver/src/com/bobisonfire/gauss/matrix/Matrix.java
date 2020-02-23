@@ -171,13 +171,15 @@ public class Matrix { // todo: write tests
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringJoiner lineJoiner = new StringJoiner("\n");
+
         for (Rational[] row : model) {
-            StringJoiner sj = new StringJoiner("\t");
-            for (Rational el : row) sj.add(el.toString());
-            sb.append(sj.toString()).append('\n');
+            StringJoiner elementJoiner = new StringJoiner("\t");
+            for (Rational el : row) elementJoiner.add(el.toString());
+            lineJoiner.add(elementJoiner.toString());
         }
-        return sb.toString();
+
+        return lineJoiner.toString();
     }
 
     @Override

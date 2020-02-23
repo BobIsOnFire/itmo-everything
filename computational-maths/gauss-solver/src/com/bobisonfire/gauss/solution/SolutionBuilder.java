@@ -36,8 +36,19 @@ public class SolutionBuilder {
         return this;
     }
 
+    public SolutionBuilder remainders(Rational[] remainders) {
+        solution.setRemainders(remainders);
+        return this;
+    }
+
+    public SolutionBuilder variableNames(String[] variableNames) {
+        solution.setVariableNames(variableNames);
+        return this;
+    }
+
     public Solution get() {
-        if (!solution.isNoSolutions() && solution.getFreeMembers() == null)
+        if (!solution.isNoSolutions() &&
+                (solution.getFreeMembers() == null || solution.getRemainders() == null || solution.getVariableNames() == null))
             throw new SolutionException();
 
         if (solution.isInfiniteSolutions() && (solution.getConstants() == null || solution.getIsAny() == null))
