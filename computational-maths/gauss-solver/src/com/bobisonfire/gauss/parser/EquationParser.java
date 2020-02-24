@@ -1,40 +1,19 @@
-package com.bobisonfire;
+package com.bobisonfire.gauss.parser;
 
-import com.bobisonfire.gauss.GaussSolver;
-import com.bobisonfire.gauss.matrix.Matrix;
 import com.bobisonfire.gauss.matrix.Rational;
-import com.bobisonfire.gauss.solution.Solution;
 
-import java.io.InputStream;
-import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
-public class EquationParser implements Parser {
-    private Rational[][] model;
+public class EquationParser extends Parser {
     private String[] variableNames;
 
     @Override
-    public void readAndParse(InputStream in) {
-        Scanner scanner = new Scanner(in);
-
-        if (!scanner.hasNextLine()) {
-            System.out.println("Heyy what's up with your input stream? I reached unexpected EOF. Gimme yo' bytes!");
-            System.exit(0);
-        }
-
-        String line = scanner.nextLine().trim();
-        if (!line.matches("-?\\d+")) {
-            System.out.println("First line should contain the size of system.");
-            System.exit(0);
-        }
-
-        int size = Integer.parseInt(line);
-        model = new Rational[size][size + 1];
+    protected Rational[][] parseModel(Scanner scanner) {
         variableNames = new String[size];
+        Rational[][] model = new Rational[size][size + 1];
 
         for (Rational[] row : model)
             for (int i = 0; i <= size; i++)
@@ -111,7 +90,7 @@ public class EquationParser implements Parser {
                         continue;
                     }
 
-                    if (ch == '.') {
+                    if (ch == '.' || ch == ',') {
                         if (hadSeparatorInNumber) throw new ParseException(equation, charOffset);
 
                         if (!parsingNumber) {
@@ -120,7 +99,7 @@ public class EquationParser implements Parser {
                             hadSeparatorInNumber = true;
                         }
 
-                        numberBuilder.append(ch);
+                        numberBuilder.append('.');
                         continue;
                     }
 
@@ -203,6 +182,13 @@ public class EquationParser implements Parser {
             System.out.println("Cannot parse equation: " + exc.getMessage() + ", offset - " + exc.getErrorOffset());
             System.exit(0);
         }
+
+        return model;
+    }
+
+    @Override
+    public String[] getVariableNames() {
+        return variableNames;
     }
 
     private int variableIndexOf(String var) {
@@ -211,23 +197,5 @@ public class EquationParser implements Parser {
 
         if (k == variableNames.length) return -1;
         return k;
-    }
-
-    @Override
-    public void printSolution(PrintStream out) {
-        Matrix matrix = Matrix.from(model);
-        out.println("Original matrix:\n" + matrix + "\n");
-
-        GaussSolver solver = new GaussSolver(matrix);
-        out.println("Determinant: " + solver.getDeterminant());
-        out.println("Triangle matrix:\n" + solver.getTriangleMatrix() + "\n");
-
-        Solution solution = solver.getSolution(variableNames);
-        out.println("Solution:\n" + solution);
-
-        if (!solution.isNoSolutions()) {
-            out.println("Variables: " + Arrays.toString(solution.getVariableNames()));
-            out.println("Remainders: " + Arrays.toString(solution.getRemainders()));
-        }
     }
 }

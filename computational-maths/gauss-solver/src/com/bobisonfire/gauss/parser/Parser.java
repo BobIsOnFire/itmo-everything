@@ -1,4 +1,4 @@
-package com.bobisonfire;
+package com.bobisonfire.gauss.parser;
 
 import com.bobisonfire.gauss.GaussSolver;
 import com.bobisonfire.gauss.matrix.Matrix;
@@ -10,10 +10,13 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Scanner;
 
-public class MatrixParser implements Parser {
+public abstract class Parser {
     private Rational[][] model;
+    protected int size;
 
-    @Override
+    protected abstract Rational[][] parseModel(Scanner scanner);
+    protected abstract String[] getVariableNames();
+
     public void readAndParse(InputStream in) {
         Scanner scanner = new Scanner(in);
 
@@ -28,29 +31,11 @@ public class MatrixParser implements Parser {
             System.exit(0);
         }
 
-        int size = Integer.parseInt(line);
-        model = new Rational[size][size + 1];
-
-        try {
-            for (int i = 0; i < size; i++) {
-                if (!scanner.hasNextLine()) throw new IndexOutOfBoundsException();
-
-                String[] tokens = scanner.nextLine().trim().split("\\s+\\|?\\s*");
-                for (int j = 0; j < size + 1; j++) {
-                    String s = tokens[j].trim();
-                    model[i][j] = Rational.parse(s);
-                }
-            }
-        } catch (IndexOutOfBoundsException exc) {
-            System.out.println("Matrix size is less than expected size.");
-            System.exit(0);
-        } catch (NumberFormatException exc) {
-            System.out.println("Found non-rational value in matrix. " + exc.getMessage());
-            System.exit(0);
-        }
+        size = Integer.parseInt(line);
+        model = parseModel(scanner);
     }
 
-    @Override
+
     public void printSolution(PrintStream out) {
         Matrix matrix = Matrix.from(model);
         out.println("Original matrix:\n" + matrix + "\n");
@@ -59,10 +44,10 @@ public class MatrixParser implements Parser {
         out.println("Determinant: " + solver.getDeterminant());
         out.println("Triangle matrix:\n" + solver.getTriangleMatrix() + "\n");
 
-        Solution solution = solver.getSolution();
+        Solution solution = solver.getSolution( getVariableNames() );
         out.println("Solution:\n" + solution);
 
-        if (!solution.isNoSolutions()) {
+        if (solution.hasSolutions()) {
             out.println("Variables: " + Arrays.toString(solution.getVariableNames()));
             out.println("Remainders: " + Arrays.toString(solution.getRemainders()));
         }

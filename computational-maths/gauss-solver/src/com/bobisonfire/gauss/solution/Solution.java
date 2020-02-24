@@ -17,8 +17,8 @@ public class Solution {
         return infiniteSolutions;
     }
 
-    public boolean isNoSolutions() {
-        return noSolutions;
+    public boolean hasSolutions() {
+        return !noSolutions;
     }
 
     public boolean[] getIsAny() {

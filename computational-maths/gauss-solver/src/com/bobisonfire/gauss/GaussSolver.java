@@ -6,14 +6,14 @@ import com.bobisonfire.gauss.matrix.Matrix;
 import com.bobisonfire.gauss.matrix.Rational;
 
 public class GaussSolver {
-    private Matrix matrix;
+    private final Matrix matrix;
     private Matrix triangleMatrix = null;
 
-    private int rows;
-    private int cols;
+    private final int rows;
+    private final int cols;
 
     private boolean negated = false;
-    private boolean[] isZero;
+    private final boolean[] isZero;
 
     public GaussSolver(Matrix matrix) {
         this.matrix = matrix;
@@ -52,7 +52,7 @@ public class GaussSolver {
         return triangleMatrix;
     }
 
-    public Rational getDeterminant() { // todo: check if rows > cols
+    public Rational getDeterminant() {
         Matrix t = getTriangleMatrix();
         Rational det = Rational.ONE;
         if (negated) det = det.negate();
@@ -64,15 +64,6 @@ public class GaussSolver {
         return det;
     }
 
-    public int getRank() {
-        Matrix t = getTriangleMatrix();
-        int rank = rows;
-
-        for (int i = 0; i < rows; i++) {
-            if ( t.get(i, i).equals(Rational.ZERO) ) rank--;
-        }
-        return rank;
-    }
 
     public Matrix getPartlyDiagonalMatrix() {
         Matrix t = getTriangleMatrix();

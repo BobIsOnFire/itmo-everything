@@ -47,7 +47,7 @@ public class SolutionBuilder {
     }
 
     public Solution get() {
-        if (!solution.isNoSolutions() &&
+        if (solution.hasSolutions() &&
                 (solution.getFreeMembers() == null || solution.getRemainders() == null || solution.getVariableNames() == null))
             throw new SolutionException();
 

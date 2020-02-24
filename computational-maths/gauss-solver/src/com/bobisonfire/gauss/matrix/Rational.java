@@ -69,13 +69,13 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
     private static Rational parseDoubleString(String s) {
         String[] parts = s.split("\\.");
 
-        if (parts[0].isEmpty()) parts[0] = "0";
+        if (parts[0].matches("-?")) parts[0] += "0";
         if (parts[1].isEmpty()) parts[1] = "0";
 
         int exp = (int) pow(10, parts[1].length());
 
         int whole = Integer.parseInt(parts[0]);
-        int fractional = Integer.parseInt(parts[1]);
+        int fractional = (whole > 0 ? 1 : -1) * Integer.parseInt(parts[1]);
 
         return from(whole * exp + fractional, exp);
     }

@@ -1,5 +1,9 @@
 package com.bobisonfire;
 
+import com.bobisonfire.gauss.parser.EquationParser;
+import com.bobisonfire.gauss.parser.MatrixParser;
+import com.bobisonfire.gauss.parser.Parser;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -37,10 +41,7 @@ public class Main {
             System.exit(0);
         }
 
-        if (!isEquation && !isMatrix) {
-            System.out.println("No mode specified - entering matrix mode as default.");
-            isMatrix = true;
-        }
+        if (!isEquation && !isMatrix) System.out.println("No mode specified - entering matrix mode as default.");
 
         Parser parser;
         if (isEquation) parser = new EquationParser();

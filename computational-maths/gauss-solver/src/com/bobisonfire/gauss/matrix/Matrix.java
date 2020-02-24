@@ -2,15 +2,13 @@ package com.bobisonfire.gauss.matrix;
 
 import java.util.StringJoiner;
 
-public class Matrix { // todo: write tests
+public class Matrix {
     private Rational[][] model;
     private int rows;
     private int cols;
-    private Matrix triangleMatrix = null;
-    private boolean negated = false;
 
     public static Matrix from(Rational[][] model) {
-        if (model.length == 0 || model[0].length == 0) throw new RuntimeException(); // todo: replace with custom exception
+        if (model.length == 0 || model[0].length == 0) throw new MatrixException();
         Matrix m = new Matrix();
 
         m.model = model;
@@ -66,7 +64,7 @@ public class Matrix { // todo: write tests
 
 
     public Matrix add(Matrix x) {
-        if (rows != x.rows || cols != x.cols) throw new RuntimeException();
+        if (rows != x.rows || cols != x.cols) throw new MatrixException();
 
         Rational[][] newModel = new Rational[rows][cols];
         for (int i = 0; i < rows; i++)
@@ -86,7 +84,7 @@ public class Matrix { // todo: write tests
     }
 
     public Matrix multiply(Matrix x) {
-        if (cols != x.rows) throw new RuntimeException();
+        if (cols != x.rows) throw new MatrixException();
 
         Rational[][] newModel = new Rational[rows][x.cols];
 
@@ -126,7 +124,7 @@ public class Matrix { // todo: write tests
 
     public Matrix multiplyRow(int i, Rational r) {
         Rational[][] newModel = cloneModel(model);
-        if (r.equals(Rational.ZERO)) throw new RuntimeException();
+        if (r.equals(Rational.ZERO)) throw new MatrixException();
         if (r.equals(Rational.ONE)) return from(newModel);
 
         for (int j = 0; j < cols; j++)
@@ -137,7 +135,7 @@ public class Matrix { // todo: write tests
 
     public Matrix multiplyCol(int j, Rational r) {
         Rational[][] newModel = cloneModel(model);
-        if (r.equals(Rational.ZERO)) throw new RuntimeException();
+        if (r.equals(Rational.ZERO)) throw new MatrixException();
         if (r.equals(Rational.ONE)) return from(newModel);
 
         for (int i = 0; i < rows; i++) {

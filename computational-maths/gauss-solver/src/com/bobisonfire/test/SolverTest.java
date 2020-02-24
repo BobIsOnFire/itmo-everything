@@ -35,7 +35,6 @@ class SolverTest {
 
         assertEquals(solver.getTriangleMatrix(), Matrix.from(triangle));
         assertEquals(solver.getDeterminant(), Rational.from(-4));
-        assertEquals(solver.getRank(), 3);
         assertEquals(solver.getPartlyDiagonalMatrix(), Matrix.from(diagonal));
 
         Solution solution = solver.getSolution();
@@ -60,13 +59,12 @@ class SolverTest {
                 {Rational.ZERO, Rational.ONE, Rational.from(-1, 3), Rational.from(-2)},
         };
 
-        Rational[] freeMembers = {Rational.from(3), Rational.from(-2), null};
+        Rational[] freeMembers = {Rational.from(3), Rational.from(-2), Rational.ZERO};
 
         GaussSolver solver = new GaussSolver( Matrix.from(model) );
 
         assertEquals(solver.getTriangleMatrix(), Matrix.from(triangle));
         assertEquals(solver.getDeterminant(), Rational.from(-3));
-        assertEquals(solver.getRank(), 2);
         assertEquals(solver.getPartlyDiagonalMatrix(), Matrix.from(diagonal));
 
         Solution solution = solver.getSolution();

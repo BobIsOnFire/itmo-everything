@@ -9,20 +9,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MatrixTransformTest {
 
-    private Rational[][] starter = {
-            {Rational.from(3), Rational.from(3), Rational.from(-1)},
-            {Rational.from(4), Rational.ONE, Rational.from(3)},
-            {Rational.ONE, Rational.from(-2), Rational.from(-2)}
+    private final Rational[][] starter = {
+            {Rational.from(3), Rational.from(3), Rational.from(-1), Rational.ZERO},
+            {Rational.from(4), Rational.ONE, Rational.from(3), Rational.ZERO},
+            {Rational.ONE, Rational.from(-2), Rational.from(-2), Rational.ZERO}
     };
 
-    private Rational[][] triangle = {
-            {Rational.from(3), Rational.from(3), Rational.from(-1)},
-            {Rational.ZERO, Rational.from(-3), Rational.from(13, 3)},
-            {Rational.ZERO, Rational.ZERO, Rational.from(-6)}
+    private final Rational[][] triangle = {
+            {Rational.from(3), Rational.from(3), Rational.from(-1), Rational.ZERO},
+            {Rational.ZERO, Rational.from(-3), Rational.from(13, 3), Rational.ZERO},
+            {Rational.ZERO, Rational.ZERO, Rational.from(-6), Rational.ZERO}
     };
 
-    private Matrix matrix = Matrix.from(starter);
-    private GaussSolver solver = new GaussSolver(matrix);
+    private final Matrix matrix = Matrix.from(starter);
+    private final GaussSolver solver = new GaussSolver(matrix);
 
     @Test
     void from() {
@@ -39,14 +39,8 @@ class MatrixTransformTest {
     }
 
     @Test
-    void getRank() {
-        assertEquals(solver.getRank(), 3);
-    }
-
-    @Test
     void getDeterminant() {
         assertEquals(solver.getDeterminant(), Rational.from(54));
     }
-
 
 }
