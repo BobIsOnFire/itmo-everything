@@ -32,8 +32,16 @@ public class GaussSolver {
 
         for (int i = 0; i < steps; i++) {
             int j = i;
-            while (j < rows && t.get(i, j).equals(Rational.ZERO)) j++;
-            if (j == rows) continue;
+            while (j < rows && t.get(j, i).equals(Rational.ZERO)) j++;
+            if (j == rows) {
+                j = i;
+                while (j < cols && t.get(i, j).equals(Rational.ZERO)) j++;
+                if (j >= cols - 1 || !t.get(j, j).equals(Rational.ZERO)) continue;
+
+                t = t.swapRows(i, j);
+                negated = !negated;
+                continue;
+            }
 
             if (i != j) {
                 t = t.swapRows(i, j);
