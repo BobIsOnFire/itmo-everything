@@ -10,7 +10,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Scanner;
 
-public abstract class Parser {
+public abstract class SystemProvider {
     private Rational[][] model;
     protected int size;
 

@@ -4,7 +4,7 @@ import com.bobisonfire.gauss.matrix.Rational;
 
 import java.util.Scanner;
 
-public class MatrixParser extends Parser {
+public class MatrixSystemProvider extends SystemProvider {
     @Override
     public Rational[][] parseModel(Scanner scanner) {
         Rational[][] model = new Rational[size][size + 1];

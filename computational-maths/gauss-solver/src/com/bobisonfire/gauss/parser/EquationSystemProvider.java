@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class EquationParser extends Parser {
+public class EquationSystemProvider extends SystemProvider {
     private String[] variableNames;
 
     @Override
