@@ -13,15 +13,11 @@ public class GaussSolver {
     private final int cols;
 
     private boolean negated = false;
-    private final boolean[] isZero;
 
     public GaussSolver(Matrix matrix) {
         this.matrix = matrix;
         this.rows = matrix.getModel().length;
         this.cols = matrix.getRow(0).length;
-
-        this.isZero = new boolean[cols - 1];
-        for (int i = 0; i < cols - 1; i++) isZero[i] = true;
     }
 
     public Matrix getTriangleMatrix() {
@@ -48,7 +44,6 @@ public class GaussSolver {
                 negated = !negated;
             }
 
-            isZero[i] = false;
             for (j = i + 1; j < rows; j++) {
                 if (t.get(j, i).equals(Rational.ZERO)) continue;
                 Rational mul = t.get(j, i).divide( t.get(i, i) ).negate();
@@ -96,9 +91,11 @@ public class GaussSolver {
 
         Rational[] freeMembers = new Rational[cols - 1];
         Rational[][] constants = new Rational[rows][cols - 1];
+        boolean[] isZero = new boolean[cols - 1];
         boolean infiniteSolutions = false;
 
         for (int i = 0; i < cols - 1; i++) {
+            isZero[i] = t.get(i, i).equals(Rational.ZERO);
             if (!isZero[i]) {
                 freeMembers[i] = t.get(i, cols - 1);
                 continue;

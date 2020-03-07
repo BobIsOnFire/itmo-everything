@@ -71,36 +71,43 @@ public class Solution {
 
     @Override
     public String toString() {
-        if (noSolutions) return "No solutions";
+        if (noSolutions) return "No solutions.";
 
-        StringBuilder sb = new StringBuilder();
+        int size = freeMembers.length;
 
-        for (int i = 0; i < freeMembers.length; i++) {
-            String s = String.format("%s = %s", variableNames[i], freeMembers[i]);
+        if (!infiniteSolutions) {
+            StringBuilder sb = new StringBuilder("One solution:\n");
+            for (int i = 0; i < size; i++)
+                sb.append( String.format("%s = %s", variableNames[i], freeMembers[i]) ).append('\n');
+            return sb.toString();
+        }
 
-            if (!infiniteSolutions) {
-                sb.append(s).append('\n');
-                continue;
-            }
+        String[] constantNames = new String[size];
+        int k = 0;
+        for (int i = 0; i < size; i++) {
+            if (isAny[i]) constantNames[i] = "c" + ++k;
+        }
 
+        StringBuilder sb = new StringBuilder("Infinite solutions:\n");
+        for (int i = 0; i < size; i++) {
             if (isAny[i]) {
-                sb.append( String.format("%s = %s", variableNames[i], variableNames[i]) ).append('\n');
+                sb.append( String.format("%s = %s", variableNames[i], constantNames[i]) ).append('\n');
                 continue;
             }
 
-            sb.append(s);
-            for (int j = 0; j < isAny.length; j++) {
+            sb.append( String.format("%s = %s", variableNames[i], freeMembers[i]) );
+            for (int j = 0; j < size; j++) {
                 if (!isAny[j]) continue;
 
                 Rational r = constants[i][j];
                 if (r.equals(Rational.ZERO)) continue;
 
                 if (r.absolute().equals(Rational.ONE)) {
-                    sb.append( String.format(" %s %s", r.sign() == 1 ? "+" : "-", variableNames[j]) );
+                    sb.append( String.format(" %s %s", r.sign() == 1 ? "+" : "-", constantNames[j]) );
                     continue;
                 }
 
-                sb.append( String.format(" %s %s %s", r.sign() == 1 ? "+" : "-", r.absolute().toString(), variableNames[j]) );
+                sb.append( String.format(" %s %s %s", r.sign() == 1 ? "+" : "-", r.absolute().toString(), constantNames[j]) );
             }
             sb.append('\n');
         }

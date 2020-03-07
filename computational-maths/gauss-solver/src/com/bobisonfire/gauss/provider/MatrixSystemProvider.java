@@ -1,4 +1,4 @@
-package com.bobisonfire.gauss.parser;
+package com.bobisonfire.gauss.provider;
 
 import com.bobisonfire.gauss.matrix.Rational;
 

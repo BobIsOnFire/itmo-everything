@@ -8,21 +8,21 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
     public static final Rational ZERO = from(0);
     public static final Rational ONE = from(1);
 
-    private int nom;
-    private int denom;
+    private long nom;
+    private long denom;
 
-    public static Rational from(int nom, int denom) {
+    public static Rational from(long nom, long denom) {
         if (denom == 0) throw new ArithmeticException();
         Rational x = new Rational();
 
-        int factor = greatestFactor(nom, denom);
-        int sign = denom / abs(denom);
+        long factor = greatestFactor(nom, denom);
+        long sign = denom / abs(denom);
         x.nom = sign * nom / factor;
         x.denom = sign * denom / factor;
         return x;
     }
 
-    public static Rational from(int x) {
+    public static Rational from(long x) {
         return from(x, 1);
     }
 
@@ -49,12 +49,12 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
         throw new NumberFormatException("For input string: \"" + s + "\"");
     }
 
-    private static int greatestFactor(int a, int b) {
-        int x1 = max(abs(a), abs(b));
-        int x2 = min(abs(a), abs(b));
+    private static long greatestFactor(long a, long b) {
+        long x1 = max(abs(a), abs(b));
+        long x2 = min(abs(a), abs(b));
 
         while (x2 != 0) {
-            int r = x1 % x2;
+            long r = x1 % x2;
             x1 = x2;
             x2 = r;
         }
@@ -62,7 +62,7 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
         return x1;
     }
 
-    private static int leastMultiple(int a, int b) {
+    private static long leastMultiple(long a, long b) {
         return (a * b) / greatestFactor(a, b);
     }
 
@@ -83,8 +83,8 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
 
 
     public Rational add(Rational r) {
-        int newDenom = leastMultiple(denom, r.denom);
-        int newNom = nom * (newDenom / denom) + r.nom * (newDenom / r.denom);
+        long newDenom = leastMultiple(denom, r.denom);
+        long newNom = nom * (newDenom / denom) + r.nom * (newDenom / r.denom);
 
         return from(newNom, newDenom);
     }
@@ -129,18 +129,18 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
         return from(abs(nom), denom);
     }
 
-    public int sign() {
+    public long sign() {
         return nom == 0 ? 0 : (nom / abs(nom));
     }
 
     @Override
     public int intValue() {
-        return nom / denom;
+        return (int) longValue();
     }
 
     @Override
     public long longValue() {
-        return intValue();
+        return nom / denom;
     }
 
     @Override
@@ -155,7 +155,7 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
 
     @Override
     public int compareTo(Rational o) {
-        return this.subtract(o).nom;
+        return (int) this.subtract(o).nom;
     }
 
     @Override
@@ -168,7 +168,7 @@ public class Rational extends Number implements Serializable, Comparable<Rationa
 
     @Override
     public String toString() {
-        if (denom == 1) return Integer.toString(nom);
+        if (denom == 1) return Long.toString(nom);
         return nom + "/" + denom;
     }
 }

@@ -1,9 +1,9 @@
 package com.bobisonfire;
 
-import com.bobisonfire.gauss.parser.EquationSystemProvider;
-import com.bobisonfire.gauss.parser.MatrixSystemProvider;
-import com.bobisonfire.gauss.parser.SystemProvider;
-import com.bobisonfire.gauss.parser.RandomSystemProvider;
+import com.bobisonfire.gauss.provider.EquationSystemProvider;
+import com.bobisonfire.gauss.provider.MatrixSystemProvider;
+import com.bobisonfire.gauss.provider.SystemProvider;
+import com.bobisonfire.gauss.provider.RandomSystemProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +48,10 @@ public class Main {
             System.exit(0);
         }
 
-        if (!isEquation && !isMatrix && !isRandom) System.out.println("No mode specified - entering matrix mode as default.");
+        if (!isEquation && !isMatrix && !isRandom) {
+            System.out.println("No mode specified - entering matrix mode as default.");
+            isMatrix = true;
+        }
 
         SystemProvider systemProvider;
         if (isEquation) systemProvider = new EquationSystemProvider();

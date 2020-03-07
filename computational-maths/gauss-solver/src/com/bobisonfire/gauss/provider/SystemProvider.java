@@ -1,4 +1,4 @@
-package com.bobisonfire.gauss.parser;
+package com.bobisonfire.gauss.provider;
 
 import com.bobisonfire.gauss.GaussSolver;
 import com.bobisonfire.gauss.matrix.Matrix;
@@ -45,11 +45,8 @@ public abstract class SystemProvider {
         out.println("Triangle matrix:\n" + solver.getTriangleMatrix() + "\n");
 
         Solution solution = solver.getSolution( getVariableNames() );
-        out.println("Solution:\n" + solution);
+        out.println(solution);
 
-        if (solution.hasSolutions()) {
-            out.println("Variables: " + Arrays.toString(solution.getVariableNames()));
-            out.println("Remainders: " + Arrays.toString(solution.getRemainders()));
-        }
+        if (solution.hasSolutions()) out.println("Remainders: " + Arrays.toString(solution.getRemainders()));
     }
 }

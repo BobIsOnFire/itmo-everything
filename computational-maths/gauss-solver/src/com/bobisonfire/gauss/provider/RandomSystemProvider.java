@@ -1,4 +1,4 @@
-package com.bobisonfire.gauss.parser;
+package com.bobisonfire.gauss.provider;
 
 import com.bobisonfire.gauss.matrix.Rational;
 
@@ -17,7 +17,7 @@ public class RandomSystemProvider extends SystemProvider {
 
         for (Rational[] row : model) {
             for (int i = 0; i < size + 1; i++) {
-                row[i] = Rational.from(r.nextInt(100), r.nextInt(100));
+                row[i] = Rational.from(r.nextInt(21) - 10, r.nextInt(10) + 1);
             }
         }
 
