@@ -1,15 +1,10 @@
 package com.bobisonfire.integral.functions;
 
 import static java.lang.Math.pow;
-public class PolynomProvider implements FunctionProvider {
+public class PolynomProvider extends FunctionProvider {
     @Override
-    public double getValue(double x) {
+    public double getLeftValue(double x) {
         return 4 * pow(x, 3) + 2 * pow(x, 2) + 5 * x + 1;
-    }
-
-    @Override
-    public boolean integralExists(double a, double b) {
-        return true;
     }
 
     @Override

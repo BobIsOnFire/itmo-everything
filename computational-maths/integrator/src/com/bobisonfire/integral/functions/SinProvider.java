@@ -1,14 +1,9 @@
 package com.bobisonfire.integral.functions;
 
-public class SinProvider implements FunctionProvider {
+public class SinProvider extends FunctionProvider {
     @Override
-    public double getValue(double x) {
+    public double getLeftValue(double x) {
         return Math.sin(x);
-    }
-
-    @Override
-    public boolean integralExists(double a, double b) {
-        return true;
     }
 
     @Override

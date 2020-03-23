@@ -1,14 +1,20 @@
 package com.bobisonfire.integral.functions;
 
-public class LnProvider implements FunctionProvider {
+public class LnProvider extends FunctionProvider {
     @Override
-    public double getValue(double x) {
+    public double getLeftValue(double x) {
+        if (x == 0) return Math.log(EPSILON);
+        return Math.log(x);
+    }
+
+    @Override
+    public double getRightValue(double x) {
         return Math.log(x);
     }
 
     @Override
     public boolean integralExists(double a, double b) {
-        return a > 0 && b > 0;
+        return a >= 0 && b >= 0;
     }
 
     @Override

@@ -10,8 +10,8 @@ import java.util.Scanner;
 
 public class Application {
     private static final FunctionProvider[] providers = {
-            new PolynomProvider(), new FractionProvider(), new AbsProvider(),
-            new SinProvider(), new TanProvider(), new LnProvider()
+            new PolynomProvider(), new FractionProvider(), new FloorProvider(),
+            new SinProvider(), new LnProvider()
     };
 
     public static void start() {
@@ -53,7 +53,7 @@ public class Application {
 
             try {
                 int num = Integer.parseInt(tokens[1]);
-                if (num <= 0 || num >= providers.length) {
+                if (num <= 0 || num > providers.length) {
                     System.out.println("Enter a valid number of function in the list.");
                     continue;
                 }
