@@ -1,6 +1,6 @@
 package com.bobisonfire.integral;
 
-import com.bobisonfire.integral.functions.FunctionProvider;
+import com.bobisonfire.functions.FunctionProvider;
 
 import static java.lang.Math.*;
 

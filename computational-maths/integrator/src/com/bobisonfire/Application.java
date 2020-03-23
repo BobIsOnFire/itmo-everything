@@ -3,7 +3,7 @@ package com.bobisonfire;
 import com.bobisonfire.integral.IntegralException;
 import com.bobisonfire.integral.Solution;
 import com.bobisonfire.integral.TrapezoidSolver;
-import com.bobisonfire.integral.functions.*;
+import com.bobisonfire.functions.*;
 
 import java.util.NoSuchElementException;
 import java.util.Scanner;

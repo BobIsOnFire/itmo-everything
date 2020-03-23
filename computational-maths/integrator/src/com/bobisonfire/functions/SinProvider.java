@@ -1,4 +1,4 @@
-package com.bobisonfire.integral.functions;
+package com.bobisonfire.functions;
 
 public class SinProvider extends FunctionProvider {
     @Override

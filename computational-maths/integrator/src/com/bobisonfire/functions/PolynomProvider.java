@@ -1,4 +1,4 @@
-package com.bobisonfire.integral.functions;
+package com.bobisonfire.functions;
 
 import static java.lang.Math.pow;
 public class PolynomProvider extends FunctionProvider {

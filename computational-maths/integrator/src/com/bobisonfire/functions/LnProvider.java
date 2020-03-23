@@ -1,4 +1,4 @@
-package com.bobisonfire.integral.functions;
+package com.bobisonfire.functions;
 
 public class LnProvider extends FunctionProvider {
     @Override

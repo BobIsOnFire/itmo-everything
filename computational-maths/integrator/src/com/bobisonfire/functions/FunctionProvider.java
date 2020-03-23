@@ -1,4 +1,4 @@
-package com.bobisonfire.integral.functions;
+package com.bobisonfire.functions;
 
 public abstract class FunctionProvider {
     protected static final double EPSILON = 1E-12;
