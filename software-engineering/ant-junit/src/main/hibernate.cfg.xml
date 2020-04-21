@@ -12,6 +12,6 @@
 
         <property name="dialect">org.hibernate.dialect.Oracle10gDialect</property>
 
-        <mapping class="com.bobisonfire.ORMHistoryNode" />
+        <mapping class="com.bobisonfire.web.ORMHistoryNode" />
     </session-factory>
 </hibernate-configuration>
