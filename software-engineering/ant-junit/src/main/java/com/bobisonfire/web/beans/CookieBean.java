@@ -7,7 +7,15 @@ import javax.faces.context.FacesContext;
 import javax.servlet.http.Cookie;
 import java.io.Serializable;
 import java.util.Map;
-
+/**
+ * Managed Bean, ответственный за работу с куки light-theme.
+ *
+ * Возвращает/устанавливает значение темы, меняет тему со светлой на темную.
+ * По умолчанию на странице устанавливается светлая тема.
+ *
+ * @author Nikita Akatyev
+ * @version 1.0.0
+ */
 @ViewScoped
 @ManagedBean(name = "cookies")
 public class CookieBean implements Serializable {

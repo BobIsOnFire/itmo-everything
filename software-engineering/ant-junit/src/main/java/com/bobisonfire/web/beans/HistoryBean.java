@@ -10,14 +10,24 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Managed Bean, управляющий блоком с историей попаданий точек.
+ *
+ * Предоставляет доступ к полям, регулирующим не только данные истории,
+ * но и состояние прокрутки таблицы с историей.
+ * @author Nikita Akatyev
+ * @see HistoryNode
+ * @see HistoryDataAccess
+ * @version 1.0.0
+ */
 @ApplicationScoped
 @ManagedBean(name = "history")
 public class HistoryBean implements Serializable {
     private HistoryNode node;
     private int scrollPage;
 
-    private String[] availableX = {"-2", "-1,5", "-1", "-0,5", "0", "0,5", "1", "1,5", "2"};
-    private String[] availableR = {"1", "2", "3", "4", "5"};
+    private final String[] availableX = {"-2", "-1,5", "-1", "-0,5", "0", "0,5", "1", "1,5", "2"};
+    private final String[] availableR = {"1", "2", "3", "4", "5"};
     private boolean scrollableLeft;
     private boolean scrollableRight;
     private boolean submitted;
@@ -44,6 +54,11 @@ public class HistoryBean implements Serializable {
         submitted = false;
     }
 
+    /**
+     * Получает из БД состояние истории и возвращает преобразованный список.
+     * @return преобразованный список истории попаданий
+     * @see HistoryDataAccess
+     */
     private List<HistoryNode> getNodeList() {
         try (HistoryDataAccess access = new HistoryDataAccess()) {
             return access
@@ -54,6 +69,12 @@ public class HistoryBean implements Serializable {
         }
     }
 
+    /**
+     * Возвращает данные, которые необходимо отобразить на текущей странице таблицы.
+     * Список истории попаданий переворачивается для того, чтобы последние добавленные
+     * элементы истории отображались в начале.
+     * @return содержание текущей страницы с историей попаданий.
+     */
     public List<HistoryNode> getReversedNodeList() {
         List<HistoryNode> temp = getNodeList();
         Collections.reverse(temp);
@@ -67,10 +88,20 @@ public class HistoryBean implements Serializable {
         );
     }
 
+    /**
+     * Вызов, происходящий при нажатии кнопки перехода влево в таблице.
+     * Обновляет номер страницы, чтобы далее вызов <i>getReversedNodeList</i>
+     * возвратил содержимое для этой страницы.
+     */
     public void scrollLeft() {
         if (scrollableLeft) scrollPage--;
     }
 
+    /**
+     * Вызов, происходящий при нажатии кнопки перехода вправо в таблице.
+     * Обновляет номер страницы, чтобы далее вызов <i>getReversedNodeList</i>
+     * возвратил содержимое для этой страницы.
+     */
     public void scrollRight() {
         if (scrollableRight) scrollPage++;
     }
@@ -91,8 +122,15 @@ public class HistoryBean implements Serializable {
         return submitted;
     }
 
+    /**
+     * Метод, вызываемый при клике на график или при заполнении формы.
+     * После валидации и конвертации данных отвечает за добавление нового
+     * элемента истории и обновление таблицы.
+     *
+     * @see HistoryDataAccess
+     */
     public void addNode() {
-        if (node.printHit()) {
+        if (node.updateHit()) {
             try(HistoryDataAccess access = new HistoryDataAccess()) {
                 access.addNode( new ORMHistoryNode(node) );
             }

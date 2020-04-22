@@ -5,6 +5,14 @@ import com.bobisonfire.web.ORMHistoryNode;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+/**
+ * Часть Managed Bean, отвечающая за хранение данных о координатах точки
+ * и проверке, попала точка в синее поле или нет.
+ *
+ * @author Nikita Akatyev
+ * @see ORMHistoryNode
+ * @version 1.0.0
+ */
 public class HistoryNode implements Serializable {
     private BigDecimal x;
     private BigDecimal y;
@@ -53,8 +61,9 @@ public class HistoryNode implements Serializable {
     }
 
     public boolean isHit() {
-        if (x == null || y == null || r == null) return false;
-        return calculateHit(x, y, r);
+        if (x == null || y == null || r == null) hit = false;
+        else hit = calculateHit(x, y, r);
+        return hit;
     }
 
     private boolean calculateHit(BigDecimal x, BigDecimal y, BigDecimal r) {
@@ -71,7 +80,11 @@ public class HistoryNode implements Serializable {
                 y.compareTo( r.negate() ) >= 0; // y >= -r
     }
 
-    boolean printHit() {
+    /**
+     * Обновляет информацию о попадании точки в поле.
+     * @return true, если данные о координатах валидны, иначе false
+     */
+    boolean updateHit() {
         if (x == null || y == null || r == null) return false;
         this.hit = calculateHit( x, y, r );
         return true;

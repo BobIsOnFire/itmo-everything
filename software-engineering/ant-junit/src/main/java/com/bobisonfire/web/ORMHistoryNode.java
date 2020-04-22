@@ -5,6 +5,15 @@ import com.bobisonfire.web.beans.HistoryNode;
 import javax.persistence.*;
 import java.math.BigDecimal;
 
+/**
+ * Persistence Entity, используемый библиотекой Hibernate для организации
+ * объектно-реляционной связи списка истории попаданий.
+ *
+ * @author Nikita Akatyev
+ * @version 1.0.0
+ * @see HistoryDataAccess
+ * @see HistoryNode
+ */
 @Entity(name = "history")
 public class ORMHistoryNode {
     @Id @GeneratedValue
