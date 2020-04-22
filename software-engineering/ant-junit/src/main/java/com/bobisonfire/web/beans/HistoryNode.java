@@ -53,7 +53,8 @@ public class HistoryNode implements Serializable {
     }
 
     public boolean isHit() {
-        return hit;
+        if (x == null || y == null || r == null) return false;
+        return calculateHit(x, y, r);
     }
 
     private boolean calculateHit(BigDecimal x, BigDecimal y, BigDecimal r) {
@@ -61,12 +62,12 @@ public class HistoryNode implements Serializable {
             return false;
 
         if ( x.compareTo(BigDecimal.ZERO) > 0 && y.compareTo(BigDecimal.ZERO) < 0 ) // x > 0 and y < 0
-            return y.compareTo( x.subtract( r.divide( BigDecimal.valueOf(2), BigDecimal.ROUND_HALF_UP ) ) ) >= 0; // y >= x - r / 2
+            return y.compareTo( x.subtract( r.divide( BigDecimal.valueOf(2) ) ) ) >= 0; // y >= x - r / 2
 
         if (x.compareTo(BigDecimal.ZERO) >= 0) // x >= 0
             return x.pow(2).add( y.pow(2) ).compareTo( r.pow(2) ) <= 0; // x^2 + y^2 <= r^2
 
-        return x.compareTo( r.negate().divide( BigDecimal.valueOf(2), BigDecimal.ROUND_HALF_UP ) ) >= 0 && // x >= -r / 2
+        return x.compareTo( r.negate().divide( BigDecimal.valueOf(2) ) ) >= 0 && // x >= -r / 2
                 y.compareTo( r.negate() ) >= 0; // y >= -r
     }
 
