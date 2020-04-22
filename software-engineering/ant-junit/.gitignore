@@ -1,3 +1,5 @@
 .idea
 Lab3.iml
-target
+build
+compile
+hashes
