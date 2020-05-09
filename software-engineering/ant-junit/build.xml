@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Lab3" basedir="." default="build" xmlns:if="ant:if" xmlns:unless="ant:unless">
+    <property file="build.properties"/>
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+
+    <path id="lib_path">
+        <fileset dir="${libs.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="check_conditions">
+        <var name="javasrc.exists" unset="true"/>
+        <condition property="javasrc.exists">
+            <available file="${javasrc.dir}" type="dir"/>
+        </condition>
+
+        <var name="web.exists" unset="true"/>
+        <condition property="web.exists">
+            <available file="${web.dir}" type="dir"/>
+        </condition>
+
+        <var name="hibernate.exists" unset="true"/>
+        <available file="${src.dir}/hibernate.cfg.xml" property="hibernate.exists"/>
+
+        <var name="test.condition" unset="true"/>
+        <condition property="test.condition">
+            <and>
+                <available file="${testsrc.dir}" type="dir"/>
+                <available file="${compile.dir}" type="dir"/>
+            </and>
+        </condition>
+
+        <var name="commit.condition" unset="true"/>
+        <condition property="commit.condition">
+            <and>
+                <isset property="commit.hash"/>
+                <not>
+                    <equals arg1="${commit.hash}" arg2="undefined"/>
+                </not>
+            </and>
+        </condition>
+    </target>
+
+    <target name="save_commit" depends="check_conditions" if="commit.condition">
+        <exec executable="git" failifexecutionfails="true">
+            <arg value="checkout"/>
+            <arg value="${commit.hash}"/>
+        </exec>
+        <antcall target="build"/>
+        <move file="lab3.war" tofile="${team.dir}/${commit.hash}.war"/>
+    </target>
+
+    <target name="compile" depends="check_conditions">
+    	<delete dir="${compile.dir}"/>
+        <mkdir dir="${compile.dir}"/>
+        <javac if:set="javasrc.exists" srcdir="${javasrc.dir}" destdir="${compile.dir}" executable="${javac.path}"
+               classpathref="lib_path" includeantruntime="false" encoding="UTF-8"/>
+        <echo unless:set="javasrc.exists" message="Sources are missing: skipping compilation"/>
+    </target>
+
+    <target name="build" depends="compile, check_conditions">
+    	<delete dir="${build.dir}"/>
+        <delete file="lab3.war"/>
+        <mkdir dir="${build.dir}"/>
+        <copy todir="${build.dir}" if:set="web.exists">
+            <fileset dir="${web.dir}" includes="**"/>
+        </copy>
+        <echo unless:set="web.exists" message="webapp is missing: skipping copying"/>
+
+        <mkdir dir="${build.dir}/WEB-INF/classes"/>
+        <copy todir="${build.dir}/WEB-INF/classes">
+            <fileset dir="${compile.dir}" includes="**"/>
+        </copy>
+        <copy todir="${build.dir}/WEB-INF/classes" if:set="hibernate.exists">
+            <file file="${src.dir}/hibernate.cfg.xml"/>
+        </copy>
+        <echo unless:set="hibernate.exists" message="hibernate.cfg.xml is missing: skipping copying"/>
+
+        <war destfile="lab3.war" basedir="${build.dir}" webxml="${web.dir}/WEB-INF/web.xml">
+            <manifest>
+                <attribute name="Project-Version" value="${version}"/>
+            </manifest>
+        </war>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${compile.dir}"/>
+        <delete dir="${hashes.dir}"/>
+        <delete dir="${team.dir}"/>
+    </target>
+
+    <target name="test" depends="compile, check_conditions">
+        <javac srcdir="${testsrc.dir}" destdir="${compile.dir}" executable="${javac.path}"
+               classpath="${compile.dir}" classpathref="lib_path" includeantruntime="false" if:set="test.condition"/>
+        <junit haltonfailure="yes" printsummary="true" if:set="test.condition">
+            <classpath refid="lib_path"/>
+            <classpath location="${compile.dir}"/>
+            <test name="${test.classpath}"/>
+        </junit>
+        <echo unless:set="test.condition" message="Nothing to test."/>
+    </target>
+
+    <target name="doc" depends="build, check_conditions">
+        <delete dir="${hashes.dir}"/>
+        <mkdir dir="${javadoc.dir}"/>
+        <javadoc if:set="javasrc.exists" sourcepath="${javasrc.dir}" destdir="${javadoc.dir}"
+                 classpathref="lib_path" encoding="UTF-8"/>
+        <echo unless:set="javasrc.exists" message="Sources are missing: skipping documentation creation"/>
+
+        <mkdir dir="${hashes.dir}"/>
+        <checksum todir="${hashes.dir}" totalproperty="MD5-hash">
+            <fileset dir="${src.dir}"/>
+        </checksum>
+        <checksum todir="${hashes.dir}" algorithm="SHA-1" totalproperty="SHA-1-hash">
+            <fileset dir="${src.dir}"/>
+        </checksum>
+
+        <war destfile="lab3.war" basedir="${build.dir}" webxml="${web.dir}/WEB-INF/web.xml">
+            <manifest>
+                <attribute name="Project-Version" value="${version}"/>
+                <attribute name="MD5" value="${MD5-hash}"/>
+                <attribute name="SHA-1" value="${SHA-1-hash}"/>
+            </manifest>
+        </war>
+    </target>
+
+    <target name="team" depends="check_conditions">
+        <delete dir="${team.dir}"/>
+        <mkdir dir="${team.dir}"/>
+        <delete file="team.zip"/>
+        <exec executable="git" outputproperty="git.commit" failifexecutionfails="true">
+            <arg value="rev-list"/>
+            <arg value="--max-count=4"/>
+            <arg value="--abbrev-commit"/>
+            <arg value="HEAD"/>
+        </exec>
+
+        <script language="javascript">
+            arr = project.getProperty('git.commit').split('\r\n');
+            project.setProperty('r4', arr[0]);
+            project.setProperty('r3', arr[1]);
+            project.setProperty('r2', arr[2]);
+            project.setProperty('r1', arr[3]);
+        </script>
+
+        <property name="commit.hash" value="${r1}"/>
+        <antcall target="save_commit"/>
+
+        <var name="commit.hash" value="${r2}"/>
+        <antcall target="save_commit"/>
+
+        <var name="commit.hash" value="${r3}"/>
+        <antcall target="save_commit"/>
+
+        <var name="commit.hash" value="${r4}"/>
+        <antcall target="save_commit"/>
+
+        <zip destfile="team.zip">
+            <fileset dir="${team.dir}" includes="*"/>
+        </zip>
+
+        <exec executable="git" failifexecutionfails="true">
+            <arg value="checkout"/>
+            <arg value="${r4}"/>
+        </exec>
+    </target>
+</project>
