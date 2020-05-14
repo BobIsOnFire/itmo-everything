@@ -4,6 +4,8 @@ import com.bobisonfire.lab4.data.HistoryEntity;
 import com.bobisonfire.lab4.data.User;
 import com.bobisonfire.lab4.data.UserRepository;
 import com.bobisonfire.lab4.data.HistoryDto;
+import com.bobisonfire.lab4.jmx.ClickPercentage;
+import com.bobisonfire.lab4.jmx.PointCounter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +19,14 @@ import java.util.stream.Collectors;
 @RequestMapping("/history")
 public class HistoryApiController {
     private final UserRepository users;
+    private final PointCounter pointCounter;
+    private final ClickPercentage clickPercentage;
 
     @Autowired
-    public HistoryApiController(UserRepository users) {
+    public HistoryApiController(UserRepository users, PointCounter pointCounter, ClickPercentage clickPercentage) {
         this.users = users;
+        this.pointCounter = pointCounter;
+        this.clickPercentage = clickPercentage;
     }
 
     @GetMapping
@@ -35,6 +41,11 @@ public class HistoryApiController {
     @PostMapping
     public HistoryDto addHistoryNode(@Valid HistoryDto historyDto, Principal principal) {
         HistoryEntity historyEntity = entityFromDto(historyDto);
+        if (historyDto.isClicked()) {
+            clickPercentage.addNode(historyEntity);
+        } else {
+            pointCounter.addNode(historyEntity);
+        }
         User user = users.findByUsername(principal.getName());
 
         user.getUserHistory().add(historyEntity);

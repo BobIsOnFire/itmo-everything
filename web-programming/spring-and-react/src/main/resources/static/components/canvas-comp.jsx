@@ -70,7 +70,7 @@ class CanvasComponent extends React.Component {
         this.setState(state);
     }
 
-    handleSubmit(event) {
+    handleSubmit(event, clicked=false) {
         event.preventDefault();
 
         if (this.state.yQuery === '') {
@@ -88,7 +88,7 @@ class CanvasComponent extends React.Component {
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body:
                 `${this.props._csrf.parameter}=${this.props._csrf.token}&` +
-                `x=${this.state.xQuery}&y=${this.state.yQuery}&r=${this.state.rQuery}`
+                `x=${this.state.xQuery}&y=${this.state.yQuery}&r=${this.state.rQuery}&clicked=${clicked}`
         };
 
         const host = `${location.protocol}//${location.hostname}:${location.port}`;
@@ -311,7 +311,7 @@ class CanvasComponent extends React.Component {
             message: ''
         };
 
-        this.handleSubmit(event);
+        this.handleSubmit(event, true);
     }
 
     convertCleanToCanvasCoordinates(x, y, r, centerX, centerY, pointDistance) {

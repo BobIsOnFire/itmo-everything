@@ -21,6 +21,8 @@ public class HistoryDto {
     @BigDecimalConstraint(min = -3.0d, max = 5.0d, message = "R не принадлежит заданному интервалу.")
     private String r;
 
+    private boolean clicked;
+
     private boolean result;
 
     public HistoryDto() {
@@ -56,5 +58,13 @@ public class HistoryDto {
 
     public void setResult(boolean result) {
         this.result = result;
+    }
+
+    public boolean isClicked() {
+        return clicked;
+    }
+
+    public void setClicked(boolean clicked) {
+        this.clicked = clicked;
     }
 }
