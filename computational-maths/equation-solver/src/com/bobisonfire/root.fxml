@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bobisonfire.Controller">
+    <left>
+        <FlowPane prefHeight="300.0" prefWidth="360.0" BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets left="20.0" right="20.0" />
+            </BorderPane.margin>
+            <Label alignment="CENTER" prefWidth="360.0" text="Уравнения:">
+                <FlowPane.margin>
+                    <Insets top="10.0" />
+                </FlowPane.margin>
+            </Label>
+            <TextField fx:id="firstEquationText" prefWidth="300.0" />
+         <Label prefHeight="25.0" prefWidth="35.0" text=" = 0" />
+            <Button mnemonicParsing="false" onMouseClicked="#addEquation" prefHeight="25.0" prefWidth="25.0" text="+" />
+            <FlowPane fx:id="oneEquationPane" prefHeight="25.0" prefWidth="360.0">
+                <FlowPane.margin>
+                    <Insets />
+                </FlowPane.margin>
+                <RadioButton fx:id="halfSolverButton" mnemonicParsing="false" prefWidth="120.0" selected="true" text="Пополам">
+                    <FlowPane.margin>
+                        <Insets top="5.0" />
+                    </FlowPane.margin>
+                    <toggleGroup>
+                        <ToggleGroup fx:id="method" />
+                    </toggleGroup>
+                </RadioButton>
+                <RadioButton fx:id="iterateSolverButton" mnemonicParsing="false" prefWidth="120.0" text="Итерации" toggleGroup="$method">
+                    <FlowPane.margin>
+                        <Insets top="5.0" />
+                    </FlowPane.margin>
+                </RadioButton>
+            <RadioButton mnemonicParsing="false" prefWidth="120.0" text="Сравнить" toggleGroup="$method" />
+            </FlowPane>
+            <FlowPane fx:id="twoEquationPane" prefHeight="25.0" prefWidth="360.0" visible="false">
+                <FlowPane.margin>
+                    <Insets top="-25.0" />
+                </FlowPane.margin>
+                <TextField fx:id="secondEquationText" focusTraversable="false" prefWidth="300.0" />
+            <Label prefHeight="25.0" prefWidth="35.0" text=" = 0" />
+                <Button mnemonicParsing="false" onMouseClicked="#deleteEquation" prefHeight="25.0" prefWidth="25.0" text="-" />
+            </FlowPane>
+            <Label prefWidth="150.0" text="Точность:">
+                <FlowPane.margin>
+                    <Insets top="20.0" />
+                </FlowPane.margin>
+            </Label>
+            <TextField fx:id="precisionText" prefWidth="210.0">
+                <FlowPane.margin>
+                    <Insets top="20.0" />
+                </FlowPane.margin>
+            </TextField>
+            <Label prefWidth="150.0" text="Левая граница:">
+                <FlowPane.margin>
+                    <Insets top="10.0" />
+                </FlowPane.margin>
+            </Label>
+            <TextField fx:id="leftBorderText" prefWidth="210.0">
+                <FlowPane.margin>
+                    <Insets top="10.0" />
+                </FlowPane.margin>
+            </TextField>
+            <Label prefWidth="150.0" text="Правая граница:">
+                <FlowPane.margin>
+                    <Insets top="10.0" />
+                </FlowPane.margin>
+            </Label>
+            <TextField fx:id="rightBorderText" prefWidth="210.0">
+                <FlowPane.margin>
+                    <Insets top="10.0" />
+                </FlowPane.margin>
+            </TextField>
+            <Label prefWidth="150.0" text="Размер шага:">
+                <FlowPane.margin>
+                    <Insets top="10.0" />
+                </FlowPane.margin>
+            </Label>
+            <Slider fx:id="stepSizeSlider" prefWidth="170.0">
+                <FlowPane.margin>
+                    <Insets top="10.0" />
+                </FlowPane.margin>
+            </Slider>
+            <Label fx:id="stepSizeLabel" alignment="CENTER_RIGHT" prefWidth="40.0" text="${stepSizeSlider.value}">
+           <FlowPane.margin>
+              <Insets top="10.0" />
+           </FlowPane.margin></Label>
+        <Button mnemonicParsing="false" onMouseClicked="#solveEquations" prefWidth="360.0" text="Найти решения">
+           <FlowPane.margin>
+              <Insets top="10.0" />
+           </FlowPane.margin>
+        </Button>
+            <Label fx:id="errorMessageLabel" alignment="TOP_LEFT" prefHeight="140.0" prefWidth="360.0" wrapText="true">
+           <FlowPane.margin>
+              <Insets top="10.0" />
+           </FlowPane.margin></Label>
+        </FlowPane>
+    </left>
+    <top>
+        <AnchorPane prefHeight="100.0" prefWidth="800.0" BorderPane.alignment="CENTER">
+            <Label alignment="CENTER" text="Лабораторная №3 by Акатьев Никита Львович P3211" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                <font>
+                    <Font name="Consolas" size="22.0" />
+                </font>
+            </Label>
+         <Button fx:id="switchButton" mnemonicParsing="false" onMouseClicked="#switchGraphicsMode" text="К графику" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0" />
+        </AnchorPane>
+    </top>
+   <right>
+       <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+           <Canvas fx:id="canvas" height="400.0" width="400.0" />
+           <ScrollPane fx:id="solutionPane" prefHeight="400.0" prefWidth="400.0" />
+       </StackPane>
+   </right>
+</BorderPane>
