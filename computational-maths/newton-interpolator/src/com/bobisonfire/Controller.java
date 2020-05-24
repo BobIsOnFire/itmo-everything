@@ -14,6 +14,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ public class Controller {
 
     private static final CoordinateTranslator translateX = (v, center, size) -> CANVAS_SIZE * (v - center + size) / (2 * size);
     private static final CoordinateTranslator translateY = (v, center, size) -> CANVAS_SIZE * (center - v + size) / (2 * size);
+
+    private static final CoordinateTranslator revertX = (c, center, size) -> 2 * size * c / CANVAS_SIZE + center - size;
+    private static final CoordinateTranslator revertY = (c, center, size) -> center - 2 * size * c / CANVAS_SIZE + size;
 
     private static final String NUMBER_REGEXP = "-?[0-9]+(\\.[0-9]+)?([Ee]-?[0-9]+)?";
 
@@ -102,14 +106,16 @@ public class Controller {
     public void addPointButton() {
         List<Node> children = pointsPane.getChildren();
         TextField x = new TextField("0");
-        x.setPrefWidth(pointsPane.getPrefWidth() / 2);
-        children.add(x);
-    }
+        x.setPrefWidth(pointsPane.getPrefWidth() / 2 - 25);
+        Button b = new Button("-");
+        b.setPrefWidth(25);
+        b.setOnMouseClicked(e -> {
+            children.remove(x);
+            children.remove(b);
+        });
 
-    public void removePointButton() {
-        List<Node> children = pointsPane.getChildren();
-        if (children.isEmpty()) return;
-        children.remove(children.size() - 1);
+        children.add(x);
+        children.add(b);
     }
 
     public void switchGraphicsMode() {
@@ -128,6 +134,7 @@ public class Controller {
         }
 
         for (Node n : children) {
+            if (!(n instanceof TextField)) continue;
             String text = ((TextField) n).getText();
             if (!text.matches(NUMBER_REGEXP)) {
                 errorMessageLabel.setText("Одна из опорных точек не является числом: " + text);
@@ -152,9 +159,10 @@ public class Controller {
             basicPoints.clear();
             customPoints.clear();
 
-            Point[] points = new Point[children.size()];
+            Point[] points = new Point[children.size() / 2];
             int k = 0;
             for (Node n : children) {
+                if (!(n instanceof TextField)) continue;
                 Point p = new Point();
                 double value = Double.parseDouble(((TextField) n).getText());
                 p.put(x, value);
@@ -267,17 +275,11 @@ public class Controller {
         double centerY = Double.parseDouble(yCoordText.getText());
 
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        drawField(gc, translateX.translate(0, centerX, size), translateY.translate(0, centerY, size));
-        drawFunction(gc, basicFunction, Color.BLUE, centerX, centerY, size);
-        drawFunction(gc, interpolatedFunction, Color.RED, centerX, centerY, size);
+        gc.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        for (double point : basicPoints) {
-            drawDot(gc,
-                    translateX.translate(point, centerX, size),
-                    translateY.translate(basicFunction.getValue(point), centerY, size),
-                    Color.BLACK
-            );
-        }
+        drawField(gc, centerX, centerY, size);
+        if (basicFunction != null) drawFunction(gc, basicFunction, Color.BLUE, centerX, centerY, size);
+        if (interpolatedFunction != null) drawFunction(gc, interpolatedFunction, Color.RED, centerX, centerY, size);
 
         for (double point : customPoints) {
             drawDot(gc,
@@ -288,7 +290,15 @@ public class Controller {
             drawDot(gc,
                     translateX.translate(point, centerX, size),
                     translateY.translate(interpolatedFunction.getValue(point), centerY, size),
-                    Color.YELLOW
+                    Color.MAGENTA
+            );
+        }
+
+        for (double point : basicPoints) {
+            drawDot(gc,
+                    translateX.translate(point, centerX, size),
+                    translateY.translate(basicFunction.getValue(point), centerY, size),
+                    Color.BLACK
             );
         }
     }
@@ -326,28 +336,61 @@ public class Controller {
 
     }
 
-    private void drawDot(GraphicsContext gc, double x, double y, Color color) { // todo arrow if a point is above or below the field
+    private void drawDot(GraphicsContext gc, double x, double y, Color color) {
         gc.setFill(color);
-        gc.fillOval(x - 4, y - 4, 8, 8);
+        if (y >= 0 && y <= CANVAS_SIZE) {
+            gc.fillOval(x - 4, y - 4, 8, 8);
+            return;
+        }
+
+        gc.beginPath();
+        if (y < 0) {
+            gc.moveTo(x, 0);
+            gc.lineTo(x - 8, 8);
+            gc.lineTo(x - 4, 8);
+            gc.lineTo(x - 4, 16);
+            gc.lineTo(x + 4, 16);
+            gc.lineTo(x + 4, 8);
+            gc.lineTo(x + 8, 8);
+            gc.lineTo(x, 0);
+        } else {
+            gc.moveTo(x, CANVAS_SIZE);
+            gc.lineTo(x - 8, CANVAS_SIZE - 8);
+            gc.lineTo(x - 4, CANVAS_SIZE - 8);
+            gc.lineTo(x - 4, CANVAS_SIZE - 16);
+            gc.lineTo(x + 4, CANVAS_SIZE - 16);
+            gc.lineTo(x + 4, CANVAS_SIZE - 8);
+            gc.lineTo(x + 8, CANVAS_SIZE - 8);
+            gc.lineTo(x, CANVAS_SIZE);
+        }
+        gc.fill();
     }
 
-    private void drawField(GraphicsContext gc, double arrowX, double arrowY) { // todo axes and numbers!
-        gc.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-        gc.setStroke(Color.GRAY);
-        gc.setLineWidth(1);
+    private void drawField(GraphicsContext gc, double centerX, double centerY, double size) {
+        double arrowX = translateX.translate(0, centerX, size);
+        double arrowY = translateY.translate(0, centerY, size);
 
         double step = CANVAS_SIZE / 10;
+
+        if (arrowX - step < 0 || arrowX + step > CANVAS_SIZE) arrowX = 0;
+        if (arrowY - step < 0 || arrowY + step > CANVAS_SIZE) arrowY = CANVAS_SIZE;
+
+        gc.setStroke(Color.GRAY);
+        gc.setFill(Color.BLACK);
+        gc.setLineWidth(1);
+        gc.setFont(Font.font(10));
 
         gc.beginPath();
         for (double i = arrowX % step; i <= CANVAS_SIZE; i += step) {
             gc.moveTo(i, 0);
             gc.lineTo(i, CANVAS_SIZE);
+            gc.fillText(cutSymbols(revertX.translate(i, centerX, size)), i + 2, CANVAS_SIZE - 3);
         }
 
         for (double i = arrowY % step; i <= CANVAS_SIZE; i += step) {
             gc.moveTo(0, i);
             gc.lineTo(CANVAS_SIZE, i);
+            gc.fillText(cutSymbols(revertY.translate(i, centerY, size)), 2, i + 12);
         }
 
         gc.stroke();
@@ -359,26 +402,40 @@ public class Controller {
         gc.setLineWidth(3);
         gc.beginPath();
 
-        if (arrowX >= 0 && arrowX <= CANVAS_SIZE) {
-            gc.moveTo(arrowX, CANVAS_SIZE);
-            gc.lineTo(arrowX, 0);
-            gc.lineTo(arrowX - arrowWidth, arrowHeight);
-            gc.moveTo(arrowX, 0);
-            gc.lineTo(arrowX + arrowWidth, arrowHeight);
-        }
+        gc.moveTo(arrowX, CANVAS_SIZE);
+        gc.lineTo(arrowX, 0);
+        gc.lineTo(arrowX - arrowWidth, arrowHeight);
+        gc.moveTo(arrowX, 0);
+        gc.lineTo(arrowX + arrowWidth, arrowHeight);
 
-        if (arrowY >= 0 && arrowY <= CANVAS_SIZE) {
-            gc.moveTo(0, arrowY);
-            gc.lineTo(CANVAS_SIZE, arrowY);
-            gc.lineTo(CANVAS_SIZE - arrowHeight, arrowY - arrowWidth);
-            gc.moveTo(CANVAS_SIZE, arrowY);
-            gc.lineTo(CANVAS_SIZE - arrowHeight, arrowY + arrowWidth);
-        }
+        gc.moveTo(0, arrowY);
+        gc.lineTo(CANVAS_SIZE, arrowY);
+        gc.lineTo(CANVAS_SIZE - arrowHeight, arrowY - arrowWidth);
+        gc.moveTo(CANVAS_SIZE, arrowY);
+        gc.lineTo(CANVAS_SIZE - arrowHeight, arrowY + arrowWidth);
 
         gc.stroke();
+
+        gc.setLineWidth(1);
+        gc.setFont(Font.font(arrowHeight));
+
+        if (arrowX > arrowWidth * 3) gc.fillText("y", arrowX - arrowWidth * 3, arrowHeight * 2);
+        else gc.fillText("y", arrowX + arrowWidth, arrowHeight * 2);
+
+        if (arrowY > arrowWidth * 3) gc.fillText("x", CANVAS_SIZE - arrowHeight * 2, arrowY - arrowWidth);
+        else gc.fillText("x", CANVAS_SIZE - arrowHeight * 2, arrowY + arrowWidth * 3);
     }
 
     private String format(double value) {
         return String.valueOf(Math.round(value / OUTPUT_PRECISION) * OUTPUT_PRECISION);
+    }
+
+    private String cutSymbols(double value) {
+        String s = String.valueOf(value);
+        try {
+            return s.substring(0, s.indexOf('.') + 3);
+        } catch (StringIndexOutOfBoundsException exc) {
+            return s;
+        }
     }
 }
