@@ -12,6 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -59,6 +60,9 @@ public class Controller {
     private final List<Double> basicPoints = new ArrayList<>();
     private final List<Double> customPoints = new ArrayList<>();
 
+    private TextField customPointText;
+    private FlowPane customPointPane;
+
     public void initialize() {
         fieldSizeText.setText(String.valueOf(FIELD_SIZE_DEFAULT));
         xCoordText.setText("0");
@@ -104,8 +108,12 @@ public class Controller {
     }
 
     public void addPointButton() {
+        addBasicPoint(0);
+    }
+
+    private void addBasicPoint(double value) {
         List<Node> children = pointsPane.getChildren();
-        TextField x = new TextField("0");
+        TextField x = new TextField(String.valueOf(value));
         x.setPrefWidth(pointsPane.getPrefWidth() / 2 - 25);
         Button b = new Button("-");
         b.setPrefWidth(25);
@@ -116,6 +124,7 @@ public class Controller {
 
         children.add(x);
         children.add(b);
+
     }
 
     public void switchGraphicsMode() {
@@ -184,9 +193,9 @@ public class Controller {
     }
 
     private void printResults() {
-        FlowPane pane = new FlowPane();
-        pane.setPrefWidth(385);
-        List<Node> children = pane.getChildren();
+        customPointPane = new FlowPane();
+        customPointPane.setPrefWidth(385);
+        List<Node> children = customPointPane.getChildren();
         Insets padding = new Insets(10);
 
         children.add(createLabel("Исходная функция:", 385, padding));
@@ -198,20 +207,20 @@ public class Controller {
         children.add(polynom);
 
         children.add(createLabel("Пользовательские точки", 385, padding));
-        TextField custom = new TextField("0");
-        custom.setPrefWidth(250);
+        customPointText = new TextField("0");
+        customPointText.setPrefWidth(250);
         Button check = new Button("Найти значение");
         check.setPrefWidth(135);
 
-        children.add(custom);
+        children.add(customPointText);
         children.add(check);
 
-        children.add(createLabel("Аргумент", 96, padding));
-        children.add(createLabel("Исходное", 96, padding));
-        children.add(createLabel("Многочлен", 96, padding));
-        children.add(createLabel("Дельта", 97, padding));
+        children.add(createLabel("Аргумент", 90, padding));
+        children.add(createLabel("Исходное", 90, padding));
+        children.add(createLabel("Многочлен", 90, padding));
+        children.add(createLabel("Дельта", 90, padding));
 
-        custom.textProperty().addListener((ov, oldV, newV) -> {
+        customPointText.textProperty().addListener((ov, oldV, newV) -> {
             if (newV.isEmpty()) {
                 check.setDisable(true);
                 return;
@@ -225,22 +234,48 @@ public class Controller {
             check.setDisable(false);
         });
 
-        check.setOnMouseClicked(e -> {
-            if (check.isDisable()) return;
+        check.setOnMouseClicked(this::addCustomPoint);
 
-            double value = Double.parseDouble(custom.getText());
-            double basic = basicFunction.getValue(value);
-            double interpolated = interpolatedFunction.getValue(value);
+        for (double b : customPoints) {
+            customPointText.setText(String.valueOf(b));
+            addCustomPoint(null);
+        }
 
-            children.add(createLabel(value, 96));
-            children.add(createLabel(basic, 96));
-            children.add(createLabel(interpolated, 96));
-            children.add(createLabel(Math.abs(basic - interpolated), 97));
+        customPointText.setText("0");
+        solutionPane.setContent(customPointPane);
+    }
 
-            customPoints.add(value);
+    private void addCustomPoint(MouseEvent evt) {
+        List<Node> children = customPointPane.getChildren();
+        double value = Double.parseDouble(customPointText.getText());
+        double basic = basicFunction.getValue(value);
+        double interpolated = interpolatedFunction.getValue(value);
+
+        Label valueLabel = createLabel(value, 90);
+        Label basicLabel = createLabel(basic, 90);
+        Label interpolatedLabel = createLabel(interpolated, 90);
+        Label deltaLabel = createLabel(Math.abs(basic - interpolated), 90);
+
+        children.add(valueLabel);
+        children.add(basicLabel);
+        children.add(interpolatedLabel);
+        children.add(deltaLabel);
+
+        Button toBasic = new Button(">");
+        toBasic.setPrefWidth(25);
+
+        toBasic.setOnMouseClicked(e -> {
+            basicPoints.add(value);
+            customPoints.remove(value);
+
+            NewtonInterpolator.addPoint(interpolatedFunction, value, basic);
+            addBasicPoint(value);
+            printResults();
         });
 
-        solutionPane.setContent(pane);
+        children.add(toBasic);
+        if (evt != null) customPoints.add(value);
+
     }
 
     private Label createLabel(double value, double width) {
@@ -259,7 +294,7 @@ public class Controller {
         return label;
     }
 
-    public void repaint() { // todo drag'n'drop and scroll support
+    public void repaint() {
         if (!fieldSizeValid) {
             errorMessageLabel.setText("Значение размера поля все еще не валидно.");
             return;
