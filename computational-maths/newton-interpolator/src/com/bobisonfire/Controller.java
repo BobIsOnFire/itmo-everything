@@ -17,15 +17,18 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 
 public class Controller {
     private static final double FIELD_SIZE_DEFAULT = 10.0;
     private static final double CANVAS_SIZE = 400.0;
-    private static final double OUTPUT_PRECISION = 1E-5;
+    private static final DecimalFormat df = new DecimalFormat("#");
 
     private static final CoordinateTranslator translateX = (v, center, size) -> CANVAS_SIZE * (v - center + size) / (2 * size);
     private static final CoordinateTranslator translateY = (v, center, size) -> CANVAS_SIZE * (center - v + size) / (2 * size);
@@ -64,6 +67,10 @@ public class Controller {
     private FlowPane customPointPane;
 
     public void initialize() {
+        df.setMaximumFractionDigits(2);
+        df.setMinimumIntegerDigits(1);
+        df.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
+
         fieldSizeText.setText(String.valueOf(FIELD_SIZE_DEFAULT));
         xCoordText.setText("0");
         yCoordText.setText("0");
@@ -261,7 +268,7 @@ public class Controller {
         children.add(interpolatedLabel);
         children.add(deltaLabel);
 
-        Button toBasic = new Button(">");
+        Button toBasic = new Button("<");
         toBasic.setPrefWidth(25);
 
         toBasic.setOnMouseClicked(e -> {
@@ -279,7 +286,7 @@ public class Controller {
     }
 
     private Label createLabel(double value, double width) {
-        return createLabel(format(value), width);
+        return createLabel(df.format(value), width);
     }
 
     private Label createLabel(String text, double width) {
@@ -419,13 +426,13 @@ public class Controller {
         for (double i = arrowX % step; i <= CANVAS_SIZE; i += step) {
             gc.moveTo(i, 0);
             gc.lineTo(i, CANVAS_SIZE);
-            gc.fillText(cutSymbols(revertX.translate(i, centerX, size)), i + 2, CANVAS_SIZE - 3);
+            gc.fillText(df.format(revertX.translate(i, centerX, size)), i + 2, CANVAS_SIZE - 3);
         }
 
         for (double i = arrowY % step; i <= CANVAS_SIZE; i += step) {
             gc.moveTo(0, i);
             gc.lineTo(CANVAS_SIZE, i);
-            gc.fillText(cutSymbols(revertY.translate(i, centerY, size)), 2, i + 12);
+            gc.fillText(df.format(revertY.translate(i, centerY, size)), 2, i + 12);
         }
 
         gc.stroke();
@@ -459,18 +466,5 @@ public class Controller {
 
         if (arrowY > arrowWidth * 3) gc.fillText("x", CANVAS_SIZE - arrowHeight * 2, arrowY - arrowWidth);
         else gc.fillText("x", CANVAS_SIZE - arrowHeight * 2, arrowY + arrowWidth * 3);
-    }
-
-    private String format(double value) {
-        return String.valueOf(Math.round(value / OUTPUT_PRECISION) * OUTPUT_PRECISION);
-    }
-
-    private String cutSymbols(double value) {
-        String s = String.valueOf(value);
-        try {
-            return s.substring(0, s.indexOf('.') + 3);
-        } catch (StringIndexOutOfBoundsException exc) {
-            return s;
-        }
     }
 }

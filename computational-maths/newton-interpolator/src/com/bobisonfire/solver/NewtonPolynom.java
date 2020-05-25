@@ -2,8 +2,18 @@ package com.bobisonfire.solver;
 
 import com.bobisonfire.function.Function;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
+
 class NewtonPolynom implements Function {
-    private static final double OUTPUT_PRECISION = 1E-2;
+    private static final DecimalFormat df = new DecimalFormat("#");
+
+    static {
+        df.setMaximumFractionDigits(2);
+        df.setMinimumIntegerDigits(1);
+        df.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
+    }
 
     double[] arguments;
     double[] constants;
@@ -35,16 +45,12 @@ class NewtonPolynom implements Function {
 
         for (int i = 0; i < arguments.length; i++) {
             if (i != 0) fullBuilder.append(" + ");
-            fullBuilder.append(format(constants[i])).append(multiplierBuilder);
+            fullBuilder.append(df.format(constants[i])).append(multiplierBuilder);
 
             if (arguments[i] == 0) multiplierBuilder.append("x");
-            else multiplierBuilder.append("(x - ").append(format(arguments[i])).append(")");
+            else multiplierBuilder.append("(x - ").append(df.format(arguments[i])).append(")");
         }
 
         return fullBuilder.toString();
-    }
-
-    private String format(double value) {
-        return String.valueOf(Math.round(value / OUTPUT_PRECISION) * OUTPUT_PRECISION);
     }
 }
