@@ -1,10 +1,10 @@
 package com.bobisonfire;
 
-import com.bobisonfire.function.Function;
-import com.bobisonfire.function.Point;
-import com.bobisonfire.function.Variable;
+import com.bobisonfire.function.*;
 import com.bobisonfire.parser.FunctionParser;
-import com.bobisonfire.solver.*;
+import com.bobisonfire.solver.AdamsSolver;
+import com.bobisonfire.solver.NewtonInterpolator;
+import javafx.animation.PauseTransition;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,9 +13,11 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.util.Duration;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -28,6 +30,7 @@ import java.util.function.Predicate;
 public class Controller {
     private static final double FIELD_SIZE_DEFAULT = 10.0;
     private static final double CANVAS_SIZE = 400.0;
+    private static final double PRECISION_MIN = 1E-4;
     private static final DecimalFormat df = new DecimalFormat("#");
 
     private static final CoordinateTranslator translateX = (v, center, size) -> CANVAS_SIZE * (v - center + size) / (2 * size);
@@ -39,7 +42,16 @@ public class Controller {
     private static final String NUMBER_REGEXP = "-?[0-9]+(\\.[0-9]+)?([Ee]-?[0-9]+)?";
 
     public TextField firstEquationText;
-    public FlowPane pointsPane;
+
+    public RadioButton trigonometricButton;
+    public RadioButton exponentialButton;
+    public RadioButton linearButton;
+    public RadioButton customButton;
+
+    public TextField xStartText;
+    public TextField yStartText;
+    public TextField xEndText;
+    public TextField precisionText;
 
     public TextField fieldSizeText;
     public TextField xCoordText;
@@ -51,26 +63,84 @@ public class Controller {
     public Button switchButton;
     public ScrollPane solutionPane;
     public Canvas canvas;
+    public ToggleGroup equation;
 
     private boolean graphicsMode = false;
+    private int equationMode = Mode.TRIGONOMETRIC;
+
+    private boolean numbersValid = true;
+    private boolean precisionValid = true;
 
     private boolean fieldSizeValid = true;
     private boolean centerValid = true;
 
-    private Function basicFunction;
-    private Function interpolatedFunction;
+    private Function resultFunction;
+    private Function compareFunction;
 
     private final List<Double> basicPoints = new ArrayList<>();
-    private final List<Double> customPoints = new ArrayList<>();
 
-    private TextField customPointText;
-    private FlowPane customPointPane;
+    private boolean canvasDrag = false;
+    private double prevX;
+    private double prevY;
+    private double velocityX = 0;
+    private double velocityY = 0;
 
     public void initialize() {
         df.setMinimumIntegerDigits(1);
+        df.setMaximumFractionDigits(5);
         df.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
 
-        fieldSizeText.setText(String.valueOf(FIELD_SIZE_DEFAULT));
+        xStartText.setText("0");
+        yStartText.setText("0");
+        xEndText.setText("1");
+        precisionText.setText(df.format(PRECISION_MIN));
+
+        precisionText.textProperty().addListener((ov, oldV, newV) -> {
+            if (newV.isEmpty()) return;
+            if (!newV.matches(NUMBER_REGEXP)) {
+                errorMessageLabel.setText("Значение точности не является числом.");
+                precisionValid = false;
+                return;
+            }
+
+            double precision = Double.parseDouble(newV);
+            if (precision >= PRECISION_MIN) {
+                errorMessageLabel.setText(numbersValid ? "" : "Значение координат все еще не валидно.");
+                precisionValid = true;
+                return;
+            }
+
+            precisionValid = false;
+            errorMessageLabel.setText("Значение точности должно быть больше 1E-4.");
+        });
+
+        ChangeListener<String> numberListener = (ov, oldV, newV) -> {
+            String xText = xStartText.getText();
+            String yText = yStartText.getText();
+            String end = xEndText.getText();
+
+            if (xText.isEmpty() || yText.isEmpty() || end.isEmpty()) return;
+            if (!xText.matches(NUMBER_REGEXP) || !yText.matches(NUMBER_REGEXP) || !end.matches(NUMBER_REGEXP)) {
+                errorMessageLabel.setText("Значение координат не является числом.");
+                numbersValid = false;
+                return;
+            }
+
+            if (Double.parseDouble(end) <= Double.parseDouble(xText)) {
+                errorMessageLabel.setText("Координата конца отрезка должна быть больше координаты старта.");
+                numbersValid = false;
+                return;
+            }
+
+            errorMessageLabel.setText(precisionValid ? "" : "Значение точности все еще не валидно.");
+            numbersValid = true;
+        };
+
+        xStartText.textProperty().addListener(numberListener);
+        yStartText.textProperty().addListener(numberListener);
+        xEndText.textProperty().addListener(numberListener);
+
+        fieldSizeText.setText(df.format(FIELD_SIZE_DEFAULT));
         xCoordText.setText("0");
         yCoordText.setText("0");
 
@@ -93,7 +163,7 @@ public class Controller {
             errorMessageLabel.setText("Значение размера поля должно быть положительным.");
         });
 
-        ChangeListener<String> listener = (ov, oldV, newV) -> {
+        ChangeListener<String> coordListener = (ov, oldV, newV) -> {
             String xText = xCoordText.getText();
             String yText = yCoordText.getText();
 
@@ -108,29 +178,36 @@ public class Controller {
             centerValid = true;
         };
 
-        xCoordText.textProperty().addListener(listener);
-        yCoordText.textProperty().addListener(listener);
+        xCoordText.textProperty().addListener(coordListener);
+        yCoordText.textProperty().addListener(coordListener);
 
-    }
-
-    public void addPointButton() {
-        addBasicPoint(0);
-    }
-
-    private void addBasicPoint(double value) {
-        List<Node> children = pointsPane.getChildren();
-        TextField x = new TextField(String.valueOf(value));
-        x.setPrefWidth(pointsPane.getPrefWidth() / 2 - 25);
-        Button b = new Button("-");
-        b.setPrefWidth(25);
-        b.setOnMouseClicked(e -> {
-            children.remove(x);
-            children.remove(b);
+        trigonometricButton.selectedProperty().addListener((obj, prevV, newV) -> {
+            if (!prevV && newV) {
+                equationMode = Mode.TRIGONOMETRIC;
+                firstEquationText.setDisable(true);
+            }
         });
 
-        children.add(x);
-        children.add(b);
+        exponentialButton.selectedProperty().addListener((obj, prevV, newV) -> {
+            if (!prevV && newV) {
+                equationMode = Mode.EXPONENTIAL;
+                firstEquationText.setDisable(true);
+            }
+        });
 
+        linearButton.selectedProperty().addListener((obj, prevV, newV) -> {
+            if (!prevV && newV) {
+                equationMode = Mode.LINEAR;
+                firstEquationText.setDisable(true);
+            }
+        });
+
+        customButton.selectedProperty().addListener((obj, prevV, newV) -> {
+            if (!prevV && newV) {
+                equationMode = Mode.CUSTOM;
+                firstEquationText.setDisable(false);
+            }
+        });
     }
 
     public void switchGraphicsMode() {
@@ -140,55 +217,75 @@ public class Controller {
         if (graphicsMode) repaint();
     }
 
-    public void interpolate() {
-        List<Node> children = pointsPane.getChildren();
-        if (children.isEmpty()) {
-            errorMessageLabel.setText("Для выполнения необходим хотя бы один узел.");
-            drawEquationButton.setDisable(true);
+    public void solve() {
+        if (!numbersValid) {
+            errorMessageLabel.setText("Значение координат все еще не валидно.");
             return;
         }
 
-        for (Node n : children) {
-            if (!(n instanceof TextField)) continue;
-            String text = ((TextField) n).getText();
-            if (!text.matches(NUMBER_REGEXP)) {
-                errorMessageLabel.setText("Один из узлов интерполяции не является числом: " + text);
-                drawEquationButton.setDisable(true);
-                return;
-            }
+        if (!precisionValid) {
+            errorMessageLabel.setText("Значение точности все еще не валидно.");
+            return;
         }
 
         errorMessageLabel.setText("");
 
         try {
-            basicFunction = new FunctionParser().parse(firstEquationText.getText());
-            String x = Variable.variableNames()[0];
-            Variable.clearPool();
+            Function equation;
+            FunctionParser parser = new FunctionParser();
 
-            if (x.equalsIgnoreCase("y")) {
-                errorMessageLabel.setText("Используйте для неизвестной в функции другую переменную.");
-                drawEquationButton.setDisable(true);
-                return;
+            switch (equationMode) {
+                case Mode.TRIGONOMETRIC:
+                    equation = Mode.COS_X;
+                    break;
+                case Mode.EXPONENTIAL:
+                    equation = Mode.MUL_XY;
+                    break;
+                case Mode.LINEAR:
+                    equation = Mode.CONSTANT;
+                    break;
+                default:
+                    equation = parser.parse(firstEquationText.getText());
+                    break;
+            }
+
+            double x0 = Double.parseDouble(xStartText.getText());
+            double y0 = Double.parseDouble(yStartText.getText());
+            Point start = new Point();
+            start.put("x", x0);
+            start.put("y", y0);
+
+            double end = Double.parseDouble(xEndText.getText());
+            double precision = Double.parseDouble(precisionText.getText());
+
+            AdamsSolver solver = new AdamsSolver(equation, "x", "y");
+            Point[] solution = solver.solve(start, end, precision);
+
+            resultFunction = NewtonInterpolator.getInterpolationPolynom(solution, "x", "y");
+
+            Function constant;
+            switch (equationMode) {
+                case Mode.TRIGONOMETRIC:
+                    constant = Constant.from(y0 - Math.sin(x0));
+                    compareFunction = FunctionSum.from(Mode.SIN_X, constant);
+                    break;
+                case Mode.EXPONENTIAL:
+                    constant = Constant.from(y0 / Math.exp(x0 * x0));
+                    compareFunction = FunctionMul.from(constant, Mode.EXP_SQUARE_X);
+                    break;
+                case Mode.LINEAR:
+                    constant = Constant.from(y0 - 4 * x0);
+                    compareFunction = FunctionSum.from(Mode.LINEAR_X, constant);
+                    break;
+                default:
+                    compareFunction = null;
+                    break;
             }
 
             basicPoints.clear();
-            customPoints.clear();
+            for (Point p : solution) basicPoints.add(p.get("x"));
 
-            Point[] points = new Point[children.size() / 2];
-            int k = 0;
-            for (Node n : children) {
-                if (!(n instanceof TextField)) continue;
-                Point p = new Point();
-                double value = Double.parseDouble(((TextField) n).getText());
-                p.put(x, value);
-                p.put("y", basicFunction.getValue(value));
-                points[k++] = p;
-
-                basicPoints.add(value);
-            }
-
-            interpolatedFunction = NewtonInterpolator.getInterpolationPolynom(points, x, "y");
-            printResults();
+            printResults(equation);
             if (graphicsMode) repaint();
             drawEquationButton.setDisable(false);
         } catch (ParseException e) {
@@ -198,91 +295,53 @@ public class Controller {
         }
     }
 
-    private void printResults() {
-        customPointPane = new FlowPane();
+    private void printResults(Function equation) {
+        FlowPane customPointPane = new FlowPane();
         customPointPane.setPrefWidth(385);
         List<Node> children = customPointPane.getChildren();
         Insets padding = new Insets(10);
 
-        children.add(createLabel("Исходная функция:", 385, padding));
-        children.add(createLabel("y = " + basicFunction.toString(), 385));
+        children.add(createLabel("Исходное уравнение:", 385, padding));
+        children.add(createLabel("y' = " + equation.toString(), 385));
+
+        if (equationMode != Mode.CUSTOM) {
+            children.add(createLabel("Решение:", 385, padding));
+            children.add(createLabel("y = " + compareFunction.toString(), 385));
+        }
+
+        children.add(createLabel("Таблица значений функции:", 385, padding));
+        if (equationMode == Mode.CUSTOM) {
+            children.add(createLabel("X", 192));
+            children.add(createLabel("Y", 193));
+
+            for (double x : basicPoints) {
+                children.add(createLabel(x, 192));
+                children.add(createLabel(resultFunction.getValue(x), 193));
+            }
+        } else {
+            children.add(createLabel("X", 96));
+            children.add(createLabel("Исходное", 96));
+            children.add(createLabel("Рассчет", 96));
+            children.add(createLabel("Дельта", 97));
+
+            for (double x : basicPoints) {
+                double basic = compareFunction.getValue(x);
+                double count = resultFunction.getValue(x);
+                double delta = Math.abs(basic - count);
+
+                children.add(createLabel(x, 96));
+                children.add(createLabel(basic, 96));
+                children.add(createLabel(count, 96));
+                children.add(createLabel(delta, 97));
+            }
+        }
 
         children.add(createLabel("Многочлен Ньютона:", 385, padding));
-        Label polynom = createLabel("y = " + interpolatedFunction.toString(), 385);
+        Label polynom = createLabel("y = " + resultFunction.toString(), 385);
         polynom.setWrapText(true);
         children.add(polynom);
 
-        children.add(createLabel("Точки интерполяции:", 385, padding));
-        customPointText = new TextField("0");
-        customPointText.setPrefWidth(250);
-        Button check = new Button("Найти значение");
-        check.setPrefWidth(135);
-
-        children.add(customPointText);
-        children.add(check);
-
-        children.add(createLabel("Аргумент", 90, padding));
-        children.add(createLabel("Исходное", 90, padding));
-        children.add(createLabel("Многочлен", 90, padding));
-        children.add(createLabel("Дельта", 90, padding));
-
-        customPointText.textProperty().addListener((ov, oldV, newV) -> {
-            if (newV.isEmpty()) {
-                check.setDisable(true);
-                return;
-            }
-            if (!newV.matches(NUMBER_REGEXP)) {
-                errorMessageLabel.setText("Значение точки интерполяции не является числом.");
-                check.setDisable(true);
-                return;
-            }
-            errorMessageLabel.setText("");
-            check.setDisable(false);
-        });
-
-        check.setOnMouseClicked(this::addCustomPoint);
-
-        for (double b : customPoints) {
-            customPointText.setText(String.valueOf(b));
-            addCustomPoint(null);
-        }
-
-        customPointText.setText("0");
         solutionPane.setContent(customPointPane);
-    }
-
-    private void addCustomPoint(MouseEvent evt) {
-        df.setMaximumFractionDigits(5);
-        List<Node> children = customPointPane.getChildren();
-        double value = Double.parseDouble(customPointText.getText());
-        double basic = basicFunction.getValue(value);
-        double interpolated = interpolatedFunction.getValue(value);
-
-        Label valueLabel = createLabel(value, 90);
-        Label basicLabel = createLabel(basic, 90);
-        Label interpolatedLabel = createLabel(interpolated, 90);
-        Label deltaLabel = createLabel(Math.abs(basic - interpolated), 90);
-
-        children.add(valueLabel);
-        children.add(basicLabel);
-        children.add(interpolatedLabel);
-        children.add(deltaLabel);
-
-        Button toBasic = new Button("<");
-        toBasic.setPrefWidth(25);
-
-        toBasic.setOnMouseClicked(e -> {
-            basicPoints.add(value);
-            customPoints.remove(value);
-
-            NewtonInterpolator.addPoint(interpolatedFunction, value, basic);
-            addBasicPoint(value);
-            printResults();
-        });
-
-        children.add(toBasic);
-        if (evt != null) customPoints.add(value);
-
     }
 
     private Label createLabel(double value, double width) {
@@ -320,28 +379,23 @@ public class Controller {
         gc.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         drawField(gc, centerX, centerY, size);
-        if (basicFunction != null) drawFunction(gc, basicFunction, Color.BLUE, centerX, centerY, size);
-        if (interpolatedFunction != null) drawFunction(gc, interpolatedFunction, Color.RED, centerX, centerY, size);
-
-        for (double point : customPoints) {
-            drawDot(gc,
-                    translateX.translate(point, centerX, size),
-                    translateY.translate(basicFunction.getValue(point), centerY, size),
-                    Color.GREEN
-            );
-            drawDot(gc,
-                    translateX.translate(point, centerX, size),
-                    translateY.translate(interpolatedFunction.getValue(point), centerY, size),
-                    Color.MAGENTA
-            );
-        }
+        if (resultFunction != null) drawFunction(gc, resultFunction, Color.BLUE, centerX, centerY, size);
+        if (compareFunction != null) drawFunction(gc, compareFunction, Color.RED, centerX, centerY, size);
 
         for (double point : basicPoints) {
             drawDot(gc,
                     translateX.translate(point, centerX, size),
-                    translateY.translate(basicFunction.getValue(point), centerY, size),
-                    Color.BLACK
+                    translateY.translate(resultFunction.getValue(point), centerY, size),
+                    Color.GREEN
             );
+
+            if (equationMode != Mode.CUSTOM) {
+                drawDot(gc,
+                        translateX.translate(point, centerX, size),
+                        translateY.translate(compareFunction.getValue(point), centerY, size),
+                        Color.MAGENTA
+                );
+            }
         }
     }
 
@@ -413,11 +467,7 @@ public class Controller {
 
         double arrowX = translateX.translate(0, centerX, size);
         double arrowY = translateY.translate(0, centerY, size);
-
         double step = CANVAS_SIZE / 10;
-
-        if (arrowX - step < 0 || arrowX + step > CANVAS_SIZE) arrowX = 0;
-        if (arrowY - step < 0 || arrowY + step > CANVAS_SIZE) arrowY = CANVAS_SIZE;
 
         gc.setStroke(Color.GRAY);
         gc.setFill(Color.BLACK);
@@ -425,6 +475,7 @@ public class Controller {
         gc.setFont(Font.font(10));
 
         gc.beginPath();
+
         for (double i = arrowX % step; i <= CANVAS_SIZE; i += step) {
             gc.moveTo(i, 0);
             gc.lineTo(i, CANVAS_SIZE);
@@ -438,6 +489,9 @@ public class Controller {
         }
 
         gc.stroke();
+
+        if (arrowX - step < 0 || arrowX + step > CANVAS_SIZE) arrowX = 0;
+        if (arrowY - step < 0 || arrowY + step > CANVAS_SIZE) arrowY = CANVAS_SIZE;
 
         double arrowHeight = step / 2;
         double arrowWidth = arrowHeight / 3;
@@ -468,5 +522,66 @@ public class Controller {
 
         if (arrowY > arrowWidth * 3) gc.fillText("x", CANVAS_SIZE - arrowHeight * 2, arrowY - arrowWidth);
         else gc.fillText("x", CANVAS_SIZE - arrowHeight * 2, arrowY + arrowWidth * 3);
+
+        df.setMaximumFractionDigits(5);
+    }
+
+    public void mouseRelease() {
+        if (!canvasDrag) return;
+        canvasDrag = false;
+
+        PauseTransition decay = new PauseTransition(Duration.millis(1000.0 / 60));
+        decay.setOnFinished(e -> {
+            velocityX *= 0.96;
+            if (Math.abs(velocityX) <= 1) velocityX = 0;
+            velocityY *= 0.96;
+            if (Math.abs(velocityY) <= 1) velocityY = 0;
+
+            moveTo(prevX + velocityX, prevY + velocityY);
+
+            if (!canvasDrag && (velocityX != 0 || velocityY != 0)) decay.playFromStart();
+        });
+        decay.play();
+    }
+
+    public void mouseMove(MouseEvent mouseEvent) {
+        if (!canvasDrag) return;
+        moveTo(mouseEvent.getScreenX(), mouseEvent.getScreenY());
+    }
+
+    public void startMove(MouseEvent mouseEvent) {
+        canvasDrag = true;
+        prevX = mouseEvent.getScreenX();
+        prevY = mouseEvent.getScreenY();
+    }
+
+    public void zoomCanvas(ScrollEvent scrollEvent) {
+        double delta = Math.abs(scrollEvent.getDeltaY()) / 100.0 + 1;
+        if (delta > 2) delta = 2;
+        if (scrollEvent.getDeltaY() > 0) delta = 1 / delta;
+
+        double size = Double.parseDouble(fieldSizeText.getText()) * delta;
+        if (size < 1E-5) size = 1E-5;
+
+        fieldSizeText.setText(df.format(size));
+
+        repaint();
+    }
+
+    private void moveTo(double newX, double newY) {
+        velocityX = newX - prevX;
+        velocityY = newY - prevY;
+
+        double size = Double.parseDouble(fieldSizeText.getText());
+        double x = Double.parseDouble(xCoordText.getText()) - velocityX * size / 200.0;
+        double y = Double.parseDouble(yCoordText.getText()) + velocityY * size / 200.0;
+
+        xCoordText.setText(df.format(x));
+        yCoordText.setText(df.format(y));
+
+        prevX = newX;
+        prevY = newY;
+
+        repaint();
     }
 }

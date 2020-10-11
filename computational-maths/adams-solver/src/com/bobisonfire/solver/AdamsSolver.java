@@ -1,6 +1,7 @@
 package com.bobisonfire.solver;
 
 import com.bobisonfire.function.ExtendedFunction;
+import com.bobisonfire.function.Function;
 import com.bobisonfire.function.Point;
 
 import static java.lang.Math.*;
@@ -16,9 +17,13 @@ public class AdamsSolver {
         this.varY = varY;
     }
 
+    public AdamsSolver(Function function, String x, String y) {
+        this((ExtendedFunction) function, x, y);
+    }
+
     public Point[] solve(Point start, double end, double precision) {
         double step = pow(precision, 0.25);
-        int len = (int) ((end - start.get(varX)) / precision) + 1;
+        int len = (int) ((end - start.get(varX)) / step) + 1;
 
         Point[] result = new Point[len];
         result[0] = start.copy();
