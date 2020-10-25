@@ -1,5 +1,6 @@
 DEBUG		?= YES
 DEBUG_FLAGS.YES := -g
+ROOT		:= ../..
 
 ASM := /usr/bin/nasm
 LD := /usr/bin/ld
@@ -16,7 +17,11 @@ all: $(patsubst %.asm,%,$(SOURCES))
 
 factorial.o: lib.inc
 
-.PHONY: clean
+.PHONY: install clean
+install: factorial
+	mkdir -p $(ROOT)/bin
+	cp $^ $(ROOT)/bin/lab1
+
 clean:
 	$(RM) $(patsubst %.asm,%.o,$(SOURCES))
 	$(RM) $(patsubst %.asm,%,$(SOURCES))

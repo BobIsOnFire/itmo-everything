@@ -1,4 +1,5 @@
-NAME := lab3
+NAME := scalar_product
+ROOT := ../..
 
 SOURCES := $(wildcard *.c) $(wildcard *.asm)
 OBJECTS := $(addsuffix .o,$(SOURCES))
@@ -24,6 +25,11 @@ $(NAME): $(OBJECTS)
 
 ulong_ops.c: ulong_ops.h
 main.c: ulong_ops.h
+
+.PHONY: install clean
+install: $(NAME)
+	mkdir -p $(ROOT)/bin/lab3
+	cp $^ $(ROOT)/bin/lab3
 
 clean:
 	$(RM) $(OBJECTS) $(NAME)

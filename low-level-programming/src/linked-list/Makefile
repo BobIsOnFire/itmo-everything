@@ -1,4 +1,5 @@
 NAME := lab5
+ROOT := ../..
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(addsuffix .o,$(SOURCES))
@@ -20,6 +21,11 @@ main.c: linked_list.h
 bi_linked_list.c: bi_linked_list.h
 
 TMP_FILES := list.txt list.bin
+
+.PHONY: install clean
+install: $(NAME)
+	mkdir -p $(ROOT)/bin
+	cp $^ $(ROOT)/bin
 
 clean:
 	$(RM) $(OBJECTS) $(NAME) $(TMP_FILES)

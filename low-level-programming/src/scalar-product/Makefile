@@ -1,5 +1,6 @@
 CC := gcc
 CFLAGS := -ansi -pedantic-errors
+ROOT := ../..
 
 CWARNINGS := all error
 CFLAGS += $(addprefix -W,$(CWARNINGS))
@@ -12,6 +13,10 @@ all: $(OBJECTS)
 %: %.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-.PHONY: clean
+.PHONY: clean install
+install: main conscious_main
+	mkdir -p $(ROOT)/bin/lab3
+	cp $^  $(ROOT)/bin/lab3
+
 clean:
 	$(RM) $(OBJECTS)
