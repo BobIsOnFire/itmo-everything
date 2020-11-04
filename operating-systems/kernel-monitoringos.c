@@ -123,8 +123,8 @@ void *write_block(void *args) {
     struct write_thread_args *v_args = args;
     char *start = v_args->start;
     size_t size = v_args->size;
-        
-    do_write_block(count, start, size);
+
+    do_write_block(++count, start, size);
 
     return NULL;
 }
