@@ -54,7 +54,7 @@
 #define IO_BLOCK_SIZE 6 /* 6 B */
 #define READ_THREADS_COUNT 200
 
-#define FILE_OPEN_FLAGS O_RDWR | O_CREAT | __O_DIRECT
+#define FILE_OPEN_FLAGS O_RDWR | O_CREAT
 #define FILE_OPEN_MODE S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH
 #define FILE_TEMPLATE "/tmp/os-rand-file-%lu"
 
@@ -62,6 +62,7 @@ static sem_t tmp_sem[FILE_COUNT];
 static int tmp_fd[FILE_COUNT];
 
 static volatile int thread_initialized;
+static volatile int thread_terminate = 0;
 static pthread_t write_threads[WRITE_THREADS_COUNT];
 static pthread_t read_threads[READ_THREADS_COUNT];
 
@@ -93,7 +94,7 @@ void sem_setup( void ) {
 void do_write_block(size_t count, char *start, size_t size) {
     thread_initialized = 1;
     size_t lock_count = 0;
-    while (1) {
+    while (!thread_terminate) {
         size_t num, i;
         /* write random bytes into designated memory space */
         getrandom(start, size, 0);
@@ -104,7 +105,7 @@ void do_write_block(size_t count, char *start, size_t size) {
         lock_count++;
 
         /* write bytes from memory space to random offsets in the file */
-        fprintf(stderr, "[write %3lu] Acquired lock to file #%lu (for the %lu time)\n", count, num, lock_count);
+        fprintf(stderr, "[write %3lu] Lock to file #%lu: ACQUIRE (for the %lu time)\n", count, num, lock_count);
         for (i = 0; i < size; i += IO_BLOCK_SIZE) {
             off_t offset = rand() % (FILE_SIZE - IO_BLOCK_SIZE);
             lseek(tmp_fd[num], offset, SEEK_SET);
@@ -112,9 +113,10 @@ void do_write_block(size_t count, char *start, size_t size) {
         }
 
         /* release lock */
-        fprintf(stderr, "[write %3lu] Lock to file #%lu released\n", count, num);
+        fprintf(stderr, "[write %3lu] Lock to file #%lu: RELEASE\n", count, num);
         sem_post(&tmp_sem[num]);
     }
+    fprintf(stderr, "[write %3lu] Thread terminated\n", count);
 }
 
 void *write_block(void *args) {
@@ -141,22 +143,22 @@ void write_threads_init(char *p) {
         struct write_thread_args args = {p + i * size, size};
         pthread_create(&write_threads[i], NULL, write_block, &args);
         while (!thread_initialized);
-        fprintf(stdout, "%3lu. Created write thread for block at %ld\n", (i + 1), (long) (p + i * size));
+        fprintf(stderr, "%3lu. Created write thread for block at %ld\n", (i + 1), (long) (p + i * size));
     }
 }
 
 void do_read_block(size_t count, size_t num, off_t offset, size_t size) {
     thread_initialized = 1;
     size_t lock_count = 0;
-    while (1) {
+    while (!thread_terminate) {
         size_t i;
-        char min = CHAR_MAX;
-        char block[size];
+        unsigned char min = CHAR_MAX;
+        unsigned char block[size];
         
         /* acquire lock on a file */
         sem_wait(&tmp_sem[num]);
         lock_count++;
-        fprintf(stderr, " [read %3lu] Acquired lock to file #%lu (for the %lu time)\n", count, num, lock_count);
+        fprintf(stderr, "[read %4lu] Lock to file #%lu: ACQUIRE (for the %lu time)\n", count, num, lock_count);
 
         /* read a block at the offset */
         lseek(tmp_fd[num], offset, SEEK_SET);
@@ -164,11 +166,13 @@ void do_read_block(size_t count, size_t num, off_t offset, size_t size) {
         for (i = 0; i < size; i++) {
             if (min > block[i]) min = block[i];
         }
+        
 
         /* release lock */
-        fprintf(stderr, " [read %3lu] Lock to file #%lu released, min is %hhd\n", count, num, min);
+        fprintf(stderr, "[read %4lu] Lock to file #%lu: RELEASE, aggregated result: %#hhx\n", count, num, min);
         sem_post(&tmp_sem[num]);
     }
+    fprintf(stderr, "[read %4lu] Thread terminated\n", count);
 }
 
 void *read_block(void *args) {
@@ -198,16 +202,28 @@ void read_threads_init(void) {
 
             pthread_create(&read_threads[i], NULL, read_block, &args);
             while (!thread_initialized);
-            fprintf(stdout, "%3lu. Created read thread for file %lu, offset %ld, size %lu\n", (i * threads_per_file + j + 1), i, (j * size), size);
+            fprintf(stderr, "%3lu. Created read thread for file %lu, offset %ld, size %lu\n", (i * threads_per_file + j + 1), i, (j * size), size);
         }
     }
+}
+
+void close_threads(void) {
+    size_t i;
+    thread_terminate = 1;
+    for (i = 0; i < WRITE_THREADS_COUNT; i++) pthread_join(write_threads[i], NULL);
+    for (i = 0; i < READ_THREADS_COUNT; i++) pthread_join(read_threads[i], NULL);
+    for (i = 0; i < FILE_COUNT; i++)  {
+        close(tmp_fd[i]);
+        sem_destroy(&tmp_sem[i]);
+    }
+    puts("All threads are terminated");
 }
 
 int main( void ) {
     srand((unsigned) time(NULL));
     sem_setup();
 
-    size_t i;
+    while (getchar() != '\n'); /* Before allocation */
     char *p = mmap(
         (void *) MEMORY_ADDRESS,
         MEMORY_SIZE,
@@ -216,9 +232,16 @@ int main( void ) {
         -1,
         0
     );
+    puts("Memory allocated");
+    while (getchar() != '\n'); /* After allocation */
 
     write_threads_init(p);
     read_threads_init();
-    while (1);
+
+    while (getchar() != '\n'); /* After memory filling (need to wait a little) */
+    close_threads();
+
+    munmap(p, MEMORY_SIZE);
+    while (getchar() != '\n'); /* After deallocating */
     return 0;
 }
