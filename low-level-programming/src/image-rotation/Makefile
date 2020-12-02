@@ -1,23 +1,38 @@
-NAME := lab6
+NAME := lab8
 ROOT := ../..
 
-SOURCES  := $(wildcard *.c)
-OBJECTS  := $(addsuffix .o,$(SOURCES))
+SOURCES.C   := $(wildcard *.c)
+OBJECTS.C   := $(addsuffix .o,$(SOURCES.C))
 
-CC := gcc
-CFLAGS := -g -pedantic-errors
-LIBS := -lm
+SOURCES.ASM := $(wildcard *.asm)
+OBJECTS.ASM := $(addsuffix .o,$(SOURCES.ASM))
 
+OBJECTS     := $(OBJECTS.C) $(OBJECTS.ASM)
+
+CC        := gcc
+CFLAGS    := -g -pedantic-errors -Iheaders
+CLIBS     := -lm
 CWARNINGS := all error
-CFLAGS += $(addprefix -W,$(CWARNINGS))
+CFLAGS    += $(addprefix -W,$(CWARNINGS))
+
+ASM       := nasm
+ASMFLAGS  := -felf64 -g
 
 all: $(NAME)
 
 $(NAME): $(OBJECTS)
-	$(CC) $^ -o $@ $(LIBS)
+	$(CC) $^ -o $@ $(CLIBS)
 
-%.c.o: %.c Makefile image_utils.h
+%.c.o: %.c Makefile
 	$(CC) $(CFLAGS) $< -c -o $@
+
+%.asm.o: %.asm Makefile
+	$(ASM) $(ASMFLAGS) $< -o $@
+
+image_definitions.c.o: headers/image_definitions.h
+bmp_utils.c.o:         headers/image_definitions.h headers/bmp_utils.h
+image_transform.c.o:   headers/image_definitions.h headers/image_transform.h
+main.c.o:              headers/image_definitions.h headers/bmp_utils.h headers/image_transform.h
 
 .PHONY: install clean
 install: $(NAME)
