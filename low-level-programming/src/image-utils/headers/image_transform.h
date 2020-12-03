@@ -21,7 +21,6 @@
 
 #include <math.h>
 #include <stdbool.h>
-#include <sys/mman.h>
 
 #include "image_definitions.h"
 
@@ -54,26 +53,27 @@ static const float byte_to_float[256] = {
     240.0f, 241.0f, 242.0f, 243.0f, 244.0f, 245.0f, 246.0f, 247.0f, 248.0f, 249.0f, 250.0f, 251.0f, 252.0f, 253.0f, 254.0f, 255.0f
 };
 
-enum effect_mode {
+typedef enum _effect_mode {
     M_ROTATE,
     M_BLUR,
     M_DILATE,
     M_ERODE,
     M_SEPIA,
-    M_SEPIA_FAST
-};
+    M_SEPIA_FAST,
+    M_INVALID
+} effect_mode;
 
-void apply_mask(struct image * const source, struct image const mask);
+void apply_mask(image * const source, image const mask);
 
-struct image rotate(struct image const source, int64_t angle);
+image rotate(image const source, int64_t angle);
 
-struct image morph_transform(struct image const source, enum effect_mode const mode);
-struct image blur(struct image const source);
-struct image dilate(struct image const source);
-struct image erode(struct image const source);
+image morph_transform(image const source, effect_mode const mode);
+image blur(image const source);
+image dilate(image const source);
+image erode(image const source);
 
-struct image sepia(struct image const source);
-struct image sepia_fast(struct image const source);
+image sepia(image const source);
+image sepia_fast(image const source);
 
 void packed_mul(float *result, float const *mul1, float const *mul2);
 

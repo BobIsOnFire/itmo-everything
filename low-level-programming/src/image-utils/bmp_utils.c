@@ -1,10 +1,11 @@
 #include "bmp_utils.h"
 
-static void *memory_map(uint64_t size) {
-    return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+static uint64_t get_remainder(uint64_t width) {
+    uint64_t rem = (width * 3) % 4;
+    return rem ? (4 - rem) : 0;
 }
 
-void bmp_header_print(struct bmp_header header) {
+void bmp_header_print(bmp_header header) {
     printf("         bfType: %#x\n", header.bfType);
     printf("         bfSize: %u\n", header.bfSize);
     printf("     bfReserved: %u\n", header.bfReserved);
@@ -22,9 +23,8 @@ void bmp_header_print(struct bmp_header header) {
     printf(" biClrImportant: %u\n", header.biClrImportant);
 }
 
-struct bmp_header bmp_header_compose(struct image img) {
-    struct bmp_header header;
-    uint64_t remainder;
+bmp_header bmp_header_compose(image img) {
+    bmp_header header = BMP_HEADER_EMPTY;
 
     header.bfType          = BF_TYPE_DEFAULT;
     header.bfReserved      = BF_RESERVED_DEFAULT;
@@ -42,15 +42,13 @@ struct bmp_header bmp_header_compose(struct image img) {
     header.biHeight = img.height;
     header.biWidth = img.width;
 
-    remainder = (img.width * 3) % 4;
-    remainder = (remainder == 0) ? 0 : (4 - remainder);
-    header.biSizeImage = (img.width * 3 + remainder) * img.height;
+    header.biSizeImage = (img.width * 3 + get_remainder(img.width)) * img.height;
     header.bfSize = header.biSizeImage + header.bfOffBits;
 
     return header;
 }
 
-enum read_status bmp_header_sanity_check(struct bmp_header header) {
+read_status bmp_header_sanity_check(bmp_header header) {
     /* these do not make header invalid, but separate supported files from unsupported */
     if (header.bfType        != BF_TYPE_DEFAULT)        return READ_INVALID_SIGNATURE;
     if (header.biBitCount    != BI_BIT_COUNT_DEFAULT)   return READ_INVALID_BITS;
@@ -65,32 +63,25 @@ enum read_status bmp_header_sanity_check(struct bmp_header header) {
     return READ_OK;
 }
 
-enum read_status from_bmp(FILE *in, struct image * const image) {
-    enum read_status sanity_check_status;
-    uint8_t spare[4];
-    int64_t remainder, row;
-    struct bmp_header header;
+read_status from_bmp(FILE *in, image * const img) {
+    if (img == NULL) return READ_IMAGE_NULL;
 
-    if (image == NULL) return READ_IMAGE_NULL;
+    bmp_header header = BMP_HEADER_EMPTY;
     if (!fread(&header, sizeof(header), 1, in)) return READ_IO_ERROR;
 
-    sanity_check_status = bmp_header_sanity_check(header);
-    if (sanity_check_status != READ_OK) return sanity_check_status;
+    read_status sc_status = bmp_header_sanity_check(header);
+    if (sc_status != READ_OK) return sc_status;
 
-    image->height = header.biHeight;
-    image->width = header.biWidth;    
-    image->data = memory_map(image->height * image->width * 3);
-    image->mask = NULL;
+    *img = image_create(header.biHeight, header.biWidth);
 
-    /* how many bytes to skip to get on the next row */
-    remainder = (image->width * 3) % 4;
-    remainder = (remainder == 0) ? 0 : (4 - remainder);
+    uint64_t remainder = get_remainder(img->width);
+    uint8_t spare[4] = {0};
 
-    for (row = image->height - 1; row >= 0; row--) {
-        uint64_t row_bits = fread(&image->data[row * image->width], sizeof(struct pixel), image->width, in);
+    for (int64_t row = img->height - 1; row >= 0; row--) {
+        uint64_t row_bits = fread(img->data + row * img->width, sizeof(pixel), img->width, in);
         uint64_t rem_bits = fread(spare, sizeof(uint8_t), remainder, in);
         if (!row_bits || (remainder && !rem_bits)) {
-            free(image->data);
+            free(img->data);
             return READ_IO_ERROR;
         }
     }
@@ -98,23 +89,20 @@ enum read_status from_bmp(FILE *in, struct image * const image) {
     return READ_OK;
 }
 
-enum write_status to_bmp(FILE *out, struct image const *image) {
-    int64_t remainder, row;
-    const uint8_t spare[4] = {0};
-    struct bmp_header header;
-    
-    if (image == NULL) return WRITE_IMAGE_NULL;
-    header = bmp_header_compose(*image);
+write_status to_bmp(FILE *out, image const *img) {
+    if (img == NULL) return WRITE_IMAGE_NULL;
+
+    bmp_header header = bmp_header_compose(*img);
     if (!fwrite(&header, sizeof(header), 1, out)) return WRITE_IO_ERROR;
 
-    /* how many bytes to skip to get on the next row */
-    remainder = (image->width * 3) % 4;
-    remainder = (remainder == 0) ? 0 : (4 - remainder);
+    uint64_t remainder = get_remainder(img->width);
+    uint8_t spare[4] = {0};
 
-    for (row = image->height - 1; row >= 0; row--) {
-        uint64_t row_bits = fwrite(&image->data[row * image->width], sizeof(struct pixel), image->width, out);
-        uint64_t rem_bits = fwrite(spare, sizeof(uint8_t), remainder, out);
-        if (!row_bits || (remainder && !rem_bits)) return WRITE_IO_ERROR;
+    for (int64_t row = img->height - 1; row >= 0; row--) {
+        if (
+            !fwrite(img->data + row * img->width, sizeof(pixel), img->width, out) ||
+            (remainder && !fwrite(spare, sizeof(uint8_t), remainder, out))
+        ) return WRITE_IO_ERROR;
     }
 
     return WRITE_OK;
