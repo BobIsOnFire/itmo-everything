@@ -9,4 +9,7 @@ CREATE INDEX delivery_order_responsible_id_hash ON delivery_order USING HASH(res
 
 CREATE INDEX store_room_order_responsible_id_hash ON store_room USING HASH(responsible_id);
 
+CREATE INDEX item_name_hash ON item USING HASH(name);
+
 CREATE INDEX user_family_card_id_hash ON user_account USING HASH(family_card_id);
+CREATE INDEX user_email_hash ON user_account USING HASH(email);
