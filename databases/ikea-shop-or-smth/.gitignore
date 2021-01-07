@@ -1,3 +1,6 @@
 *.sh
 *.pyc
+*.db
+logs/
+migrations/
 
