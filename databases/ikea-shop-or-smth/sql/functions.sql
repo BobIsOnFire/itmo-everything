@@ -195,8 +195,9 @@ CREATE OR REPLACE FUNCTION add_delivery_order(
 
     BEGIN
         INSERT INTO delivery_order
-            (ord_id, address, assembly_ordered, delivery_time, responsible_id, order_id) VALUES
+            (id, address, assembly_ordered, delivery_time, responsible_id, order_id) VALUES
             (
+                ord_id,
                 requester_address,
                 requester_assembly,
                 requester_delivery_time,
