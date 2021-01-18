@@ -25,12 +25,12 @@ INSERT INTO family_card
     (    1,      0, '2020-12-06 19:46:30');
 
 INSERT INTO user_account
-    (name,              email,                  family_card_id, password_hash                                                                                   ) VALUES
-    ('Nikita Akatyev',  'akatyevnl@gmail.com',               2, 'pbkdf2:sha256:150000$Z8U9Sohl$edc023ac7002c39801122876eb2f41f2914dc8287b5c5f8fbc71833adca0f143'), -- pw: 123
-    ('Mikhail Mirchuk', 'miker@goodgame.ru',              NULL, 'pbkdf2:sha256:150000$zFqMP463$b27de9cb14488268dd776df2a0e2f652b5a7b1a7b7f2f0b0d7bafa19e95a35a5'), -- pw: bob
-    ('Artem Gorshkov',  'gorshik@gmail.com',                 3, 'pbkdf2:sha256:150000$SWTe3gjo$f90e085f93723e60f1b8b19343805039a535eeda7592d2b4a7ebc6876c8e8920'), -- pw: mac
-    ('Sandy Muse',      'muse134@bing.com',                  1, 'pbkdf2:sha256:150000$POXP1cps$ba107d9e0299d5ba4cbd5272162ee311791c233c80e315a6c6d0f716e032c118'), -- pw: cheese
-    ('Maxim Iurov',     'maxim.iurov@ikea.com',           NULL, 'pbkdf2:sha256:150000$BpGX146a$4eb8f940383195ce6b9f4a01b127903cd864d88677f8c544e21a8e788c4eeab6'); -- pw: 321
+    (name,              email,                  family_card_id, password_hash                                                                     ) VALUES
+    ('Nikita Akatyev',  'akatyevnl@gmail.com',               2, 'sha256$Cn5lidZ5$faf314c0ab0b67544a05425afb59f0c5c8196555fa8db13685a06b4bd14a38b2'), -- pw: 123
+    ('Mikhail Mirchuk', 'miker@goodgame.ru',              NULL, 'sha256$opdEZ6Xy$845eb21f497bf87917d65f6ee7d3281ae7a392dc680b401dc3e0350797f7908b'), -- pw: bob
+    ('Artem Gorshkov',  'gorshik@gmail.com',                 3, 'sha256$qq4S4OYM$6bfc8605e1d884c29e02cda52c47e9814d6e9b63760832b463bbcb555781d2f4'), -- pw: mac
+    ('Sandy Muse',      'muse134@bing.com',                  1, 'sha256$K9Ixx47w$78cb9589cb939ce1de9d48b425f665ebd06021db87e7d6501c14916e79374fc5'), -- pw: cheese
+    ('Maxim Iurov',     'maxim.iurov@ikea.com',           NULL, 'sha256$YHeJXWCM$a7a3222b11f59cad276f3d668653eb22b6d96574c2bbfe495dfdee8e8c9713c2'); -- pw: 321
 
 INSERT INTO store_room
     (name,                        length, width, responsible_id) VALUES

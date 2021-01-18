@@ -1,5 +1,10 @@
 CREATE TYPE department AS enum ('sales', 'engineering', 'delivery', 'support', 'higher management');
 
+CREATE TYPE order_item AS (
+    item_id integer,
+    item_count integer
+);
+
 CREATE TABLE employee
 (
     id serial
