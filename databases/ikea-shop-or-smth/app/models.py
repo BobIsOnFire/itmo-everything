@@ -133,98 +133,109 @@ class ItemContent(db.Model):
     material = db.Column(db.String(64))
     part_count = db.Column(db.Integer)
 
-def get_user_data(user_id):
-    user_data_cols = [
-        db.column('user_id'),
-        db.column('name'),
-        db.column('email'),
-        db.column('card_level'),
-        db.column('card_points'),
-        db.column('card_release_time')
-    ]
+class PgFunctionWrapper():
+    def get_user_data(self, user_id):
+        user_data_cols = [
+            db.column('user_id'),
+            db.column('name'),
+            db.column('email'),
+            db.column('card_level'),
+            db.column('card_points'),
+            db.column('card_release_time')
+        ]
 
-    stmt = db.select(user_data_cols).select_from(db.func.get_user_data(user_id))
-    return db.session.execute(stmt).first()
+        stmt = db.select(user_data_cols).select_from(db.func.get_user_data(user_id))
+        return db.session.execute(stmt).first()
 
-def get_order_history(user_id):
-    order_data_cols = [
-        db.column('order_id'),
-        db.column('order_time'),
-        db.column('delivery_requested'),
-        db.column('address'),
-        db.column('delivery_time'),
-        db.column('assembly_ordered'),
-        db.column('resolved'),
-        db.column('resolve_time')
-    ]
+    def get_order_history(self, user_id):
+        order_data_cols = [
+            db.column('order_id'),
+            db.column('order_time'),
+            db.column('delivery_requested'),
+            db.column('address'),
+            db.column('delivery_time'),
+            db.column('assembly_ordered'),
+            db.column('resolved'),
+            db.column('resolve_time')
+        ]
 
-    stmt = db.select(order_data_cols).select_from(db.func.get_order_history(user_id))
-    return db.session.execute(stmt).fetchall()
+        stmt = db.select(order_data_cols).select_from(db.func.get_order_history(user_id))
+        return db.session.execute(stmt).fetchall()
 
-def get_order_data(order_id):
-    order_data_cols = [
-        db.column('customer_id'),
-        db.column('order_id'),
-        db.column('order_time'),
-        db.column('delivery_requested'),
-        db.column('address'),
-        db.column('delivery_time'),
-        db.column('assembly_ordered'),
-        db.column('resolved'),
-        db.column('resolve_time')
-    ]
+    def get_order_data(self, order_id):
+        order_data_cols = [
+            db.column('customer_id'),
+            db.column('order_id'),
+            db.column('order_time'),
+            db.column('delivery_requested'),
+            db.column('address'),
+            db.column('delivery_time'),
+            db.column('assembly_ordered'),
+            db.column('resolved'),
+            db.column('resolve_time')
+        ]
 
-    stmt = db.select(order_data_cols).select_from(db.func.get_order_data(order_id))
-    return db.session.execute(stmt).first()
+        stmt = db.select(order_data_cols).select_from(db.func.get_order_data(order_id))
+        return db.session.execute(stmt).first()
 
 
-def get_order_content(order_id):
-    order_content_cols = [
-        db.column('item_id'),
-        db.column('name'),
-        db.column('price'),
-        db.column('length'),
-        db.column('width'),
-        db.column('height'),
-        db.column('in_stock_storage'),
-        db.column('in_stock_shop'),
-        db.column('store_room'),
-        db.column('item_count')
-    ]
+    def get_order_content(self, order_id):
+        order_content_cols = [
+            db.column('item_id'),
+            db.column('name'),
+            db.column('price'),
+            db.column('length'),
+            db.column('width'),
+            db.column('height'),
+            db.column('in_stock_storage'),
+            db.column('in_stock_shop'),
+            db.column('store_room'),
+            db.column('item_count')
+        ]
 
-    stmt = db.select(order_content_cols).select_from(db.func.get_order_content(order_id))
-    return db.session.execute(stmt).fetchall()
+        stmt = db.select(order_content_cols).select_from(db.func.get_order_content(order_id))
+        return db.session.execute(stmt).fetchall()
 
-def get_item_data(item_id):
-    item_data_cols = [
-        db.column('item_id'),
-        db.column('name'),
-        db.column('price'),
-        db.column('length'),
-        db.column('width'),
-        db.column('height'),
-        db.column('in_stock_storage'),
-        db.column('in_stock_shop'),
-        db.column('store_room')
-    ]
+    def get_item_data(self, item_id):
+        item_data_cols = [
+            db.column('item_id'),
+            db.column('name'),
+            db.column('price'),
+            db.column('length'),
+            db.column('width'),
+            db.column('height'),
+            db.column('in_stock_storage'),
+            db.column('in_stock_shop'),
+            db.column('store_room')
+        ]
 
-    stmt = db.select(item_data_cols).select_from(db.func.get_item_data(item_id))
-    return db.session.execute(stmt).first()
+        stmt = db.select(item_data_cols).select_from(db.func.get_item_data(item_id))
+        return db.session.execute(stmt).first()
 
-def get_item_content(item_id):
-    item_content_cols = [
-        db.column('name'),
-        db.column('length'),
-        db.column('width'),
-        db.column('height'),
-        db.column('color'),
-        db.column('material'),
-        db.column('part_count')
-    ]
+    def get_item_content(self, item_id):
+        item_content_cols = [
+            db.column('name'),
+            db.column('length'),
+            db.column('width'),
+            db.column('height'),
+            db.column('color'),
+            db.column('material'),
+            db.column('part_count')
+        ]
 
-    stmt = db.select(item_content_cols).select_from(db.func.get_item_content(item_id))
-    return db.session.execute(stmt).fetchall()
+        stmt = db.select(item_content_cols).select_from(db.func.get_item_content(item_id))
+        return db.session.execute(stmt).fetchall()
 
+    def add_order(self, user_id, cart):
+        stmt = db.select([db.column('add_order')]).select_from(db.func.add_order(user_id, *cart.get()))
+        return db.session.execute(stmt).fetchone().add_order
+
+    def add_delivery_order(self, address, assembly_requested, delivery_time, main_order_id):
+        stmt = db.select([db.column('add_delivery_order')]).select_from(
+            db.func.add_delivery_order(address, assembly_requested, delivery_time, main_order_id))
+        return db.session.execute(stmt).fetchone().add_delivery_order
+
+pg_functions = PgFunctionWrapper()
 
 @login.user_loader
 def load_user(id):

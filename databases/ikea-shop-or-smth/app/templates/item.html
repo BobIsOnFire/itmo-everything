@@ -1,8 +1,16 @@
 {% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
 {% block app_content %}
 
 <img src="/static/items/{{item_data.item_id}}.webp" alt="{{item_data.name}} picture" height="300" width="300"/>
 <h1>{{item_data.name}}</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        {{ wtf.quick_form(form) }}
+    </div>
+</div><br>
 
 Size: {{item_data.length}} x {{item_data.width}} x {{item_data.height}}<br>
                     

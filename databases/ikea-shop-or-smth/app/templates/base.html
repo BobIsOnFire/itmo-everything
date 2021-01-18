@@ -14,7 +14,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ url_for('index') }}">Microblog</a>
+            <a class="navbar-brand" href="{{ url_for('index') }}">Coursach</a>
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
@@ -25,6 +25,7 @@
                 <li><a href="{{ url_for('login') }}">Login</a></li>
                 {% else %}
                 <li><a href="{{ url_for('user') }}">Profile</a></li>
+                <li><a href="{{ url_for('cart') }}">Shopping Cart</a></li>
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
                 {% endif %}
             </ul>

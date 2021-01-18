@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+
+<h1>Shopping Cart</h1>
+
+<hr>
+
+{% if cart_data %}
+<h3>Items</h3>
+
+{% for item_data, count in cart_data %}
+    <div class="media">
+        <div class="media-left media-middle">
+            <a href="{{url_for('item', item_id=item_data.item_id)}}">
+                <img class="media-object" src="/static/items/{{item_data.item_id}}.webp"
+                        alt="{{item_data.name}} picture" width="64" height="64"/>
+            </a>
+        </div>
+        <div class="media-body media-middle">
+            <h4 class="media-heading">{{item_data.name}}</h4>
+            {{count}} item(s)
+        </div>
+    </div>
+{% endfor %}
+
+<h4>Total price: <b>{{total_price}}</b></h4>
+
+<hr>
+
+<h3>Create Order</h3>
+
+<div class="row">
+    <div class="col-md-4">
+        {{ wtf.quick_form(form) }}
+    </div>
+</div><br>
+{% else %}
+<h3>Nothing here!</h3>
+{% endif %}
+
+{% endblock %}
