@@ -1,12 +1,34 @@
-{% extends "base.html" %}
-{% import 'bootstrap/wtf.html' as wtf %}
+{% extends 'base.html' %}
 
 {% block app_content %}
-    <h1>User: {{ user.username }}</h1>
-    <hr>
-    {% for post in posts %}
+    <h1>User Profile</h1>
+    <h3>Info:</h3>
     <p>
-    {{ post.author.username }} says: <b>{{ post.body }}</b>
+        Name: {{user_data.name}}<br>
+        Email: {{user_data.email}}<br>
+        Card level: {{user_data.card_level}}<br>
+        Card points: {{user_data.card_points}}<br>
+        Card release date: {{user_data.card_release_time}}<br>
     </p>
+    <hr>
+    <h3>Orders:</h3>
+    <ul>
+    {% for order in orders %}
+        <li>
+            <p>
+                <b>{{order.order_time}}</b> Order #{{order.order_id}}<br>
+
+                {% if order.delivery_requested %}
+                    {{order.address}}, delivery at {{order.delivery_time}}<br>
+                {% endif %}
+
+                {% if order.resolved %}
+                    Resolved at {{order.resolve_time}}<br>
+                {% endif %}
+            </p>
+            
+            <p><a class="btn btn-primary" href="{{ url_for('order', order_id=order.order_id) }}">View order</a></p>
+        </li>
     {% endfor %}
+    </ul>
 {% endblock %}

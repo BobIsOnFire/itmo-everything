@@ -1,51 +1,3 @@
--- types for functions and front-end, possibly
-CREATE TYPE order_data AS (
-    order_id integer,
-    order_time timestamp,
-    delivery_requested boolean,
-    address varchar(64),
-    delivery_time timestamp,
-    assembly_ordered boolean,
-    resolved boolean,
-    resolve_time timestamp
-);
-
-CREATE TYPE user_data AS (
-    user_id integer,
-    name varchar(64),
-    email varchar(64),
-    card_level integer,
-    card_points integer,
-    card_release_time timestamp
-);
-
-CREATE TYPE order_item AS (
-    item_id integer,
-    item_count integer
-);
-
-CREATE TYPE order_item_data AS (
-    name varchar(64),
-    price real,
-    length real,
-    width real,
-    height real,
-    in_stock_storage boolean,
-    in_stock_shop boolean,
-    store_room varchar(64),
-    item_count integer
-);
-
-CREATE TYPE item_content AS (
-    name varchar(64),
-    length real,
-    width real,
-    height real,
-    color integer,
-    material varchar(64),
-    part_count integer
-);
-
 CREATE TYPE department AS enum ('sales', 'engineering', 'delivery', 'support', 'higher management');
 
 CREATE TABLE employee
@@ -87,7 +39,9 @@ CREATE TABLE user_account
         NOT NULL UNIQUE,
     family_card_id integer
         DEFAULT NULL
-        REFERENCES family_card(id) ON DELETE SET NULL
+        REFERENCES family_card(id) ON DELETE SET NULL,
+    password_hash varchar(128)
+        NOT NULL
 );
 
 CREATE TABLE store_room

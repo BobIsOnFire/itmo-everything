@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block app_content %}
+
+<img src="/static/items/{{item_data.item_id}}.webp" alt="{{item_data.name}} picture" height="300" width="300"/>
+<h1>{{item_data.name}}</h1>
+
+Size: {{item_data.length}} x {{item_data.width}} x {{item_data.height}}<br>
+                    
+<p>
+{% if item_data.in_stock_storage %}
+    <b>In Stock</b>
+{% else %}
+    <b>Out Of Stock</b>
+{% endif %}
+</p>
+
+{% if item_data.in_stock_shop %}
+    Can be found in the room: {{item_data.store_room}}<br>
+{% endif %}
+
+Item Price: <b>{{item_data.price}}</b><br>
+
+<hr>
+
+<h3>Item Parts</h3>
+
+<ul>
+    {% for part, color in part_data %}
+        <li>
+            <p>
+                <b>{{part.name}}</b><br>
+                {{part.part_count}} part(s)<br>
+                Material: {{part.material}}<br>
+                Size: {{part.length}} x {{part.width}} x {{part.height}}<br>
+                Color: <div style="width:50px;height:50px;border:1px solid black;background-color:{{color}}" ></div><br>
+            </p>
+        </li>
+    {% endfor %}
+    </ul>
+
+{% endblock %}

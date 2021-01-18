@@ -28,8 +28,15 @@ CREATE OR REPLACE FUNCTION find_delivery_responsible()
     END;
     $$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_user_data(user_email varchar(64))
-    RETURNS SETOF user_data AS
+CREATE OR REPLACE FUNCTION get_user_data(requester_id integer)
+    RETURNS TABLE (
+        user_id integer,
+        name varchar(64),
+        email varchar(64),
+        card_level integer,
+        card_points integer,
+        card_release_time timestamp
+    ) AS
     $$
     BEGIN
         RETURN QUERY
@@ -37,18 +44,27 @@ CREATE OR REPLACE FUNCTION get_user_data(user_email varchar(64))
             FROM user_account u
             LEFT JOIN family_card card
             ON card.id = u.family_card_id
-            WHERE u.email = user_email;
+            WHERE u.id = requester_id;
     END;
     $$ LANGUAGE PLPGSQL;
 
 CREATE OR REPLACE FUNCTION get_order_history(requester_id integer)
-    RETURNS SETOF order_data AS
+    RETURNS TABLE (
+        order_id integer,
+        order_time timestamp,
+        delivery_requested boolean,
+        address varchar(64),
+        delivery_time timestamp,
+        assembly_ordered boolean,
+        resolved boolean,
+        resolve_time timestamp
+    ) AS
     $$
     BEGIN
         RETURN QUERY
             SELECT ord.id AS order_id, ord.order_time, del.id IS NOT NULL AS delivery_requested,
                    del.address, del.delivery_time, del.assembly_ordered,
-                   ord.resolve_time IS NOT NULL AS resolved, resolve_time
+                   ord.resolve_time IS NOT NULL AS resolved, ord.resolve_time
             FROM customer_order ord
             LEFT JOIN delivery_order del ON del.order_id = ord.id
             WHERE ord.customer_id = requester_id
@@ -56,13 +72,50 @@ CREATE OR REPLACE FUNCTION get_order_history(requester_id integer)
     END;
     $$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_order_content(main_order_id integer)
-    RETURNS SETOF order_item_data AS
+CREATE OR REPLACE FUNCTION get_order_data(main_order_id integer)
+    RETURNS TABLE (
+        customer_id integer,
+        order_id integer,
+        order_time timestamp,
+        delivery_requested boolean,
+        address varchar(64),
+        delivery_time timestamp,
+        assembly_ordered boolean,
+        resolved boolean,
+        resolve_time timestamp
+    ) AS
     $$
     BEGIN
         RETURN QUERY
-            SELECT it.name, it.price, it.length, it.width, it.height, it.in_stock_storage,
-                   it.in_stock_shop, room.name, ord.item_count
+            SELECT ord.customer_id, ord.id AS order_id, ord.order_time,
+                   del.id IS NOT NULL AS delivery_requested, del.address,
+                   del.delivery_time, del.assembly_ordered,
+                   ord.resolve_time IS NOT NULL AS resolved, ord.resolve_time
+            FROM customer_order ord
+            LEFT JOIN delivery_order del ON del.order_id = ord.id
+            WHERE ord.id = main_order_id
+            ORDER BY ord.order_time;
+    END;
+    $$ LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION get_order_content(main_order_id integer)
+    RETURNS TABLE (
+        item_id integer,
+        name varchar(64),
+        price real,
+        length real,
+        width real,
+        height real,
+        in_stock_storage boolean,
+        in_stock_shop boolean,
+        store_room varchar(64),
+        item_count integer
+    ) AS
+    $$
+    BEGIN
+        RETURN QUERY
+            SELECT it.id AS item_id, it.name, it.price, it.length, it.width, it.height,
+                   it.in_stock_storage, it.in_stock_shop, room.name, ord.item_count
             FROM order_content ord
             INNER JOIN item it ON it.id = ord.item_id
             INNER JOIN store_room room ON it.store_room_id = room.id
@@ -70,25 +123,45 @@ CREATE OR REPLACE FUNCTION get_order_content(main_order_id integer)
     END;
     $$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_item_content(main_item_id integer)
-    RETURNS SETOF item_content AS
+CREATE OR REPLACE FUNCTION get_item_data(main_item_id integer)
+    RETURNS TABLE (
+        item_id integer,
+        name varchar(64),
+        price real,
+        length real,
+        width real,
+        height real,
+        in_stock_storage boolean,
+        in_stock_shop boolean,
+        store_room varchar(64)
+    ) AS
     $$
     BEGIN
         RETURN QUERY
-            SELECT name, length, width, height, color, material, part_count
-            FROM item_part
-            WHERE item_id = main_item_id;
+            SELECT it.id AS item_id, it.name, it.price, it.length, it.width, it.height,
+                   it.in_stock_storage, it.in_stock_shop, room.name
+            FROM item it
+            INNER JOIN store_room room ON it.store_room_id = room.id
+            WHERE it.id = main_item_id;
     END;
     $$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION get_item_content(item_name varchar(64))
-    RETURNS SETOF item_content AS
+CREATE OR REPLACE FUNCTION get_item_content(main_item_id integer)
+    RETURNS TABLE (
+        name varchar(64),
+        length real,
+        width real,
+        height real,
+        color integer,
+        material varchar(64),
+        part_count integer
+    ) AS
     $$
-    DECLARE item_id integer := (SELECT id FROM item WHERE item_name = name);
-
     BEGIN
         RETURN QUERY
-            SELECT * FROM get_item_content(item_id);
+            SELECT p.name, p.length, p.width, p.height, p.color, p.material, p.part_count
+            FROM item_part p
+            WHERE p.item_id = main_item_id;
     END;
     $$ LANGUAGE PLPGSQL;
 

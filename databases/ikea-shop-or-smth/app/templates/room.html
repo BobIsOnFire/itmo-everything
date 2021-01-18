@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block app_content %}
+<h1>{{current_room.name}}</h1>
+
+<hr>
+
+<h3>Items</h3>
+
+{% for item in items %}
+<div class="thumbnail col-sm-5 col-md-3">
+    <img src="/static/items/{{item.id}}.webp" alt="{{item.name}} picture"/>
+    <div class="caption">
+        <h4>{{item.name}}</h4>
+        <p><a href="/item/{{item.id}}" class="btn btn-primary stretched-link">Go to item</a></p>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

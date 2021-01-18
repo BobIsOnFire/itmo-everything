@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <h1>Order #{{order_data.order_id}}</h1>
+    <p>
+        Order Time: {{order_data.order_time}}<br>
+
+        {% if order_data.delivery_requested %}
+            <p>
+                <b>Delivery requested:</b><br>
+                Address: {{order_data.address}}<br>
+                Delivery Time Requested: {{order_data.delivery_time}}<br>
+                {% if order_data.assembly_requested %}<b>Assembly Required</b><br>{% endif %}    
+            </p>
+        {% endif %}
+
+        {% if order_data.resolved %}
+            <p><b>Order Resolved</b> at {{order_data.resolve_time}}</p>
+        {% endif %}
+    </p>
+    <h3>Order Cost: {{total_price}}</h3>
+
+    <hr>
+    
+    <h3>Content:</h3>
+
+    <div class="accordion" id="item-accordion">
+        {% for item in content %}
+        <div class="panel">
+            <div class="panel-heading" id="item-header-{{item.item_id}}">
+                <h4 class="mb-0">
+                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                            data-target="#item-collapse-{{item.item_id}}" aria-expanded="true"
+                            aria-controls="item-collapse-{{item.item_id}}">
+                        {{item.name}} - {{item.item_count}} item(s)
+                    </button>
+                </h4>
+            </div>
+      
+            <div id="item-collapse-{{item.item_id}}" class="collapse" aria-labelledby="item-header-{{item.item_id}}" data-parent="#item-accordion">
+                <div class="panel-body">
+                    Size: {{item.length}} x {{item.width}} x {{item.height}}<br>
+                    
+                    <p>
+                    {% if item.in_stock_storage %}
+                        <b>In Stock</b>
+                    {% else %}
+                        <b>Out Of Stock</b>
+                    {% endif %}
+                    </p>
+
+                    {% if item.in_stock_shop %}
+                        Can be found in the room: {{item.store_room}}<br>
+                    {% endif %}
+
+                    Item Price: <b>{{item.price}}</b><br>
+                    Total Cost: <b>{{item.price * item.item_count}}</b>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

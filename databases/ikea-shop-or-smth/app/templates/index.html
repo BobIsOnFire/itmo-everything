@@ -1,8 +1,18 @@
 {% extends 'base.html' %}
 {% block app_content %}
-<h1>Hello, {{current_user.username}}</h1>
-<p>Posts you have missed:</p>
-{% for post in posts %}
-<p>{{post.author.nickname}} says: <b>{{post.body}}</b></p>
+<h1>IKEA shop or smth, v. 1.0</h1>
+
+<hr>
+
+<h3>Items</h3>
+
+{% for room in rooms %}
+<div class="thumbnail col-sm-5 col-md-3">
+    <div class="caption">
+        <h4>{{room.name}}</h4>
+        <p><a href="{{url_for('room', room_id=room.id)}}" class="btn btn-primary stretched-link">Show Items</a></p>
+    </div>
+</div>
 {% endfor %}
+
 {% endblock %}
