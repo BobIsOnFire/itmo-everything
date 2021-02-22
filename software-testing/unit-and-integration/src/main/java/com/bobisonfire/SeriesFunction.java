@@ -6,6 +6,8 @@ public final class SeriesFunction {
     private static final int SOFT_BOUND = 100;
     private static final int HARD_BOUND = 10002;
 
+    public static final double DEFAULT_PRECISION = 1E-5;
+
     public static SeriesFunction getInstance(double expansionPoint, IntToDoubleFunction coefficientSupplier) {
         return new SeriesFunction(expansionPoint, coefficientSupplier);
     }
@@ -26,7 +28,7 @@ public final class SeriesFunction {
     }
 
     public double get(double x, double precision) {
-        double result = this.coefficientSupplier.applyAsDouble(0);
+        double result = getCoefficient(0);
         double prev = result;
         double term = 1;
 
@@ -34,7 +36,6 @@ public final class SeriesFunction {
             prev = result;
             double coefficient = getCoefficient(i);
             term *= x - this.expansionPoint;
-            result += coefficient * term;
 
             /*
              * Terms can be skipped - e.g., arctan(x) skips every even term
@@ -42,10 +43,12 @@ public final class SeriesFunction {
              */
             if (coefficient == 0.0) continue;
 
+            result += coefficient * term;
+
             /* Infinite numbers always fail precision check - need a fast exit point for diverging series */
             if (Double.isInfinite(result)) return result;
 
-            /* Could happen if coefficient supplier is invalid - zero division, negative square root, etc. */
+            /* Could happen if coefficient supplier is invalid - zero-zero division, negative square root, etc. */
             if (Double.isNaN(result)) throw new ArithmeticException("Cannot find value for x = " + x);
 
             /* As long as i < SOFT_BOUND, try getting the most precise result possible */
@@ -56,6 +59,10 @@ public final class SeriesFunction {
         }
 
         return (result + prev) / 2;
+    }
+
+    public double get(double x) {
+        return get(x, DEFAULT_PRECISION);
     }
 
     private double getCoefficient(int num) {
