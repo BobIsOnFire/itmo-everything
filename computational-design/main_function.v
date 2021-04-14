@@ -62,7 +62,8 @@ module main_function(
     .result(result_mult)
   );
 
-  always @(posedge clock)
+  always @(posedge clock) begin
+    if (busy_mult) enable_mult <= 0;
     if (reset) begin
       state <= READY;
       finish <= 0;
@@ -104,8 +105,5 @@ module main_function(
           end
       endcase
     end
-  
-  always @(posedge busy_mult) begin
-    enable_mult <= 0;
   end
 endmodule
