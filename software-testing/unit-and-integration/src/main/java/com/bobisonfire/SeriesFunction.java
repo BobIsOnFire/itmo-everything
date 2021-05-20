@@ -4,12 +4,16 @@ import java.util.function.IntToDoubleFunction;
 
 public final class SeriesFunction {
     private static final int SOFT_BOUND = 100;
-    private static final int HARD_BOUND = 10002;
 
+    public static final int DEFAULT_HARD_BOUND = 10002;
     public static final double DEFAULT_PRECISION = 1E-5;
 
     public static SeriesFunction getInstance(double expansionPoint, IntToDoubleFunction coefficientSupplier) {
-        return new SeriesFunction(expansionPoint, coefficientSupplier);
+        return getInstance(expansionPoint, coefficientSupplier, DEFAULT_HARD_BOUND);
+    }
+
+    public static SeriesFunction getInstance(double expansionPoint, IntToDoubleFunction coefficientSupplier, int hardBound) {
+        return new SeriesFunction(expansionPoint, coefficientSupplier, hardBound);
     }
 
     public static SeriesFunction arctan() {
@@ -18,13 +22,16 @@ public final class SeriesFunction {
 
     private final double expansionPoint;
     private final IntToDoubleFunction coefficientSupplier;
+    private final int hardBound;
 
     /* Following launches of same function will be faster than the first */
-    private final Double[] coefficientCache = new Double[HARD_BOUND];
+    private final Double[] coefficientCache;
 
-    private SeriesFunction(double expansionPoint, IntToDoubleFunction coefficientSupplier) {
+    private SeriesFunction(double expansionPoint, IntToDoubleFunction coefficientSupplier, int hardBound) {
         this.expansionPoint = expansionPoint;
         this.coefficientSupplier = coefficientSupplier;
+        this.hardBound = hardBound;
+        this.coefficientCache = new Double[this.hardBound];
     }
 
     public double get(double x, double precision) {
@@ -32,14 +39,14 @@ public final class SeriesFunction {
         double prev = result;
         double term = 1;
 
-        for (int i = 1; i < HARD_BOUND; i++) {
+        for (int i = 1; i < this.hardBound; i++) {
             prev = result;
             double coefficient = getCoefficient(i);
             term *= x - this.expansionPoint;
 
             /*
              * Terms can be skipped - e.g., arctan(x) skips every even term
-             * Precision checking relies on difference between two last sums - term skipping could mess it up
+             * Precision checking relies on difference between two last sums - not skipping could mess it up
              */
             if (coefficient == 0.0) continue;
 
