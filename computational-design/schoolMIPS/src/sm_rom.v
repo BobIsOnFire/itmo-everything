@@ -11,7 +11,7 @@ module sm_rom
     assign rd = rom [a];
 
     initial begin
-        $readmemh ("program.hex", rom);
+        $readmemh ("D:\\schoolMIPS\\program.hex", rom);
     end
 
 endmodule

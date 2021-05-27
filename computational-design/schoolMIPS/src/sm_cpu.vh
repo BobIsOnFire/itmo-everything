@@ -15,6 +15,7 @@
 `define ALU_SRL     3'b011
 `define ALU_SLTU    3'b100
 `define ALU_SUBU    3'b101
+`define ALU_SQRT    3'b111
 
 //instruction operation code
 `define C_SPEC      6'b000000 // Special instructions (depends on function field)
@@ -42,4 +43,6 @@
                               //         Rd = (Rs∅ < Rt∅) ? 1 : 0
 `define F_SUBU      6'b100011 // R-type, Unsigned Subtract
                               //         Rd = Rs – Rt
+`define F_SQRT      6'b111111 // R-type, Square Root
+                              //         Rd = sqrt(Rs)
 `define F_ANY       6'b??????

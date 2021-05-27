@@ -145,6 +145,7 @@ module sm_control
             { `C_SPEC,  `F_SRL  } : begin regDst = 1'b1; regWrite = 1'b1; aluControl = `ALU_SRL;  end
             { `C_SPEC,  `F_SLTU } : begin regDst = 1'b1; regWrite = 1'b1; aluControl = `ALU_SLTU; end
             { `C_SPEC,  `F_SUBU } : begin regDst = 1'b1; regWrite = 1'b1; aluControl = `ALU_SUBU; end
+            { `C_SPEC,  `F_SQRT } : begin regDst = 1'b1; regWrite = 1'b1; aluControl = `ALU_SQRT; end
 
             { `C_ADDIU, `F_ANY  } : begin regWrite = 1'b1; aluSrc = 1'b1; aluControl = `ALU_ADD;  end
             { `C_LUI,   `F_ANY  } : begin regWrite = 1'b1; aluSrc = 1'b1; aluControl = `ALU_LUI;  end
@@ -167,6 +168,14 @@ module sm_alu
     output        zero,
     output reg [31:0] result
 );
+
+    wire [31:0] sqrt_res;
+    sqrt sqrt (
+        .a(srcA),
+        .res(sqrt_res)
+    );
+
+
     always @ (*) begin
         case (oper)
             default   : result = srcA + srcB;
@@ -176,6 +185,7 @@ module sm_alu
             `ALU_SRL  : result = srcB >> shift;
             `ALU_SLTU : result = (srcA < srcB) ? 1 : 0;
             `ALU_SUBU : result = srcA - srcB;
+            `ALU_SQRT : result = sqrt_res;
         endcase
     end
 
