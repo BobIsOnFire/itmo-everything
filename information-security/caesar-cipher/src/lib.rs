@@ -1,27 +1,36 @@
+
+#[macro_use]
+extern crate lazy_static;
+mod alphabet_map;
+
+use alphabet_map::AlphabetMap;
+
 const ALPHABET: &str = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
 
-fn to_index(ch: char) -> usize {
-    ALPHABET
-        .chars()
-        .position(|x| x == ch)
-        .unwrap_or_else(|| panic!("There is no char '{}' (#{}) in alphabet", ch, ch as u32))
+lazy_static! {
+    static ref ALPHABET_MAP: AlphabetMap = Default::default();
 }
 
-fn from_index(index: usize) -> char {
-    ALPHABET
-        .chars()
-        .nth(index)
-        .unwrap_or_else(|| panic!("Invalid index '{}'", index))
+fn alphabetic_num(ch: char) -> usize {
+    ALPHABET_MAP.to_idx(ch)
 }
 
-fn check_alphabet(input: &str) {
-    input.chars().for_each(|ch| {
-        to_index(ch);
-    });
+fn from_alphabetic_num(index: usize) -> char {
+    ALPHABET_MAP.by_idx(index)
+}
+
+fn check_alphabet(input: &str) -> Result<&str, char> {
+    input.chars()
+        .find(|ch| !ALPHABET_MAP.contains_char(*ch))
+        .map_or(Ok(input), Err)
+}
+
+fn panic_on_bad_char<Out>(ch: char) -> Out {
+    panic!("Character {} is not found in alphabet: [{}]", ch, ALPHABET)
 }
 
 pub struct CaesarSolver {
-    letter_mapper: Vec<char>,
+    letter_mapper: AlphabetMap,
 }
 
 impl CaesarSolver {
@@ -29,10 +38,11 @@ impl CaesarSolver {
         let alphabet_size = ALPHABET.chars().count();
         let keyword = keyword.to_uppercase();
         
-        check_alphabet(&keyword);
+        check_alphabet(&keyword)
+            .unwrap_or_else(panic_on_bad_char);
 
         // Example: keyword = KEYWORD, shift = 3
-        let letter_mapper: Vec<char> = ALPHABET
+        let letter_mapper = ALPHABET
             .chars()                                // ABCDEF...VWXYZ
             .filter(|&ch| keyword.find(ch) == None) // ABCFGH...UVXYZ (without letters from KEYWORD)
             .chain(keyword.chars())                 // ABCFGH...UVXYZKEYWORD
@@ -44,23 +54,17 @@ impl CaesarSolver {
         CaesarSolver { letter_mapper }
     }
 
-    pub fn encrypt(&self, input: String) -> String {
-        let input = input.to_uppercase();
-        check_alphabet(&input);
-
+    pub fn encrypt(&self, input: impl Iterator<Item = char>) -> String {
         input
-            .chars()
-            .map(|ch| self.letter_mapper[to_index(ch)])
+            .flat_map(char::to_uppercase)
+            .map(|ch| self.letter_mapper.by_idx(alphabetic_num(ch)))
             .collect()
     }
 
-    pub fn decrypt(&self, input: String) -> String {
-        let input = input.to_uppercase();
-        check_alphabet(&input);
-
+    pub fn decrypt(&self, input: impl Iterator<Item = char>) -> String {
         input
-            .chars()
-            .map(|ch| from_index(self.letter_mapper.iter().position(|&x| x == ch).unwrap()))
+            .flat_map(char::to_uppercase)
+            .map(|ch| from_alphabetic_num(self.letter_mapper.to_idx(ch)))
             .collect()
     }
 }

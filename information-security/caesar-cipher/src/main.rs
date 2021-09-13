@@ -23,9 +23,9 @@ fn main() {
 
     let solver = CaesarSolver::new(opts.keyword, opts.shift);
     let result = if opts.decipher {
-        solver.decrypt(opts.input)
+        solver.decrypt(opts.input.chars())
     } else {
-        solver.encrypt(opts.input)
+        solver.encrypt(opts.input.chars())
     };
 
     println!("{}", result)
