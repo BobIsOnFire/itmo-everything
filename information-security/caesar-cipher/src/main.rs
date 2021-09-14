@@ -1,4 +1,4 @@
-use caesar_kw::CaesarSolver;
+use caesar_kw::{CaesarSolver, decrypt_str, encrypt_str};
 use clap::{AppSettings, Clap};
 
 #[derive(Clap, Debug)]
@@ -22,10 +22,10 @@ fn main() {
     let opts = Opts::parse();
 
     let solver = CaesarSolver::new(opts.keyword, opts.shift);
-    let result = if opts.decipher {
-        solver.decrypt(opts.input.chars())
+    let result: String = if opts.decipher {
+        decrypt_str(&opts.input, &solver)
     } else {
-        solver.encrypt(opts.input.chars())
+        encrypt_str(&opts.input, &solver)
     };
 
     println!("{}", result)
