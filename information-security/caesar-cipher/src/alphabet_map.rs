@@ -1,53 +1,74 @@
-use std::iter::FromIterator;
+use std::{hash::BuildHasherDefault, iter::FromIterator};
 
-use rustc_hash::FxHashMap;
+use bimap::BiHashMap;
+use rustc_hash::{FxHasher};
 
+type FxHasherBuilder = BuildHasherDefault<FxHasher>;
+
+const ALPHABET: &str = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+
+#[derive(Debug, Clone)]
 pub struct AlphabetMap
 {
-    idx_to_char: Vec<char>,
-    char_to_idx: FxHashMap<char, usize>,
+    mapper: BiHashMap<char, char, FxHasherBuilder, FxHasherBuilder>, // map from original to mapped
 }
 
 impl AlphabetMap
 {
-    pub fn by_idx(&self, idx: usize) -> char
-    { self.idx_to_char[idx] }
-
-    pub fn to_idx(&self, ch: char) -> usize
+    pub fn to_mapped(&self, origin: char) -> char
     {
-        *self.char_to_idx.get(&ch)
-            .unwrap_or_else(|| panic!("Bad character: {}", ch))
+        *self.mapper.get_by_left(&origin)
+            .unwrap_or_else(|| self.panic_on_bad_char(origin))
     }
 
-    pub fn contains_char(&self, ch: char) -> bool
-    { self.char_to_idx.contains_key(&ch) }
+    pub fn to_origin(&self, mapped: char) -> char
+    {
+        *self.mapper.get_by_right(&mapped)
+            .unwrap_or_else(|| self.panic_on_bad_char(mapped))
+    }
+
+// private
+    fn panic_on_bad_char<Ret>(&self, ch: char) -> Ret
+    {
+        panic!("Unexpected character: '{}' ({:x}), alphabet: {:?}", ch, ch as usize, self.mapper.left_values().collect::<Vec<_>>())
+    }
 }
 
 impl Default for AlphabetMap
 {
     fn default() -> Self {
-        let idx_to_char: Vec<_> = super::ALPHABET.chars().collect();
-        From::from(idx_to_char)
+        ALPHABET.chars().collect()
     }
 }
 
 impl From<Vec<char>> for AlphabetMap
 {
     fn from(idx_to_char: Vec<char>) -> Self {
-        let char_to_idx: FxHashMap<_, _> = idx_to_char
-            .iter()
-            .enumerate()
-            .map(|(idx, ch)| (*ch, idx))
-            .collect();
-
-        Self { idx_to_char, char_to_idx }
+        idx_to_char.into_iter().collect()
     }
 }
 
 impl FromIterator<char> for AlphabetMap
 {
     fn from_iter<T: IntoIterator<Item = char>>(iter: T) -> Self {
-        let idx_to_char: Vec<_> = iter.into_iter().collect();
-        From::from(idx_to_char)
+        let mapper = ALPHABET
+            .chars()
+            .zip(iter.into_iter())
+            .collect();
+        Self { mapper }
     }
 }
+
+lazy_static! {
+    static ref ID_ALPHABET: AlphabetMap = Default::default();
+}
+
+pub fn alphabet_size() -> usize
+{ ALPHABET.len() }
+
+pub fn original_alphabet() -> &'static str
+{ ALPHABET }
+
+/// panics on bad char
+pub fn validate_char(ch: char)
+{ ID_ALPHABET.to_mapped(ch); }
