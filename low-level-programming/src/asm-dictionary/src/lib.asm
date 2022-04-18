@@ -1,57 +1,61 @@
-%define SYS_READ 0
-%define SYS_WRITE 1
-%define SYS_EXIT 60
+%include "lib.inc"
 
-%define stdin 0
-%define stdout 1
+%include "definitions.inc"
+
+%define NUMBER_BUFFER_SIZE 24
 
 section .text
-
-; Принимает код возврата и завершает текущий процесс
-; rdi - код возврата
-exit: 
-        mov     rax, SYS_EXIT
-        syscall
-
 
 ; Принимает указатель на нуль-терминированную строку, возвращает её длину
 ; rdi - указатель на нуль-терминированную строку
 ; Идея взята с http://www.int80h.org/strlen/
 string_length:
-        push    rdi
         xor     rcx, rcx
         not     rcx
         xor     rax, rax
 repne   scasb
         not     rcx
         lea     rax, [rcx - 1]
-        pop     rdi
+        ret     rax
+
+
+; Helper: Принимает указатель на нуль-терминированную строку, пишет её по
+; указанному дескриптору
+; rdi - указатель на нуль-терминированную строку
+; rsi - файл-дескриптор
+_write_string:
+        push    rdi, rsi
+        call    string_length, rdi
+        pop     rsi, rdi
+        write   rdi, rsi, rax
         ret
 
 
 ; Принимает указатель на нуль-терминированную строку, выводит её в stdout
 ; rdi - указатель на нуль-терминированную строку
 print_string:
-        call    string_length
-        mov     rsi, rdi
-        mov     rdx, rax
-        mov     rax, SYS_WRITE
-        mov     rdi, stdout
-        syscall
-        ret
+        mov     rsi, stdout
+        jmp     _write_string
+
+
+; Принимает указатель на нуль-терминированную строку, выводит её в stderr
+; rdi - указатель на нуль-терминированную строку
+err_string:
+        mov     rsi, stderr
+        jmp     _write_string
 
 
 ; Переводит строку (выводит символ с кодом 0xA)
 print_newline:
-        mov     rdi, 0xA
-
+        mov     rdi, EOL
+        ; co-routine optimization
 
 ; Принимает код символа и выводит его в stdout
 ; rdi - код символа
 print_char:
+        and     rdi, 0xFF
         push    di; 2 байта - с кодом символа и 0x0
-        mov     rdi, rsp
-        call    print_string
+        write   stdout, rsp, 1
         pop     di
         ret
 
@@ -69,12 +73,12 @@ _format_uint:
 .loop:
         xor     rdx, rdx
         div     r8
-        add     dl, '0'
+        or      dl, '0'
         dec     rsi
         mov     byte[rsi], dl
         test    rax, rax
-        jnz      .loop
-        ret
+        jnz     .loop
+        ret     rax
 
 
 ; Выводит беззнаковое 8-байтовое число в десятичном формате 
@@ -83,29 +87,27 @@ _format_uint:
 ; rdi - беззнаковое 8-байтовое число
 print_uint:
         mov     rsi, rsp
-        sub     rsp, 24
-        call    _format_uint
-        mov     rdi, rsi
-        call    print_string
-        add     rsp, 24
-        ret
+        sub     rsp, NUMBER_BUFFER_SIZE
+        call    _format_uint, rdi, rsi
+        call    print_string, rsi
+        add     rsp, NUMBER_BUFFER_SIZE
+        ret     rax
 
 
 ; Выводит знаковое 8-байтовое число в десятичном формате 
 ; rdi - беззнаковое 8-байтовое число
 print_int:
-        cmp     rdi, 0
-        jge     print_uint
+        test    rdi, rdi
+        jns     print_uint
         neg     rdi
         mov     rsi, rsp
-        sub     rsp, 24
-        call    _format_uint
+        sub     rsp, NUMBER_BUFFER_SIZE
+        call    _format_uint, rdi, rsi
         dec     rsi
         mov     byte[rsi], '-'
-        mov     rdi, rsi
-        call    print_string
-        add     rsp, 24
-        ret
+        call    print_string, rsi
+        add     rsp, NUMBER_BUFFER_SIZE
+        ret     rax
 
 
 ; Принимает два указателя на нуль-терминированные строки, возвращает 1 если они равны, 0 иначе
@@ -114,26 +116,15 @@ print_int:
 string_equals:
         mov     r9, rdi
         mov     r8, rsi
-        call    string_length
+        push    r8, r9
+        call    string_length, rdi
         push    rax
-        mov     rdi, rsi
-        call    string_length
-        pop     rcx
+        call    string_length, rsi
+        pop     r8, r9, rcx
         cmp     rax, rcx
         jne     .fail
-.quadcmp:
-        cmp     rax, 8
-        jl      .bytecmp
-        mov     rdi, [r8]
-        mov     rsi, [r9]
-        cmp     rdi, rsi
-        jne     .fail
-        add     r8, 8
-        add     r9, 8
-        sub     rax, 8
-        jmp     .quadcmp
 .bytecmp:
-        cmp     rax, 0
+        test    rax, rax
         je      .success
         mov     dil, byte[r8]
         mov     sil, byte[r9]
@@ -144,30 +135,23 @@ string_equals:
         dec     rax
         jmp     .bytecmp
 .success:
-        mov     rax, 1
-        ret
+        ret     1
 .fail:
-        xor     rax, rax
-        ret
+        ret     0
 
 
 ; Читает один символ из stdin и возвращает его. Возвращает 0 если достигнут конец потока
 read_char:
         push    qword 0
-        mov     rsi, rsp
-        mov     rdx, 1
-        mov     rax, SYS_READ
-        mov     rdi, stdin
-        syscall
+        read    stdin, rsp, 1
         test    rax, rax
         je      .fail
 .success:
         pop     rax
-        ret
+        ret     rax
 .fail:
         add     rsp, 8
-        xor     rax, rax
-        ret
+        ret     0
 
 
 ; Принимает: адрес начала буфера, размер буфера
@@ -187,11 +171,11 @@ read_word:
         call    read_char
         test    al, al
         jz      .fail
-        cmp     al, 0x20
+        cmp     al, ' '
         je      .skip
-        cmp     al, 0x9
+        cmp     al, TAB
         je      .skip
-        cmp     al, 0xA
+        cmp     al, EOL
         je      .skip
 .loop:
         dec     r9
@@ -201,11 +185,13 @@ read_word:
         call    read_char
         test    al, al
         jz      .success
-        cmp     al, 0x20
+%ifdef READ_WORD_NO_END_ON_SPACE
+        cmp     al, ' '
         je      .success
-        cmp     al, 0x9
+        cmp     al, TAB
         je      .success
-        cmp     al, 0xA
+%endif
+        cmp     al, EOL
         je      .success
         jmp     .loop
 .success:
@@ -213,12 +199,11 @@ read_word:
         pop     rax
         mov     rdx, r8
         sub     rdx, rax
-        ret
+        ret     rax
 .fail:
         add     rsp, 8
-        xor     rax, rax
         xor     rdx, rdx
-        ret
+        ret     0
 
 
 ; Принимает указатель на строку, пытается
@@ -258,13 +243,13 @@ parse_int:
         cmp     cl, '-'
         jne     parse_uint
         inc     rdi
-        call    parse_uint
+        call    parse_uint, rdi
         test    rdx, rdx
         jz      .end
         inc     rdx
         neg     rax
 .end:
-        ret 
+        ret
 
 
 ; Принимает указатель на строку, указатель на буфер и длину буфера
@@ -274,20 +259,13 @@ parse_int:
 ; rsi - указатель на буфер
 ; rdx - длина буфера
 string_copy:
-        call    string_length
+        push    rdi, rsi, rdx
+        call    string_length, rdi
+        pop     rdi, rsi, rdx
         push    rax
         inc     rax
         cmp     rax, rdx
         jg      .fail
-.quadcpy:
-        cmp     rax, 8
-        jl      .bytecpy
-        mov     r8, [rdi]
-        mov     [rsi], r8
-        add     rdi, 8
-        add     rsi, 8
-        sub     rax, 8
-        jmp     .quadcpy
 .bytecpy:
         cmp     rax, 0
         je      .success
@@ -299,9 +277,7 @@ string_copy:
         jmp     .bytecpy
 .success:
         pop     rax
-        ret
+        ret     rax
 .fail:
         add     rsp, 8
-        xor     rax, rax
-        ret
-
+        ret     0

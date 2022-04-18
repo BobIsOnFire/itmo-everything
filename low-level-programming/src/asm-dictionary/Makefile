@@ -1,28 +1,34 @@
-NAME := lab2
-ROOT := ../..
+include util.make
 
-SOURCES := $(wildcard *.asm)
-OBJECTS := $(patsubst %.asm,%.o,$(SOURCES))
+NAME := dict
+
+SOURCES  := $(wildcard src/*.asm)
+OBJECTS  := $(SOURCES:src/%.asm=build/%.o)
+DEPFILES := $(SOURCES:src/%.asm=build/%.d)
 
 ASM := nasm
 LD := ld
+RM := rm -rf
 
-ASMFLAGS := -g -felf64
+ASMFLAGS := -g -felf64 -Iinclude/ -Wno-macro-params
 
 all: $(NAME)
 
 $(NAME): $(OBJECTS)
 	$(LD) $^ -o $@
 
-%.o: %.asm Makefile
-	$(ASM) $(ASMFLAGS) $< -o $@
+build/%.o: src/%.asm Makefile | build
+	$(ASM) $(ASMFLAGS) -DBUILDING_$(call to_uppercase,$*)=1 -MP -MD build/$*.d $< -o $@
 
-main.o: words.inc colon.inc
+build:
+	mkdir -p $@
 
-.PHONY: install clean
-install: $(NAME)
-	mkdir -p $(ROOT)/bin
-	cp $^ $(ROOT)/bin
+.PHONY: clean gdb
 
 clean:
-	$(RM) $(OBJECTS) $(NAME)
+	$(RM) build $(NAME)
+
+gdb: $(NAME)
+	gdb $(NAME) -iex "layout regs"
+
+-include $(DEPFILES)
